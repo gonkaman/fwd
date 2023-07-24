@@ -1,0 +1,36 @@
+{
+  "name": "fwd-result",
+  "version": "1.0.0",
+  "description": "Result type implmeentation",
+  "main": "./lib/index.js",
+  "scripts": {
+    "build": "sh scripts/cjsbuild.sh .",
+    "tscbuild": "npx tsc",
+    "test": "npx jasmine"
+  },
+  "types": "./lib/index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/gonkaman/fwd/js/result"
+  },
+  "keywords": [
+    "Result",
+    "ROP"
+  ],
+  "author": "Joël GONKAMAN",
+  "license": "MIT",
+  "devDependencies": {
+    "jasmine": "^5.1.0",
+    "jsdoc": "^4.0.2",
+    "typescript": "^5.1.6"
+  },
+  "files": [
+    "lib/**/*.{js,ts}"
+  ],
+  "directories":{
+    "lib": "lib",
+    "test": "spec",
+    "doc": "docs",
+    "examples": "examples"
+  }
+}
