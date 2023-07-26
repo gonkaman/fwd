@@ -22,6 +22,8 @@ Cette section de documentation a pour but d'expliciter les concepts ainsi explor
 
 ---
 
+<br/>
+
 #### Vitrail
 
 Vitrail est un framework javascript pour la construction d'application web front-end, qui offre une approche de programmation reactive foncitonnelle basée sur le modèle du Railway Oriented programming.
@@ -32,7 +34,9 @@ Vitrail est un framework javascript pour la construction d'application web front
 
 [Documentation](https://github.com/gonkaman/fwd/tree/main/vitrail/docs)
 
-<br/><br/>
+<br/>
+
+
 
 #### Cleandomain
 
@@ -47,7 +51,7 @@ Cleandomain est une librairie open source conçue afin de faciliter l’écritur
 
 [Javascript](https://github.com/gonkaman/fwd/tree/main/cleandomain/js) - [C#](https://github.com/gonkaman/fwd/tree/main/cleandomain/dotnet) - [Java](https://github.com/gonkaman/fwd/tree/main/cleandomain/java
 
-
+<br/>
 
 
 
@@ -55,7 +59,7 @@ Cleandomain est une librairie open source conçue afin de faciliter l’écritur
 
 ---
 
-
+<br/>
 
 #### fwd-result
 
@@ -71,6 +75,8 @@ Le type Result est un type généralement utilisé en programmation fonctionnell
 
 [Javascript](https://github.com/gonkaman/fwd/tree/main/result/js) - [C#](https://github.com/gonkaman/fwd/tree/main/result/dotnet) - [Java](https://github.com/gonkaman/fwd/tree/main/result/java)
 
+<br/>
+
 
 
 #### fwd-pipeline
@@ -84,6 +90,8 @@ Se basant sur *fwd-result*, **fwd-pipeline** permet de contruire des chaines d'o
 [Documentation](https://github.com/gonkaman/fwd/tree/main/pipeline/docs)
 
 [Javascript](https://github.com/gonkaman/fwd/tree/main/pipeline/js) - [C#](https://github.com/gonkaman/fwd/tree/main/pipeline/dotnet) - [Java](https://github.com/gonkaman/fwd/tree/main/pipeline/java)
+
+<br/>
 
 
 
