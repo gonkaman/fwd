@@ -1,18 +1,51 @@
-import { Result } from "./Result";
+import { Result, ResultState } from "./Result";
 
+/**
+ * Implementation of Result<TSuccess, TFailure> for success cases
+ * 
+ * @class
+ * @template TSuccess - Value type for success cases
+ * @implements Result
+ */
 export class SuccessResult<TSuccess> implements Result<TSuccess, unknown>{
     value: TSuccess;
 
+    /**
+     * @constructor
+     * @param value Success data 
+     */
     constructor(value: TSuccess){
         this.value = value;
     }
 
 
-    isSuccess(){
+    /**
+     * Checks whether the result is a success or a failure.
+     * Returns true in case of success, false in case of failure
+     * @returns {boolean} 
+     */
+    isSuccess(): boolean{
         return true;
     }
 
-    
+    /**
+     * returns the normalized state of the result object
+     * @template TSuccess - Value type for success cases
+     * @returns {ResultState} ResultState<TSuccess, unknown>
+     */
+    unwrap(): ResultState<TSuccess, unknown> {
+        return {
+            isSuccess: true,
+            value: this.value
+        };
+    }
+
+    /**
+     * Executes the given handler, using the current result to get a new result
+     * @param fn Handler to execute, must return a result object. The current result object will be passed as the first argument
+     * @param args Optional, additional arguments needed for the handler execution
+     * @returns Result<U,V>
+     */
     bind<U,V>(
         fn: (result: Result<TSuccess, unknown>, ...args: unknown[]) => Result<U,V>,
         ...args: unknown[]
@@ -20,6 +53,13 @@ export class SuccessResult<TSuccess> implements Result<TSuccess, unknown>{
         return fn(this, ...args);
     }
 
+    /**
+     * Executes the given asynchronous handler, using the current result to get a new result
+     * @async
+     * @param fn Async handler to execute, must return a result object. The current result object will be passed as the first argument
+     * @param args Optional, additional arguments needed for the handler execution
+     * @returns Promise<Result<U,V>>
+     */
     bindAsync<U,V>(
         fn: (result: Result<TSuccess, unknown>, ...args: unknown[]) => Promise<Result<U,V>>,
         ...args: unknown[]

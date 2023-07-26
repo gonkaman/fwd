@@ -20,14 +20,16 @@
   "author": "Joël GONKAMAN",
   "license": "MIT",
   "devDependencies": {
+    "better-docs": "^2.7.2",
     "jasmine": "^5.1.0",
     "jsdoc": "^4.0.2",
+    "taffydb": "^2.7.3",
     "typescript": "^5.1.6"
   },
   "files": [
     "lib/**/*.{js,ts}"
   ],
-  "directories":{
+  "directories": {
     "lib": "lib",
     "test": "spec",
     "doc": "docs",

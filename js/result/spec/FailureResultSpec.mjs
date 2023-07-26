@@ -7,10 +7,5 @@ describe('Failure result', function(){
 
         expect(fnResult.isSuccess()).toEqual(false);
     });
-
-    it('should be true when asked is not success', function() {
-
-        expect(!fnResult.isSuccess()).toEqual(true);
-    });
     
 });
