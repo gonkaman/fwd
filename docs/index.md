@@ -22,7 +22,7 @@ Vitrail est un framework javascript pour la construction d'application web front
 
 **License:** MIT
 
-[Documentation](https://github.com/gonkaman/fwd/vitrail)
+[Documentation](https://github.com/gonkaman/fwd/tree/main/vitrail/docs)
 
 #### Cleandomain
 
@@ -40,9 +40,9 @@ Le type Result est un type généralement utilisé en programmation fonctionnell
 
 **License:** MIT
 
-[Documentation](https://github.com/gonkaman/fwd/result/docs)
+[Documentation](https://github.com/gonkaman/fwd/tree/main/result/docs)
 
-[Javascript](https://github.com/gonkaman/fwd/result/js) - [C#](https://github.com/gonkaman/fwd/result/dotnet) - [Java](https://github.com/gonkaman/fwd/result/java)
+[Javascript](https://github.com/gonkaman/fwd/tree/main/result/js) - [C#](https://github.com/gonkaman/fwd/tree/main/result/dotnet) - [Java](https://github.com/gonkaman/fwd/tree/main/result/java)
 
 #### fwd-pipeline
 
