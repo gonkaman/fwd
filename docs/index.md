@@ -34,8 +34,6 @@ Vitrail est un framework javascript pour la construction d'application web front
 
 
 
----
-
 #### Cleandomain
 
 _Your little helper for building applications using Domain Driven Design_
@@ -47,9 +45,7 @@ Cleandomain est une librairie open source conçue afin de faciliter l’écritur
 
 [Documentation](https://github.com/gonkaman/fwd/tree/main/cleandomain/docs)
 
-[Javascript](https://github.com/gonkaman/fwd/tree/main/cleandomain/js) - [C#](https://github.com/gonkaman/fwd/tree/main/cleandomain/dotnet) - [Java](https://github.com/gonkaman/fwd/tree/main/cleandomain/java)
-
----
+[Javascript](https://github.com/gonkaman/fwd/tree/main/cleandomain/js) - [C#](https://github.com/gonkaman/fwd/tree/main/cleandomain/dotnet) - [Java](https://github.com/gonkaman/fwd/tree/main/cleandomain/java
 
 
 
@@ -75,8 +71,6 @@ Le type Result est un type généralement utilisé en programmation fonctionnell
 
 [Javascript](https://github.com/gonkaman/fwd/tree/main/result/js) - [C#](https://github.com/gonkaman/fwd/tree/main/result/dotnet) - [Java](https://github.com/gonkaman/fwd/tree/main/result/java)
 
----
-
 
 
 #### fwd-pipeline
@@ -91,15 +85,11 @@ Se basant sur *fwd-result*, **fwd-pipeline** permet de contruire des chaines d'o
 
 [Javascript](https://github.com/gonkaman/fwd/tree/main/pipeline/js) - [C#](https://github.com/gonkaman/fwd/tree/main/pipeline/dotnet) - [Java](https://github.com/gonkaman/fwd/tree/main/pipeline/java)
 
----
-
 
 
 #### cleandomain-efcore-adapter
 
 xxx
-
----
 
 
 
@@ -107,15 +97,11 @@ xxx
 
 xxx
 
----
-
 
 
 #### cleandomain-eventstoredb-adapter
 
 xxx
-
----
 
 
 
@@ -123,15 +109,11 @@ xxx
 
 xxx
 
----
-
 
 
 #### cleandomain-kafka-adapter
 
 xxx
-
----
 
 
 
@@ -149,15 +131,11 @@ xxx
 
 xxx
 
----
-
 
 
 #### morphos
 
 xxx
-
----
 
 
 
@@ -173,15 +151,11 @@ xxx
 
 xxxx
 
----
-
 
 
 #### FwdStudio
 
 xxxx
-
----
 
 
 
@@ -189,15 +163,11 @@ xxxx
 
 xxx
 
----
-
 
 
 #### FwdIdentity
 
 xxx
-
----
 
 
 
