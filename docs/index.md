@@ -22,7 +22,7 @@ Cette section de documentation a pour but d'expliciter les concepts ainsi explor
 
 ---
 
-<br/>
+
 
 #### Vitrail
 
@@ -59,7 +59,7 @@ Cleandomain est une librairie open source conçue afin de faciliter l’écritur
 
 ---
 
-<br/>
+
 
 #### fwd-result
 
