@@ -1,4 +1,4 @@
-import { Result } from "."
+import { Result } from "./Result"
 
 export type Runner<T,E> = (...args: any) => Result<T,E>
 
