@@ -1,12 +1,5 @@
 import { Result, ResultState } from "./Result";
 
-/**
- * Implementation of Result<TSuccess, TFailure> for success cases
- * 
- * @class
- * @template TSuccess - Value type for success cases
- * @implements Result
- */
 export class SuccessResult<TSuccess> implements Result<TSuccess, unknown>{
 
     _value: TSuccess;

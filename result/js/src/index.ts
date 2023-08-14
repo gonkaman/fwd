@@ -2,8 +2,6 @@ import { Result } from "./Result";
 import { FailureResult } from "./ResultImplFailure";
 import { SuccessResult } from "./ResultImplSuccess";
 
-export type { Result }
-
 /**
  * Creates an instance of Result representing a success, using the given value
  * @param value Result data for a success
@@ -20,9 +18,13 @@ export const success = <T,E>(value: T): Result<T,E> => new SuccessResult<T>(valu
 export const failure  = <T,E>(error: E): Result<T,E> => new FailureResult<E>(error) as Result<T,E>;
 
 
+/*
+export type { Result }
+
 export { 
     Runner, PipeEntry, PipeBuilder, pipe, exec, map, swap, 
     mapSuccess, swapSuccess, mapFailure, swapFailure,
     fork, forkMap, forkSuccess, forkFailure 
 } from "./Pipe";
 
+*/

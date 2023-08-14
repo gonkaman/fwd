@@ -1,78 +1,70 @@
 "use strict";
-/**@module fwd-result */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.result = exports.SuccessResult = exports.FailureResult = void 0;
-/**@module fwd-result */
-/**
- * Implementation of Result<TSuccess, TFailure> for failure cases
- *
- * @class
- * @template TFailure - Value type for failure cases
- * @inheritdoc
- */
+exports.failure = exports.success = exports.SuccessResult = exports.FailureResult = exports.forkFailure = exports.forkSuccess = exports.forkMap = exports.fork = exports.swapFailure = exports.swapSuccess = exports.swap = exports.mapFailure = exports.mapSuccess = exports.map = exports.exec = exports.pipe = void 0;
+const pipeEnd = (res) => res;
+const pipe = (fn) => {
+    return (handle) => {
+        if (handle === pipeEnd)
+            return ((...params) => handle(fn(...params)));
+        return (0, exports.pipe)((...params) => handle(fn(...params)));
+    };
+};
+exports.pipe = pipe;
+const exec = (pipeBuild) => pipeBuild(pipeEnd);
+exports.exec = exec;
+const map = (onSuccess, onFailure) => (res) => res.map(onSuccess, onFailure);
+exports.map = map;
+const mapSuccess = (onSuccess) => (res) => res.mapSuccess(onSuccess);
+exports.mapSuccess = mapSuccess;
+const mapFailure = (onFailure) => (res) => res.mapFailure(onFailure);
+exports.mapFailure = mapFailure;
+const swap = (onSuccess, onFailure) => (res) => res.swap(onSuccess, onFailure);
+exports.swap = swap;
+const swapSuccess = (onSuccess) => (res) => res.swapSuccess(onSuccess);
+exports.swapSuccess = swapSuccess;
+const swapFailure = (onFailure) => (res) => res.swapFailure(onFailure);
+exports.swapFailure = swapFailure;
+const fork = (handle) => (res) => res.fork(handle);
+exports.fork = fork;
+const forkMap = (onSuccess, onFailure) => (res) => res.forkMap(onSuccess, onFailure);
+exports.forkMap = forkMap;
+const forkSuccess = (onSuccess) => (res) => res.forkSuccess(onSuccess);
+exports.forkSuccess = forkSuccess;
+const forkFailure = (onFailure) => (res) => res.forkFailure(onFailure);
+exports.forkFailure = forkFailure;
 class FailureResult {
-    /**
-     *
-     * @constructor
-     * @param error Failure data
-     */
     constructor(error) {
         this.reason = error;
     }
-    /**
-     * Checks whether the result is a success or a failure.
-     * Returns true in case of success, false in case of failure
-     * @returns {boolean}
-     */
+    value() {
+        return undefined;
+    }
+    error() {
+        return this.reason;
+    }
+    state() {
+        return {
+            error: this.reason,
+            isSuccess: false
+        };
+    }
+    payload() {
+        return this.reason;
+    }
     isSuccess() {
         return false;
     }
-    /**
-     * returns the normalized state of the result object
-     * @returns {ResultState<unknown,TFailure>}
-     */
-    unwrap() {
-        return {
-            isSuccess: false,
-            error: this.reason
-        };
+    bind(fn) {
+        return fn(this);
     }
-    /**
-     * Executes the given handler, using the current result to get a new result
-     * @param fn Handler to execute, must return a result object. The current result object will be passed as the first argument
-     * @param args Optional, additional arguments needed for the handler execution
-     * @returns Result<U,V>
-     */
-    bind(fn, ...args) {
-        return fn(this, ...args);
+    bindAsync(fn) {
+        return fn(this);
     }
-    /**
-     * Executes the given asynchronous handler, using the current result to get a new result
-     * @async
-     * @param fn Async handler to execute, must return a result object. The current result object will be passed as the first argument
-     * @param args Optional, additional arguments needed for the handler execution
-     * @returns Promise<Result<U,V>>
-     */
-    bindAsync(fn, ...args) {
-        return fn(this, ...args);
+    map(_, onFailure) {
+        return onFailure(this.reason);
     }
-    bindMerge(bind, ...args) {
-        return bind(...args)(this);
-    }
-    bindMergeAsync(bind, ...args) {
-        return bind(...args)(this);
-    }
-    map(_, onFailure, ...args) {
-        return onFailure(this.reason, ...args);
-    }
-    mapAsync(_, onFailure, ...args) {
-        return onFailure(this.reason, ...args);
-    }
-    mapMerge(_, onFailure, ...args) {
-        return onFailure(...args)(this.reason);
-    }
-    mapMergeAsync(_, onFailure, ...args) {
-        return onFailure(...args)(this.reason);
+    mapAsync(_, onFailure) {
+        return onFailure(this.reason);
     }
     mapSuccess() {
         return this;
@@ -80,35 +72,17 @@ class FailureResult {
     mapSuccessAsync() {
         return Promise.resolve(this);
     }
-    mapMergeSuccess() {
-        return this;
+    mapFailure(onFailure) {
+        return onFailure(this.reason);
     }
-    mapMergeSuccessAsync() {
-        return Promise.resolve(this);
+    mapFailureAsync(onFailure) {
+        return onFailure(this.reason);
     }
-    mapFailure(onFailure, ...args) {
-        return onFailure(this.reason, ...args);
+    swap(_, onFailure) {
+        return new FailureResult(onFailure(this.reason));
     }
-    mapFailureAsync(onFailure, ...args) {
-        return onFailure(this.reason, ...args);
-    }
-    mapMergeFailure(onFailure, ...args) {
-        return onFailure(...args)(this.reason);
-    }
-    mapMergeFailureAsync(onFailure, ...args) {
-        return onFailure(...args)(this.reason);
-    }
-    swap(_, onFailure, ...args) {
-        return new FailureResult(onFailure(this.reason, ...args));
-    }
-    async swapAsync(_, onFailure, ...args) {
-        return new FailureResult(await onFailure(this.reason, ...args));
-    }
-    swapMerge(_, onFailure, ...args) {
-        return new FailureResult(onFailure(...args)(this.reason));
-    }
-    async swapMergeAsync(_, onFailure, ...args) {
-        return new FailureResult(await onFailure(...args)(this.reason));
+    async swapAsync(_, onFailure) {
+        return new FailureResult(await onFailure(this.reason));
     }
     swapSuccess() {
         return this;
@@ -116,124 +90,68 @@ class FailureResult {
     swapSuccessAsync() {
         return Promise.resolve(this);
     }
-    swapMergeSuccess() {
+    swapFailure(onFailure) {
+        return new FailureResult(onFailure(this.reason));
+    }
+    async swapFailureAsync(onFailure) {
+        return new FailureResult(await onFailure(this.reason));
+    }
+    fork(handle) {
+        handle(this);
         return this;
     }
-    swapMergeSuccessAsync() {
-        return Promise.resolve(this);
-    }
-    swapFailure(onFailure, ...args) {
-        return new FailureResult(onFailure(this.reason, ...args));
-    }
-    async swapFailureAsync(onFailure, ...args) {
-        return new FailureResult(await onFailure(this.reason, ...args));
-    }
-    swapMergeFailure(onFailure, ...args) {
-        return new FailureResult(onFailure(...args)(this.reason));
-    }
-    async swapMergeFailureAsync(onFailure, ...args) {
-        return new FailureResult(await onFailure(...args)(this.reason));
-    }
-    fork(handle, ...args) {
-        handle(this, ...args);
-        return this;
-    }
-    forkMap(_, onFailure, ...args) {
-        onFailure(this.reason, ...args);
+    forkMap(_, onFailure) {
+        onFailure(this.reason);
         return this;
     }
     forkSuccess() {
         return this;
     }
-    forkFailure(onFailure, ...args) {
-        onFailure(this.reason, ...args);
+    forkFailure(onFailure) {
+        onFailure(this.reason);
         return this;
     }
 }
 exports.FailureResult = FailureResult;
-/**@module fwd-result */
-/**
- * Implementation of Result<TSuccess, TFailure> for success cases
- *
- * @class
- * @template TSuccess - Value type for success cases
- * @inheritdoc
- */
 class SuccessResult {
-    /**
-     * @constructor
-     * @param value Success data
-     */
     constructor(value) {
-        this.value = value;
+        this._value = value;
     }
-    /**
-     * Checks whether the result is a success or a failure.
-     * Returns true in case of success, false in case of failure
-     * @returns {boolean}
-     */
     isSuccess() {
         return true;
     }
-    /**
-     * returns the normalized state of the result object
-     * @template TSuccess - Value type for success cases
-     * @returns {ResultState<TSuccess,unknown>}
-     */
-    unwrap() {
+    value() {
+        return this._value;
+    }
+    error() {
+        return undefined;
+    }
+    payload() {
+        return this._value;
+    }
+    state() {
         return {
-            isSuccess: true,
-            value: this.value
+            value: this._value,
+            isSuccess: true
         };
     }
-    /**
-     * Executes the given handler, using the current result to get a new result
-     * @param fn Handler to execute, must return a result object. The current result object will be passed as the first argument
-     * @param args Optional, additional arguments needed for the handler execution
-     * @returns Result<U,V>
-     */
-    bind(fn, ...args) {
-        return fn(this, ...args);
+    bind(fn) {
+        return fn(this);
     }
-    /**
-     * Executes the given asynchronous handler, using the current result to get a new result
-     * @async
-     * @param fn Async handler to execute, must return a result object. The current result object will be passed as the first argument
-     * @param args Optional, additional arguments needed for the handler execution
-     * @returns Promise<Result<U,V>>
-     */
-    bindAsync(fn, ...args) {
-        return fn(this, ...args);
+    bindAsync(fn) {
+        return fn(this);
     }
-    bindMerge(bind, ...args) {
-        return bind(...args)(this);
+    map(onSuccess, _) {
+        return onSuccess(this._value);
     }
-    bindMergeAsync(bind, ...args) {
-        return bind(...args)(this);
+    mapAsync(onSuccess, _) {
+        return onSuccess(this._value);
     }
-    map(onSuccess, _, ...args) {
-        return onSuccess(this.value, ...args);
+    mapSuccess(onSuccess) {
+        return onSuccess(this._value);
     }
-    mapAsync(onSuccess, _, ...args) {
-        return onSuccess(this.value, ...args);
-    }
-    mapMerge(onSuccess, _, ...args) {
-        return onSuccess(...args)(this.value);
-    }
-    mapMergeAsync(onSuccess, _, ...args) {
-        return onSuccess(...args)(this.value);
-    }
-    mapSuccess(onSuccess, ...args) {
-        return onSuccess(this.value, ...args);
-    }
-    mapSuccessAsync(onSuccess, ...args) {
-        return onSuccess(this.value, ...args);
-    }
-    mapMergeSuccess(onSuccess, ...args) {
-        return onSuccess(...args)(this.value);
-    }
-    mapMergeSuccessAsync(onSuccess, ...args) {
-        return onSuccess(...args)(this.value);
+    mapSuccessAsync(onSuccess) {
+        return onSuccess(this._value);
     }
     mapFailure() {
         return this;
@@ -241,35 +159,17 @@ class SuccessResult {
     mapFailureAsync() {
         return Promise.resolve(this);
     }
-    mapMergeFailure() {
-        return this;
+    swap(onSuccess, _) {
+        return new SuccessResult(onSuccess(this._value));
     }
-    mapMergeFailureAsync() {
-        return Promise.resolve(this);
+    async swapAsync(onSuccess, _) {
+        return new SuccessResult(await onSuccess(this._value));
     }
-    swap(onSuccess, _, ...args) {
-        return new SuccessResult(onSuccess(this.value, ...args));
+    swapSuccess(onSuccess) {
+        return new SuccessResult(onSuccess(this._value));
     }
-    async swapAsync(onSuccess, _, ...args) {
-        return new SuccessResult(await onSuccess(this.value, ...args));
-    }
-    swapMerge(onSuccess, _, ...args) {
-        return new SuccessResult(onSuccess(...args)(this.value));
-    }
-    async swapMergeAsync(onSuccess, _, ...args) {
-        return new SuccessResult(await onSuccess(...args)(this.value));
-    }
-    swapSuccess(onSuccess, ...args) {
-        return new SuccessResult(onSuccess(this.value, ...args));
-    }
-    async swapSuccessAsync(onSuccess, ...args) {
-        return new SuccessResult(await onSuccess(this.value, ...args));
-    }
-    swapMergeSuccess(onSuccess, ...args) {
-        return new SuccessResult(onSuccess(...args)(this.value));
-    }
-    async swapMergeSuccessAsync(onSuccess, ...args) {
-        return new SuccessResult(await onSuccess(...args)(this.value));
+    async swapSuccessAsync(onSuccess) {
+        return new SuccessResult(await onSuccess(this._value));
     }
     swapFailure() {
         return this;
@@ -277,22 +177,16 @@ class SuccessResult {
     swapFailureAsync() {
         return Promise.resolve(this);
     }
-    swapMergeFailure() {
+    fork(handle) {
+        handle(this);
         return this;
     }
-    swapMergeFailureAsync() {
-        return Promise.resolve(this);
-    }
-    fork(handle, ...args) {
-        handle(this, ...args);
+    forkMap(onSuccess, _) {
+        onSuccess(this._value);
         return this;
     }
-    forkMap(onSuccess, _, ...args) {
-        onSuccess(this.value, ...args);
-        return this;
-    }
-    forkSuccess(onSuccess, ...args) {
-        onSuccess(this.value, ...args);
+    forkSuccess(onSuccess) {
+        onSuccess(this._value);
         return this;
     }
     forkFailure() {
@@ -300,21 +194,27 @@ class SuccessResult {
     }
 }
 exports.SuccessResult = SuccessResult;
-exports.result = {
-    /**
-     * Creates an instance of Result representing a success, using the given value
-     * @param value Result data for a success
-     * @returns An instance of Result
-     */
-    success(value) {
-        return new SuccessResult(value);
-    },
-    /**
-     * Creates an instance of Result representing a failure, using the given error
-     * @param error Result data for a failure
-     * @returns An instance of Result
-     */
-    failure(error) {
-        return new FailureResult(error);
-    }
-};
+/**
+ * Creates an instance of Result representing a success, using the given value
+ * @param value Result data for a success
+ * @returns An instance of Result
+ */
+const success = (value) => new SuccessResult(value);
+exports.success = success;
+/**
+ * Creates an instance of Result representing a failure, using the given error
+ * @param error Result data for a failure
+ * @returns An instance of Result
+ */
+const failure = (error) => new FailureResult(error);
+exports.failure = failure;
+/*
+export type { Result }
+
+export {
+    Runner, PipeEntry, PipeBuilder, pipe, exec, map, swap,
+    mapSuccess, swapSuccess, mapFailure, swapFailure,
+    fork, forkMap, forkSuccess, forkFailure
+} from "./Pipe";
+
+*/ 

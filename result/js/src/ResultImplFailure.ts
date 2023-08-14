@@ -1,12 +1,5 @@
 import { Result, ResultState } from "./Result";
 
-/**
- * Implementation of Result<TSuccess, TFailure> for failure cases
- * 
- * @class
- * @template TFailure - Value type for failure cases
- * @implements Result
- */
 export class FailureResult<TFailure> implements Result<unknown, TFailure>{
 
     reason: TFailure;
