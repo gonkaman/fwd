@@ -1,3 +1,29 @@
+/*
+
+MIT License
+
+Copyright (c) 2023 Joël GONKAMAN
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+*/
+
 export type Runner<T, E> = (...args: any) => Result<T, E>;
 export type PipeEntry<T, E, U, V> = (res: Result<T, E>) => Result<U, V>;
 export type PipeBuilder<T, E> = <U, V>(fn: PipeEntry<T, E, U, V>) => PipeBuilder<U, V>;
@@ -263,74 +289,12 @@ export interface Result<TSuccess, TFailure> {
      */
     forkFailureAsync(onFailure: (error: TFailure) => PromiseLikeOfOr<unknown>): Promise<Result<TSuccess, TFailure>>;
 }
-export declare class FailureResult<TFailure> implements Result<unknown, TFailure> {
-    reason: TFailure;
-    constructor(error: TFailure);
-    value(): unknown;
-    error(): TFailure | undefined;
-    state(): ResultState<unknown, TFailure>;
-    payload(): unknown;
-    isSuccess(): boolean;
-    bind<U, V>(fn: (result: Result<unknown, TFailure>) => Result<U, V>): Result<U, V>;
-    bindAsync<U, V>(fn: (result: Result<unknown, TFailure>) => PromiseLikeOfOr<Result<U, V>>): Promise<Result<U, V>>;
-    map<U, V>(_: (value: unknown) => Result<U, V>, onFailure: (error: TFailure) => Result<U, V>): Result<U, V>;
-    mapAsync<U, V>(_: (value: unknown) => PromiseLikeOfOr<Result<U, V>>, onFailure: (error: TFailure) => PromiseLikeOfOr<Result<U, V>>): Promise<Result<U, V>>;
-    mapSuccess<U>(): Result<U, TFailure>;
-    mapSuccessAsync<U>(): Promise<Result<U, TFailure>>;
-    mapFailure<V>(onFailure: (error: TFailure) => Result<unknown, V>): Result<unknown, V>;
-    mapFailureAsync<V>(onFailure: (error: TFailure) => PromiseLikeOfOr<Result<unknown, V>>): Promise<Result<unknown, V>>;
-    swap<U, V>(_: (value: unknown) => U, onFailure: (error: TFailure) => V): Result<U, V>;
-    swapAsync<U, V>(_: (value: unknown) => PromiseLikeOfOr<U>, onFailure: (error: TFailure) => PromiseLikeOfOr<V>): Promise<Result<U, V>>;
-    swapSuccess<U>(): Result<U, TFailure>;
-    swapSuccessAsync<U>(): Promise<Result<U, TFailure>>;
-    swapFailure<V>(onFailure: (error: TFailure) => V): Result<unknown, V>;
-    swapFailureAsync<V>(onFailure: (error: TFailure) => PromiseLikeOfOr<V>): Promise<Result<unknown, V>>;
-    fork(handle: (result: Result<unknown, TFailure>) => unknown): Result<unknown, TFailure>;
-    forkAsync(handle: (result: Result<unknown, TFailure>) => unknown): Promise<Result<unknown, TFailure>>;
-    forkMap(_: (value: unknown) => unknown, onFailure: (error: TFailure) => unknown): Result<unknown, TFailure>;
-    forkMapAsync(_: (value: unknown) => unknown, onFailure: (error: TFailure) => unknown): Promise<Result<unknown, TFailure>>;
-    forkSuccess(): Result<unknown, TFailure>;
-    forkSuccessAsync(): Promise<Result<unknown, TFailure>>;
-    forkFailure(onFailure: (error: TFailure) => unknown): Result<unknown, TFailure>;
-    forkFailureAsync(onFailure: (error: TFailure) => unknown): Promise<Result<unknown, TFailure>>;
-}
 /**
  * Creates an instance of Result representing a failure, using the given error
  * @param error Result data for a failure
  * @returns An instance of Result
  */
 export declare const failure: <T, E>(error: E) => Result<T, E>;
-export declare class SuccessResult<TSuccess> implements Result<TSuccess, unknown> {
-    _value: TSuccess;
-    constructor(value: TSuccess);
-    isSuccess(): boolean;
-    value(): TSuccess | undefined;
-    error(): unknown;
-    payload(): unknown;
-    state(): ResultState<TSuccess, unknown>;
-    bind<U, V>(fn: (result: Result<TSuccess, unknown>) => Result<U, V>): Result<U, V>;
-    bindAsync<U, V>(fn: (result: Result<TSuccess, unknown>) => PromiseLikeOfOr<Result<U, V>>): Promise<Result<U, V>>;
-    map<U, V>(onSuccess: (value: TSuccess) => Result<U, V>, _: (error: unknown) => Result<U, V>): Result<U, V>;
-    mapAsync<U, V>(onSuccess: (value: TSuccess) => PromiseLikeOfOr<Result<U, V>>, _: (error: unknown) => PromiseLikeOfOr<Result<U, V>>): Promise<Result<U, V>>;
-    mapSuccess<U>(onSuccess: (value: TSuccess) => Result<U, unknown>): Result<U, unknown>;
-    mapSuccessAsync<U>(onSuccess: (value: TSuccess) => PromiseLikeOfOr<Result<U, unknown>>): Promise<Result<U, unknown>>;
-    mapFailure<V>(): Result<TSuccess, V>;
-    mapFailureAsync<V>(): Promise<Result<TSuccess, V>>;
-    swap<U, V>(onSuccess: (value: TSuccess) => U, _: (error: unknown) => V): Result<U, V>;
-    swapAsync<U, V>(onSuccess: (value: TSuccess) => PromiseLikeOfOr<U>, _: (error: unknown) => PromiseLikeOfOr<V>): Promise<Result<U, V>>;
-    swapSuccess<U>(onSuccess: (value: TSuccess) => U): Result<U, unknown>;
-    swapSuccessAsync<U>(onSuccess: (value: TSuccess) => PromiseLikeOfOr<U>): Promise<Result<U, unknown>>;
-    swapFailure<V>(): Result<TSuccess, V>;
-    swapFailureAsync<V>(): Promise<Result<TSuccess, V>>;
-    fork(handle: (result: Result<TSuccess, unknown>) => unknown): Result<TSuccess, unknown>;
-    forkAsync(handle: (result: Result<TSuccess, unknown>) => unknown): Promise<Result<TSuccess, unknown>>;
-    forkMap(onSuccess: (value: TSuccess) => unknown, _: (error: unknown) => unknown): Result<TSuccess, unknown>;
-    forkMapAsync(onSuccess: (value: TSuccess) => unknown, _: (error: unknown) => unknown): Promise<Result<TSuccess, unknown>>;
-    forkSuccess(onSuccess: (value: TSuccess) => unknown): Result<TSuccess, unknown>;
-    forkSuccessAsync(onSuccess: (value: TSuccess) => unknown): Promise<Result<TSuccess, unknown>>;
-    forkFailure(): Result<TSuccess, unknown>;
-    forkFailureAsync(): Promise<Result<TSuccess, unknown>>;
-}
 /**
  * Creates an instance of Result representing a success, using the given value
  * @param value Result data for a success

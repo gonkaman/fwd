@@ -2,5 +2,5 @@
 
 ## To do
 
-- Async pipe
-- Pipe merge
+- unit tests
+- documentation

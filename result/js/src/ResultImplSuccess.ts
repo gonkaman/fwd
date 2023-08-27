@@ -1,6 +1,6 @@
 import { Result, ResultState, PromiseLikeOfOr } from "./Result";
 
-export class SuccessResult<TSuccess> implements Result<TSuccess, unknown>{
+class SuccessResult<TSuccess> implements Result<TSuccess, unknown>{
 
     _value: TSuccess;
 

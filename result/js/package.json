@@ -1,17 +1,17 @@
 {
   "name": "fwd-result",
   "version": "1.0.0",
-  "description": "Result type implmeentation",
-  "main": "./lib/index.js",
+  "description": "Result type implementation",
+  "main": "./lib/index",
   "scripts": {
-    "build": "sh scripts/cjsbuild.sh .",
+    "build": "sh scripts/build.sh .",
     "tscbuild": "npx tsc",
     "test": "npx jasmine"
   },
   "types": "./lib/index.d.ts",
   "repository": {
     "type": "git",
-    "url": "https://github.com/gonkaman/fwd/js/result"
+    "url": "https://github.com/gonkaman/fwd/result/js"
   },
   "keywords": [
     "Result",
@@ -27,7 +27,7 @@
     "typescript": "^5.1.6"
   },
   "files": [
-    "lib/**/*.{js,ts}"
+    "lib/**/*.{js,mjs,ts}"
   ],
   "directories": {
     "lib": "lib",

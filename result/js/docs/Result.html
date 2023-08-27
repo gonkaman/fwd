@@ -1,0 +1,2089 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Interface: Result</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Interface: Result</h1>
+
+    
+
+
+
+
+<section>
+
+<header>
+    
+        <h2>Result</h2>
+        
+    
+</header>
+
+<article>
+    <div class="container-overview">
+    
+        
+            <div class="description">Base interface for result objects.A result object represent the outcome of an operation, that can either be a failure or a success.The Result interface also provides several utility methods to chains operations following the railway oriented programming style</div>
+        
+
+        
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="index.ts.html">index.ts</a>, <a href="index.ts.html#line284">line 284</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+        
+    
+    </div>
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+        <h3 class="subsection-title">Members</h3>
+
+        
+            
+<h4 class="name" id="bind"><span class="type-signature"></span>bind<span class="type-signature"> :<a href="Result.html">Result</a>.&lt;U, V></span></h4>
+
+
+
+
+<div class="description">
+    Executes the given bind handler, using the current result to get a new result
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type"><a href="Result.html">Result</a>.&lt;U, V></span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="index.ts.html">index.ts</a>, <a href="index.ts.html#line327">line 327</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="bindAsync"><span class="type-signature">(async) </span>bindAsync<span class="type-signature"> :Promise.&lt;<a href="Result.html">Result</a>.&lt;U, V>></span></h4>
+
+
+
+
+<div class="description">
+    Executes the given asynchronous handler, using the current result to get a new result
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">Promise.&lt;<a href="Result.html">Result</a>.&lt;U, V>></span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="index.ts.html">index.ts</a>, <a href="index.ts.html#line336">line 336</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="error"><span class="type-signature">(readonly) </span>error<span class="type-signature"> :TFailure|undefined</span></h4>
+
+
+
+
+<div class="description">
+    Value contained in the result in case of failure, undefined in case of success
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">TFailure</span>
+|
+
+<span class="param-type">undefined</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="index.ts.html">index.ts</a>, <a href="index.ts.html#line309">line 309</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="fork"><span class="type-signature"></span>fork<span class="type-signature"> :<a href="Result.html">Result</a>.&lt;TSuccess, TFailure></span></h4>
+
+
+
+
+<div class="description">
+    Executes the given handler, then returns the current result
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type"><a href="Result.html">Result</a>.&lt;TSuccess, TFailure></span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="index.ts.html">index.ts</a>, <a href="index.ts.html#line461">line 461</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="forkAsync"><span class="type-signature"></span>forkAsync<span class="type-signature"> :Promise.&lt;<a href="Result.html">Result</a>.&lt;TSuccess, TFailure>></span></h4>
+
+
+
+
+<div class="description">
+    Executes the given asynchronous handler, then returns the current result
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">Promise.&lt;<a href="Result.html">Result</a>.&lt;TSuccess, TFailure>></span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="index.ts.html">index.ts</a>, <a href="index.ts.html#line468">line 468</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="forkFailure"><span class="type-signature"></span>forkFailure<span class="type-signature"> :<a href="Result.html">Result</a>.&lt;TSuccess, TFailure></span></h4>
+
+
+
+
+<div class="description">
+    Executes the given handler, in case of failure, then returns the current result
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type"><a href="Result.html">Result</a>.&lt;TSuccess, TFailure></span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="index.ts.html">index.ts</a>, <a href="index.ts.html#line505">line 505</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="forkFailureAsync"><span class="type-signature"></span>forkFailureAsync<span class="type-signature"> :Promise.&lt;<a href="Result.html">Result</a>.&lt;TSuccess, TFailure>></span></h4>
+
+
+
+
+<div class="description">
+    Executes the given asynchronous handler, in case of failure, then returns the current result
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">Promise.&lt;<a href="Result.html">Result</a>.&lt;TSuccess, TFailure>></span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="index.ts.html">index.ts</a>, <a href="index.ts.html#line512">line 512</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="forkMap"><span class="type-signature"></span>forkMap<span class="type-signature"> :<a href="Result.html">Result</a>.&lt;TSuccess, TFailure></span></h4>
+
+
+
+
+<div class="description">
+    Executes the corresponding handler, then returns the current result
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type"><a href="Result.html">Result</a>.&lt;TSuccess, TFailure></span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="index.ts.html">index.ts</a>, <a href="index.ts.html#line475">line 475</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="forkMapAsync"><span class="type-signature"></span>forkMapAsync<span class="type-signature"> :Promise.&lt;<a href="Result.html">Result</a>.&lt;TSuccess, TFailure>></span></h4>
+
+
+
+
+<div class="description">
+    Executes the corresponding asynchronous handler, then returns the current result
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">Promise.&lt;<a href="Result.html">Result</a>.&lt;TSuccess, TFailure>></span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="index.ts.html">index.ts</a>, <a href="index.ts.html#line483">line 483</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="forkSuccess"><span class="type-signature"></span>forkSuccess<span class="type-signature"> :<a href="Result.html">Result</a>.&lt;TSuccess, TFailure></span></h4>
+
+
+
+
+<div class="description">
+    Executes the given handler, in case of success, then returns the current result
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type"><a href="Result.html">Result</a>.&lt;TSuccess, TFailure></span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="index.ts.html">index.ts</a>, <a href="index.ts.html#line491">line 491</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="forkSuccessAsync"><span class="type-signature"></span>forkSuccessAsync<span class="type-signature"> :Promise.&lt;<a href="Result.html">Result</a>.&lt;TSuccess, TFailure>></span></h4>
+
+
+
+
+<div class="description">
+    Executes the given asynchronous handler, in case of success, then returns the current result
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">Promise.&lt;<a href="Result.html">Result</a>.&lt;TSuccess, TFailure>></span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="index.ts.html">index.ts</a>, <a href="index.ts.html#line498">line 498</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="isSuccess"><span class="type-signature"></span>isSuccess<span class="type-signature"> :boolean</span></h4>
+
+
+
+
+<div class="description">
+    Checks whether the result is a success or a failure.Returns true in case of success, false in case of failure
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">boolean</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="index.ts.html">index.ts</a>, <a href="index.ts.html#line296">line 296</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="map"><span class="type-signature"></span>map<span class="type-signature"> :<a href="Result.html">Result</a>.&lt;U, V></span></h4>
+
+
+
+
+<div class="description">
+    Executes the corresponding handler, using the current result to get a new result
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type"><a href="Result.html">Result</a>.&lt;U, V></span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="index.ts.html">index.ts</a>, <a href="index.ts.html#line346">line 346</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="mapAsync"><span class="type-signature">(async) </span>mapAsync<span class="type-signature"> :Promise.&lt;<a href="Result.html">Result</a>.&lt;U, V>></span></h4>
+
+
+
+
+<div class="description">
+    Executes the corresponding asynchronous handler, using the current result.
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">Promise.&lt;<a href="Result.html">Result</a>.&lt;U, V>></span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="index.ts.html">index.ts</a>, <a href="index.ts.html#line356">line 356</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="mapFailure"><span class="type-signature"></span>mapFailure<span class="type-signature"> :<a href="Result.html">Result</a>.&lt;TSuccess, V></span></h4>
+
+
+
+
+<div class="description">
+    Execute the given handler in case of failure using the current result payload. In case of success, the current result is simply returned
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type"><a href="Result.html">Result</a>.&lt;TSuccess, V></span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="index.ts.html">index.ts</a>, <a href="index.ts.html#line385">line 385</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="mapFailureAsync"><span class="type-signature">(async) </span>mapFailureAsync<span class="type-signature"> :Promise.&lt;<a href="Result.html">Result</a>.&lt;TSuccess, V>></span></h4>
+
+
+
+
+<div class="description">
+    Execute the given asynchronous handler in case of failure using the current result payload. In case of success, the current result is simply returned
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">Promise.&lt;<a href="Result.html">Result</a>.&lt;TSuccess, V>></span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="index.ts.html">index.ts</a>, <a href="index.ts.html#line394">line 394</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="mapSuccess"><span class="type-signature"></span>mapSuccess<span class="type-signature"> :<a href="Result.html">Result</a>.&lt;U, TFailure></span></h4>
+
+
+
+
+<div class="description">
+    Execute the given handler in case of success using the current result payload. In case of failure, the current result is simply returned
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type"><a href="Result.html">Result</a>.&lt;U, TFailure></span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="index.ts.html">index.ts</a>, <a href="index.ts.html#line367">line 367</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="mapSuccessAsync"><span class="type-signature">(async) </span>mapSuccessAsync<span class="type-signature"> :Promise.&lt;<a href="Result.html">Result</a>.&lt;U, TFailure>></span></h4>
+
+
+
+
+<div class="description">
+    Execute the given asynchronous handler in case of success using the current result payload.
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">Promise.&lt;<a href="Result.html">Result</a>.&lt;U, TFailure>></span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="index.ts.html">index.ts</a>, <a href="index.ts.html#line376">line 376</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="payload"><span class="type-signature">(readonly) </span>payload<span class="type-signature"> :TSuccess|TFailure</span></h4>
+
+
+
+
+<div class="description">
+    Value contained in the result
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">TSuccess</span>
+|
+
+<span class="param-type">TFailure</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="index.ts.html">index.ts</a>, <a href="index.ts.html#line315">line 315</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="state"><span class="type-signature"></span>state<span class="type-signature"> :<a href="global.html#ResultState">ResultState</a>.&lt;TSuccess, TFailure></span></h4>
+
+
+
+
+<div class="description">
+    returns the normalized state of the result object
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type"><a href="global.html#ResultState">ResultState</a>.&lt;TSuccess, TFailure></span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="index.ts.html">index.ts</a>, <a href="index.ts.html#line321">line 321</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="swap"><span class="type-signature"></span>swap<span class="type-signature"> :<a href="Result.html">Result</a>.&lt;U, V></span></h4>
+
+
+
+
+<div class="description">
+    Replaces the current result payload with the output of the corresponding handler output.
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type"><a href="Result.html">Result</a>.&lt;U, V></span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="index.ts.html">index.ts</a>, <a href="index.ts.html#line404">line 404</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="swapAsync"><span class="type-signature">(async) </span>swapAsync<span class="type-signature"> :Promise.&lt;<a href="Result.html">Result</a>.&lt;U, V>></span></h4>
+
+
+
+
+<div class="description">
+    Replaces the current result payload with the output of the corresponding asynchronous handler output using the current payload.
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">Promise.&lt;<a href="Result.html">Result</a>.&lt;U, V>></span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="index.ts.html">index.ts</a>, <a href="index.ts.html#line414">line 414</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="swapFailure"><span class="type-signature"></span>swapFailure<span class="type-signature"> :<a href="Result.html">Result</a>.&lt;TSuccess, V></span></h4>
+
+
+
+
+<div class="description">
+    In case of failure, replaces the current result payload with the output of the given handler output.In case of success, simply returns the current result
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type"><a href="Result.html">Result</a>.&lt;TSuccess, V></span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="index.ts.html">index.ts</a>, <a href="index.ts.html#line443">line 443</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="swapFailureAsync"><span class="type-signature"></span>swapFailureAsync<span class="type-signature"> :Promise.&lt;<a href="Result.html">Result</a>.&lt;TSuccess, V>></span></h4>
+
+
+
+
+<div class="description">
+    In case of failure, replaces the current result payload with the output of the given asynchronous handler output.In case of success, simply returns the current result
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">Promise.&lt;<a href="Result.html">Result</a>.&lt;TSuccess, V>></span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="index.ts.html">index.ts</a>, <a href="index.ts.html#line452">line 452</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="swapSuccess"><span class="type-signature"></span>swapSuccess<span class="type-signature"> :<a href="Result.html">Result</a>.&lt;U, TFailure></span></h4>
+
+
+
+
+<div class="description">
+    In case of success, replaces the current result payload with the output of the given handler output.In case of failure, simply returns the current result
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type"><a href="Result.html">Result</a>.&lt;U, TFailure></span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="index.ts.html">index.ts</a>, <a href="index.ts.html#line425">line 425</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="swapSuccessAsync"><span class="type-signature"></span>swapSuccessAsync<span class="type-signature"> :Promise.&lt;<a href="Result.html">Result</a>.&lt;U, TFailure>></span></h4>
+
+
+
+
+<div class="description">
+    In case of success, replaces the current result payload with the output of the given asynchronous handler output.In case of failure, simply returns the current result
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">Promise.&lt;<a href="Result.html">Result</a>.&lt;U, TFailure>></span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="index.ts.html">index.ts</a>, <a href="index.ts.html#line434">line 434</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="value"><span class="type-signature"></span>value<span class="type-signature"> :TSuccess|undefined</span></h4>
+
+
+
+
+<div class="description">
+    Value contained in the result in case of success, undefined in case of failure
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">TSuccess</span>
+|
+
+<span class="param-type">undefined</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="index.ts.html">index.ts</a>, <a href="index.ts.html#line303">line 303</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+    
+
+    
+
+    
+
+    
+</article>
+
+</section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Interfaces</h3><ul><li><a href="Result.html">Result</a></li></ul><h3>Global</h3><ul><li><a href="global.html#failure">failure</a></li><li><a href="global.html#success">success</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.2</a> on Sun Aug 27 2023 11:03:26 GMT+0100 (GMT+01:00)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

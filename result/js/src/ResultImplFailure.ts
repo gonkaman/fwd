@@ -1,6 +1,6 @@
 import { Result, ResultState, PromiseLikeOfOr } from "./Result";
 
-export class FailureResult<TFailure> implements Result<unknown, TFailure>{
+class FailureResult<TFailure> implements Result<unknown, TFailure>{
 
     reason: TFailure;
 

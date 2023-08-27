@@ -24,7 +24,6 @@ SOFTWARE.
 
 */
 
-"use strict";
 /*
 
 MIT License
@@ -50,70 +49,44 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 */
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.success = exports.failure = exports.forkFailureAsync = exports.forkSuccessAsync = exports.forkMapAsync = exports.forkAsync = exports.swapFailureAsync = exports.swapSuccessAsync = exports.swapAsync = exports.mapFailureAsync = exports.mapSuccessAsync = exports.mapAsync = exports.execAsync = exports.pipeAsync = exports.forkFailure = exports.forkSuccess = exports.forkMap = exports.fork = exports.swapFailure = exports.swapSuccess = exports.swap = exports.mapFailure = exports.mapSuccess = exports.map = exports.exec = exports.pipe = void 0;
 const pipeEnd = (res) => res;
-const pipe = (fn) => {
+export const pipe = (fn) => {
     return (handle) => {
         if (handle === pipeEnd)
             return ((...params) => handle(fn(...params)));
-        return (0, exports.pipe)((...params) => handle(fn(...params)));
+        return pipe((...params) => handle(fn(...params)));
     };
 };
-exports.pipe = pipe;
-const exec = (pipeBuild) => pipeBuild(pipeEnd);
-exports.exec = exec;
-const map = (onSuccess, onFailure) => (res) => res.map(onSuccess, onFailure);
-exports.map = map;
-const mapSuccess = (onSuccess) => (res) => res.mapSuccess(onSuccess);
-exports.mapSuccess = mapSuccess;
-const mapFailure = (onFailure) => (res) => res.mapFailure(onFailure);
-exports.mapFailure = mapFailure;
-const swap = (onSuccess, onFailure) => (res) => res.swap(onSuccess, onFailure);
-exports.swap = swap;
-const swapSuccess = (onSuccess) => (res) => res.swapSuccess(onSuccess);
-exports.swapSuccess = swapSuccess;
-const swapFailure = (onFailure) => (res) => res.swapFailure(onFailure);
-exports.swapFailure = swapFailure;
-const fork = (handle) => (res) => res.fork(handle);
-exports.fork = fork;
-const forkMap = (onSuccess, onFailure) => (res) => res.forkMap(onSuccess, onFailure);
-exports.forkMap = forkMap;
-const forkSuccess = (onSuccess) => (res) => res.forkSuccess(onSuccess);
-exports.forkSuccess = forkSuccess;
-const forkFailure = (onFailure) => (res) => res.forkFailure(onFailure);
-exports.forkFailure = forkFailure;
+export const exec = (pipeBuild) => pipeBuild(pipeEnd);
+export const map = (onSuccess, onFailure) => (res) => res.map(onSuccess, onFailure);
+export const mapSuccess = (onSuccess) => (res) => res.mapSuccess(onSuccess);
+export const mapFailure = (onFailure) => (res) => res.mapFailure(onFailure);
+export const swap = (onSuccess, onFailure) => (res) => res.swap(onSuccess, onFailure);
+export const swapSuccess = (onSuccess) => (res) => res.swapSuccess(onSuccess);
+export const swapFailure = (onFailure) => (res) => res.swapFailure(onFailure);
+export const fork = (handle) => (res) => res.fork(handle);
+export const forkMap = (onSuccess, onFailure) => (res) => res.forkMap(onSuccess, onFailure);
+export const forkSuccess = (onSuccess) => (res) => res.forkSuccess(onSuccess);
+export const forkFailure = (onFailure) => (res) => res.forkFailure(onFailure);
 const asyncPipeEnd = (res) => res;
-const pipeAsync = (fn) => {
+export const pipeAsync = (fn) => {
     return (handle, onRejected) => {
         if (handle === asyncPipeEnd)
             return ((...params) => fn(...params).then(res => handle(res), onRejected));
-        return (0, exports.pipeAsync)((...params) => fn(...params).then(res => handle(res), onRejected));
+        return pipeAsync((...params) => fn(...params).then(res => handle(res), onRejected));
     };
 };
-exports.pipeAsync = pipeAsync;
-const execAsync = (pipeBuildAsync) => pipeBuildAsync(asyncPipeEnd);
-exports.execAsync = execAsync;
-const mapAsync = (onSuccess, onFailure) => (res) => res.mapAsync(onSuccess, onFailure);
-exports.mapAsync = mapAsync;
-const mapSuccessAsync = (onSuccess) => (res) => res.mapSuccessAsync(onSuccess);
-exports.mapSuccessAsync = mapSuccessAsync;
-const mapFailureAsync = (onFailure) => (res) => res.mapFailureAsync(onFailure);
-exports.mapFailureAsync = mapFailureAsync;
-const swapAsync = (onSuccess, onFailure) => (res) => res.swapAsync(onSuccess, onFailure);
-exports.swapAsync = swapAsync;
-const swapSuccessAsync = (onSuccess) => (res) => res.swapSuccessAsync(onSuccess);
-exports.swapSuccessAsync = swapSuccessAsync;
-const swapFailureAsync = (onFailure) => (res) => res.swapFailureAsync(onFailure);
-exports.swapFailureAsync = swapFailureAsync;
-const forkAsync = (handle) => (res) => res.forkAsync(handle);
-exports.forkAsync = forkAsync;
-const forkMapAsync = (onSuccess, onFailure) => (res) => res.forkMapAsync(onSuccess, onFailure);
-exports.forkMapAsync = forkMapAsync;
-const forkSuccessAsync = (onSuccess) => (res) => res.forkSuccessAsync(onSuccess);
-exports.forkSuccessAsync = forkSuccessAsync;
-const forkFailureAsync = (onFailure) => (res) => res.forkFailureAsync(onFailure);
-exports.forkFailureAsync = forkFailureAsync;
+export const execAsync = (pipeBuildAsync) => pipeBuildAsync(asyncPipeEnd);
+export const mapAsync = (onSuccess, onFailure) => (res) => res.mapAsync(onSuccess, onFailure);
+export const mapSuccessAsync = (onSuccess) => (res) => res.mapSuccessAsync(onSuccess);
+export const mapFailureAsync = (onFailure) => (res) => res.mapFailureAsync(onFailure);
+export const swapAsync = (onSuccess, onFailure) => (res) => res.swapAsync(onSuccess, onFailure);
+export const swapSuccessAsync = (onSuccess) => (res) => res.swapSuccessAsync(onSuccess);
+export const swapFailureAsync = (onFailure) => (res) => res.swapFailureAsync(onFailure);
+export const forkAsync = (handle) => (res) => res.forkAsync(handle);
+export const forkMapAsync = (onSuccess, onFailure) => (res) => res.forkMapAsync(onSuccess, onFailure);
+export const forkSuccessAsync = (onSuccess) => (res) => res.forkSuccessAsync(onSuccess);
+export const forkFailureAsync = (onFailure) => (res) => res.forkFailureAsync(onFailure);
 class FailureResult {
     constructor(error) {
         this.reason = error;
@@ -211,8 +184,7 @@ class FailureResult {
  * @param error Result data for a failure
  * @returns An instance of Result
  */
-const failure = (error) => new FailureResult(error);
-exports.failure = failure;
+export const failure = (error) => new FailureResult(error);
 class SuccessResult {
     constructor(value) {
         this._value = value;
@@ -310,5 +282,4 @@ class SuccessResult {
  * @param value Result data for a success
  * @returns An instance of Result
  */
-const success = (value) => new SuccessResult(value);
-exports.success = success;
+export const success = (value) => new SuccessResult(value);

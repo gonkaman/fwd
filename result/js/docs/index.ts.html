@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: index.ts</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: index.ts</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/*
+
+MIT License
+
+Copyright (c) 2023 Joël GONKAMAN
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+*/
+
+
+export type Runner&lt;T,E> = (...args: any) => Result&lt;T,E>
+
+export type PipeEntry&lt;T,E,U,V> = (res: Result&lt;T,E>) => Result&lt;U,V>
+
+export type PipeBuilder&lt;T,E> = &lt;U,V>(fn: PipeEntry&lt;T,E,U,V>) => PipeBuilder&lt;U,V>
+
+const pipeEnd = &lt;T,E>(res: Result&lt;T,E>): Result&lt;T,E> => res;
+
+export const pipe = &lt;TSuccess,TFailure>(
+    fn: Runner&lt;TSuccess, TFailure>
+): PipeBuilder&lt;TSuccess, TFailure> => {
+    return &lt;U,V>(handle: PipeEntry&lt;TSuccess, TFailure, U, V>): PipeBuilder&lt;U,V> => {
+        if(handle === pipeEnd) return (((...params: any) => handle(fn(...params))) as unknown) as PipeBuilder&lt;U,V>;
+        return pipe&lt;U,V>((...params: any) => handle(fn(...params)));
+    }
+}
+
+export const exec = &lt;TSuccess,TFailure>(
+    pipeBuild: PipeBuilder&lt;TSuccess,TFailure>
+): Runner&lt;TSuccess,TFailure> => (pipeBuild(pipeEnd) as unknown) as Runner&lt;TSuccess,TFailure>;
+
+
+export const map = &lt;T,E,U,V>(
+    onSuccess: (value: T) => Result&lt;U,V>,
+    onFailure: (error: E) => Result&lt;U,V>
+): PipeEntry&lt;T,E,U,V> => (res: Result&lt;T,E>) => res.map&lt;U,V>(onSuccess, onFailure);
+
+export const mapSuccess = &lt;T,E,U>(
+    onSuccess: (value: T) => Result&lt;U,E>
+): PipeEntry&lt;T,E,U,E> => (res: Result&lt;T,E>) => res.mapSuccess&lt;U>(onSuccess);
+
+export const mapFailure = &lt;T,E,V>(
+    onFailure: (error: E) => Result&lt;T,V>
+): PipeEntry&lt;T,E,T,V> => (res: Result&lt;T,E>) => res.mapFailure&lt;V>(onFailure);
+
+export const swap = &lt;T,E,U,V>(
+    onSuccess: (value: T) => U,
+    onFailure: (error: E) => V
+): PipeEntry&lt;T,E,U,V> => (res: Result&lt;T,E>) => res.swap&lt;U,V>(onSuccess, onFailure);
+
+export const swapSuccess = &lt;T,E,U>(
+    onSuccess: (value: T) => U
+): PipeEntry&lt;T,E,U,E> => (res: Result&lt;T,E>) => res.swapSuccess&lt;U>(onSuccess);
+
+export const swapFailure = &lt;T,E,V>(
+    onFailure: (error: E) => V
+): PipeEntry&lt;T,E,T,V> => (res: Result&lt;T,E>) => res.swapFailure&lt;V>(onFailure);
+
+export const fork = &lt;T,E>(
+    handle: (res: Result&lt;T,E>) => any
+): PipeEntry&lt;T,E,T,E> => (res: Result&lt;T,E>) => res.fork(handle);
+
+export const forkMap = &lt;T,E>(
+    onSuccess: (value: T) => any,
+    onFailure: (error: E) => any
+): PipeEntry&lt;T,E,T,E> => (res: Result&lt;T,E>) => res.forkMap(onSuccess, onFailure);
+
+export const forkSuccess = &lt;T,E>(
+    onSuccess: (value: T) => any
+): PipeEntry&lt;T,E,T,E> => (res: Result&lt;T,E>) => res.forkSuccess(onSuccess);
+
+export const forkFailure = &lt;T,E>(
+    onFailure: (error: E) => any
+): PipeEntry&lt;T,E,T,E> => (res: Result&lt;T,E>) => res.forkFailure(onFailure);
+
+export type AsyncRunner&lt;T,E> = (...args: any) => Promise&lt;Result&lt;T,E>>
+
+export type AsyncPipeEntry&lt;T,E,U,V> = (res: Result&lt;T,E>) => PromiseLikeOfOr&lt;Result&lt;U,V>>
+
+export type AsyncErrorHandler&lt;U,V> = (error: any) => PromiseLikeOfOr&lt;Result&lt;U,V>>
+
+export type AsyncPipeBuilder&lt;T,E> = &lt;U,V>(
+    fn: AsyncPipeEntry&lt;T,E,U,V>,
+    onRejected?: AsyncErrorHandler&lt;U,V>
+) => AsyncPipeBuilder&lt;U,V>
+
+const asyncPipeEnd = &lt;T,E>(res: Result&lt;T,E>): PromiseLikeOfOr&lt;Result&lt;T,E>> => res;
+
+export const pipeAsync = &lt;TSuccess,TFailure>(
+    fn: AsyncRunner&lt;TSuccess, TFailure>
+): AsyncPipeBuilder&lt;TSuccess, TFailure> => {
+    return &lt;U,V>(handle: AsyncPipeEntry&lt;TSuccess, TFailure, U, V>, onRejected?: AsyncErrorHandler&lt;U,V>): AsyncPipeBuilder&lt;U,V> => {
+        
+        if(handle === asyncPipeEnd) return ((
+            (...params: any) => fn(...params).then(res => handle(res), onRejected)
+        ) as unknown) as AsyncPipeBuilder&lt;U,V>;
+
+        return pipeAsync&lt;U,V>(
+            (...params: any) => fn(...params).then(res => handle(res), onRejected)
+        );
+
+    }
+}
+
+export const execAsync = &lt;TSuccess,TFailure>(
+    pipeBuildAsync: AsyncPipeBuilder&lt;TSuccess,TFailure>
+): AsyncRunner&lt;TSuccess,TFailure> => (pipeBuildAsync(asyncPipeEnd) as unknown) as AsyncRunner&lt;TSuccess,TFailure>;
+
+
+export const mapAsync = &lt;T,E,U,V>(
+    onSuccess: (value: T) => PromiseLikeOfOr&lt;Result&lt;U,V>>,
+    onFailure: (error: E) => PromiseLikeOfOr&lt;Result&lt;U,V>>
+): AsyncPipeEntry&lt;T,E,U,V> => (res: Result&lt;T,E>) => res.mapAsync&lt;U,V>(onSuccess, onFailure);
+
+export const mapSuccessAsync = &lt;T,E,U>(
+    onSuccess: (value: T) => PromiseLikeOfOr&lt;Result&lt;U,E>>
+): AsyncPipeEntry&lt;T,E,U,E> => (res: Result&lt;T,E>) => res.mapSuccessAsync&lt;U>(onSuccess);
+
+export const mapFailureAsync = &lt;T,E,V>(
+    onFailure: (error: E) => PromiseLikeOfOr&lt;Result&lt;T,V>>
+): AsyncPipeEntry&lt;T,E,T,V> => (res: Result&lt;T,E>) => res.mapFailureAsync&lt;V>(onFailure);
+
+export const swapAsync = &lt;T,E,U,V>(
+    onSuccess: (value: T) => PromiseLikeOfOr&lt;U>,
+    onFailure: (error: E) => PromiseLikeOfOr&lt;V>
+): AsyncPipeEntry&lt;T,E,U,V> => (res: Result&lt;T,E>) => res.swapAsync&lt;U,V>(onSuccess, onFailure);
+
+export const swapSuccessAsync = &lt;T,E,U>(
+    onSuccess: (value: T) => PromiseLikeOfOr&lt;U>
+): AsyncPipeEntry&lt;T,E,U,E> => (res: Result&lt;T,E>) => res.swapSuccessAsync&lt;U>(onSuccess);
+
+export const swapFailureAsync = &lt;T,E,V>(
+    onFailure: (error: E) => PromiseLikeOfOr&lt;V>
+): AsyncPipeEntry&lt;T,E,T,V> => (res: Result&lt;T,E>) => res.swapFailureAsync&lt;V>(onFailure);
+
+export const forkAsync = &lt;T,E>(
+    handle: (res: Result&lt;T,E>) => any
+): AsyncPipeEntry&lt;T,E,T,E> => (res: Result&lt;T,E>) => res.forkAsync(handle);
+
+export const forkMapAsync = &lt;T,E>(
+    onSuccess: (value: T) => any,
+    onFailure: (error: E) => any
+): AsyncPipeEntry&lt;T,E,T,E> => (res: Result&lt;T,E>) => res.forkMapAsync(onSuccess, onFailure);
+
+export const forkSuccessAsync = &lt;T,E>(
+    onSuccess: (value: T) => any
+): AsyncPipeEntry&lt;T,E,T,E> => (res: Result&lt;T,E>) => res.forkSuccessAsync(onSuccess);
+
+export const forkFailureAsync = &lt;T,E>(
+    onFailure: (error: E) => any
+): AsyncPipeEntry&lt;T,E,T,E> => (res: Result&lt;T,E>) => res.forkFailureAsync(onFailure);
+
+/**
+ * Normalized representation of a result object's state
+ * 
+ * @template TSuccess - Value type in case of success
+ * @template TFailure - Error type, Value type in case of failure
+ * 
+ */
+export type ResultState&lt;TSuccess, TFailure> = {
+    /**
+     * Indicate whether the result is a success or a failure
+     * @readonly 
+    */
+    isSuccess: boolean,
+
+    /**
+     * Value contained in the result in case of success, undefined in case of failure
+     * @readonly
+     */
+    value?: TSuccess,
+
+    /**
+     * Value contained in the result in case of failure, undefined in case of success
+     * @readonly
+     */
+    error?: TFailure
+}
+
+export type PromiseLikeOfOr&lt;T> = T | PromiseLike&lt;T>
+
+/**
+ * Base interface for result objects.
+ * A result object represent the outcome of an operation, that can either be a failure or a success.
+ * The Result interface also provides several utility methods to chains operations 
+ * following the railway oriented programming style
+ * 
+ * @template TSuccess - Value type in case of success
+ * @template TFailure - Error type, Value type in case of failure
+ * @interface Result
+ * 
+ */
+export interface Result&lt;TSuccess, TFailure>{
+
+    /**
+     * Checks whether the result is a success or a failure.
+     * Returns true in case of success, false in case of failure
+     * @returns {boolean} 
+     */
+    isSuccess(): boolean,
+
+    /**
+     * Value contained in the result in case of success, undefined in case of failure
+     * @returns {TSuccess}
+     */
+    value(): TSuccess | undefined,
+    
+    /**
+     * Value contained in the result in case of failure, undefined in case of success
+     * @readonly
+     */
+    error(): TFailure | undefined
+
+    /**
+     * Value contained in the result
+     * @readonly
+     */
+    payload(): TSuccess | TFailure
+
+    /**
+     * returns the normalized state of the result object
+     * @returns ResultState&lt;TSuccess, TFailure>
+     */
+    state(): ResultState&lt;TSuccess, TFailure>,
+
+    /**
+     * Executes the given bind handler, using the current result to get a new result
+     * @param fn Handler to execute. 
+     * @template U
+     * @template V
+     * @returns Result&lt;U,V>
+     */
+    bind&lt;U,V>(
+        fn: (result: Result&lt;TSuccess,TFailure>) => Result&lt;U,V>
+    ): Result&lt;U,V>,
+
+    /**
+     * Executes the given asynchronous handler, using the current result to get a new result
+     * @param fn Asynchronous handler to execute.
+     * @async
+     * @template U
+     * @template V
+     * @returns Promise&lt;Result&lt;U,V>>
+     */
+    bindAsync&lt;U,V>(
+        fn: (result: Result&lt;TSuccess,TFailure>) => PromiseLikeOfOr&lt;Result&lt;U,V>>
+    ): Promise&lt;Result&lt;U,V>>,
+
+
+    /**
+     * Executes the corresponding handler, using the current result to get a new result
+     * @param onSuccess Handler to execute in case of success, using the current result payload. 
+     * @param onFailure Handler to execute in case of failure, using the current result payload. 
+     * @template U
+     * @template V
+     * @returns Result&lt;U,V>
+     */
+    map&lt;U,V>(
+        onSuccess: (value: TSuccess) => Result&lt;U,V>,
+        onFailure: (error: TFailure) => Result&lt;U,V>
+    ): Result&lt;U,V>,
+    
+    /**
+     * Executes the corresponding asynchronous handler, using the current result.
+     * @param onSuccess Asynchronous handler to execute in case of success, using the current result payload. 
+     * @param onFailure Asynchronous handler to execute in case of failure, using the current result payload. 
+     * @async
+     * @template U
+     * @template V
+     * @returns Promise&lt;Result&lt;U,V>>
+     */
+    mapAsync&lt;U,V>(
+        onSuccess: (value: TSuccess) => PromiseLikeOfOr&lt;Result&lt;U,V>>,
+        onFailure: (error: TFailure) => PromiseLikeOfOr&lt;Result&lt;U,V>>
+    ): Promise&lt;Result&lt;U,V>>,
+
+
+
+    /**
+     * Execute the given handler in case of success using the current result payload. 
+     * In case of failure, the current result is simply returned
+     * @param onSuccess Handler to execute in case of success. 
+     * @template U
+     * @returns Result&lt;U,TFailure>
+     */
+    mapSuccess&lt;U>(
+        onSuccess: (value: TSuccess) => Result&lt;U,TFailure>
+    ): Result&lt;U,TFailure>,
+    
+    /**
+     * Execute the given asynchronous handler in case of success using the current result payload. 
+     * @param onSuccess Asynchronous handler to execute in case of success. 
+     * @async
+     * @template U
+     * @returns Promise&lt;Result&lt;U,TFailure>>
+     */
+    mapSuccessAsync&lt;U>(
+        onSuccess: (value: TSuccess) => PromiseLikeOfOr&lt;Result&lt;U,TFailure>>
+    ): Promise&lt;Result&lt;U,TFailure>>,
+
+
+    /**
+     * Execute the given handler in case of failure using the current result payload. 
+     * In case of success, the current result is simply returned
+     * @param onFailure Handler to execute in case of failure. 
+     * @template V
+     * @returns Result&lt;TSuccess,V>
+     */
+    mapFailure&lt;V>(
+        onFailure: (error: TFailure) => Result&lt;TSuccess,V>
+    ): Result&lt;TSuccess,V>,
+
+    /**
+     * Execute the given asynchronous handler in case of failure using the current result payload. 
+     * In case of success, the current result is simply returned
+     * @param onFailure Asynchronous handler to execute in case of failure. 
+     * @async
+     * @template V
+     * @returns Promise&lt;Result&lt;TSuccess,V>>
+     */
+    mapFailureAsync&lt;V>(
+        onFailure: (error: TFailure) => PromiseLikeOfOr&lt;Result&lt;TSuccess,V>>
+    ): Promise&lt;Result&lt;TSuccess,V>>,
+
+
+    /**
+     * Replaces the current result payload with the output of the corresponding handler output.
+     * @param onSuccess Handler to execute in case of success using the current payload
+     * @param onFailure Handler to execute in case of failure using the current payload
+     * @template U
+     * @template V
+     * @returns Result&lt;U,V>
+     */
+    swap&lt;U,V>(
+        onSuccess: (value: TSuccess) => U,
+        onFailure: (error: TFailure) => V
+    ): Result&lt;U,V>,
+    
+    /**
+     * Replaces the current result payload with the output of the corresponding asynchronous handler output using the current payload.
+     * @param onSuccess Asynchronous handler to execute in case of success using the current payload
+     * @param onFailure Asynchronous handler to execute in case of failure using the current payload
+     * @async
+     * @template U
+     * @template V
+     * @returns Promise&lt;Result&lt;U,V>>
+     */
+    swapAsync&lt;U,V>(
+        onSuccess: (value: TSuccess) => PromiseLikeOfOr&lt;U>,
+        onFailure: (error: TFailure) => PromiseLikeOfOr&lt;V>
+    ): Promise&lt;Result&lt;U,V>>,
+
+
+    /**
+     * In case of success, replaces the current result payload with the output of the given handler output.
+     * In case of failure, simply returns the current result
+     * @param onSuccess Handler to execute in case of success using the current payload.
+     * @template U
+     * @returns Result&lt;U,TFailure>
+     */
+    swapSuccess&lt;U>(
+        onSuccess: (value: TSuccess) => U
+    ): Result&lt;U,TFailure>,
+
+    /**
+     * In case of success, replaces the current result payload with the output of the given asynchronous handler output.
+     * In case of failure, simply returns the current result
+     * @param onSuccess Asynchronous handler to execute in case of success using the current payload.
+     * @template U
+     * @returns Promise&lt;Result&lt;U,TFailure>>
+     */
+    swapSuccessAsync&lt;U>(
+        onSuccess: (value: TSuccess) => PromiseLikeOfOr&lt;U>
+    ): Promise&lt;Result&lt;U,TFailure>>,
+
+    /**
+     * In case of failure, replaces the current result payload with the output of the given handler output.
+     * In case of success, simply returns the current result
+     * @param onFailure Handler to execute in case of failure using the current payload.
+     * @template V
+     * @returns Result&lt;TSuccess,V>
+     */
+    swapFailure&lt;V>(
+        onFailure: (error: TFailure) => V
+    ): Result&lt;TSuccess,V>,
+
+    /**
+     * In case of failure, replaces the current result payload with the output of the given asynchronous handler output.
+     * In case of success, simply returns the current result
+     * @param onFailure Asynchronous handler to execute in case of failure using the current payload.
+     * @template V
+     * @returns Promise&lt;Result&lt;TSuccess,V>>
+     */
+    swapFailureAsync&lt;V>(
+        onFailure: (error: TFailure) => PromiseLikeOfOr&lt;V>
+    ): Promise&lt;Result&lt;TSuccess,V>>,
+
+    /**
+     * Executes the given handler, then returns the current result
+     * @param handle Handler to execute using the current result
+     * @returns Result&lt;TSuccess,TFailure>
+     */
+    fork(
+        handle: (result: Result&lt;TSuccess,TFailure>) => unknown
+    ): Result&lt;TSuccess,TFailure>,
+    
+    
+    /**
+     * Executes the given asynchronous handler, then returns the current result
+     * @param handle Asynchronous handler to execute using the current result
+     * @returns romise&lt;Result&lt;TSuccess,TFailure>>
+     */
+    forkAsync(
+        handle: (result: Result&lt;TSuccess,TFailure>) => PromiseLikeOfOr&lt;unknown>
+    ): Promise&lt;Result&lt;TSuccess,TFailure>>,
+
+
+    /**
+     * Executes the corresponding handler, then returns the current result
+     * @param onSuccess Handler to execute in case of success using the current result payload
+     * @param onFailure Handler to execute in case of failure using the current result payload
+     * @returns Result&lt;TSuccess,TFailure>
+     */
+    forkMap(
+        onSuccess: (value: TSuccess) => unknown,
+        onFailure: (error: TFailure) => unknown
+    ): Result&lt;TSuccess,TFailure>,
+
+    
+    /**
+     * Executes the corresponding asynchronous handler, then returns the current result
+     * @param onSuccess Asynchronous handler to execute in case of success using the current result payload
+     * @param onFailure Asynchronous handler to execute in case of failure using the current result payload
+     * @returns Promise&lt;Result&lt;TSuccess,TFailure>>
+     */
+    forkMapAsync(
+        onSuccess: (value: TSuccess) => PromiseLikeOfOr&lt;unknown>,
+        onFailure: (error: TFailure) => PromiseLikeOfOr&lt;unknown>
+    ): Promise&lt;Result&lt;TSuccess,TFailure>>,
+    
+    /**
+     * Executes the given handler, in case of success, then returns the current result
+     * @param onSuccess Handler to execute in case of success using the current result payload
+     * @returns Result&lt;TSuccess,TFailure>
+     */
+    forkSuccess(
+        onSuccess: (value: TSuccess) => unknown
+    ): Result&lt;TSuccess,TFailure>,
+    
+    /**
+     * Executes the given asynchronous handler, in case of success, then returns the current result
+     * @param onSuccess Asynchronous handler to execute in case of success using the current result payload
+     * @returns Promise&lt;Result&lt;TSuccess,TFailure>>
+     */
+    forkSuccessAsync(
+        onSuccess: (value: TSuccess) => PromiseLikeOfOr&lt;unknown>
+    ): Promise&lt;Result&lt;TSuccess,TFailure>>,
+    
+    /**
+     * Executes the given handler, in case of failure, then returns the current result
+     * @param onFailure Handler to execute in case of failure using the current result payload
+     * @returns Result&lt;TSuccess,TFailure>
+     */
+    forkFailure(
+        onFailure: (error: TFailure) => unknown
+    ): Result&lt;TSuccess,TFailure>,
+    
+    /**
+     * Executes the given asynchronous handler, in case of failure, then returns the current result
+     * @param onFailure Asynchronous handler to execute in case of failure using the current result payload
+     * @returns Promise&lt;Result&lt;TSuccess,TFailure>>
+     */
+    forkFailureAsync(
+        onFailure: (error: TFailure) => PromiseLikeOfOr&lt;unknown>
+    ): Promise&lt;Result&lt;TSuccess,TFailure>>
+
+    
+}
+
+
+class FailureResult&lt;TFailure> implements Result&lt;unknown, TFailure>{
+
+    reason: TFailure;
+
+    constructor(error: TFailure){
+        this.reason = error;
+    }
+
+    value(): unknown {
+        return undefined;
+    }
+
+    error(): TFailure | undefined {
+        return this.reason;
+    }
+
+    state(): ResultState&lt;unknown, TFailure> {
+        return {
+            error: this.reason,
+            isSuccess: false
+        }
+    }
+
+    payload(): unknown {
+        return this.reason;
+    }
+
+    isSuccess(): boolean {
+        return false;
+    }
+    
+    bind&lt;U, V>(
+        fn: (result: Result&lt;unknown, TFailure>) => Result&lt;U, V>
+    ): Result&lt;U, V> {
+        return fn(this);    
+    }
+
+    bindAsync&lt;U, V>(
+        fn: (result: Result&lt;unknown, TFailure>) => PromiseLikeOfOr&lt;Result&lt;U,V>>
+    ): Promise&lt;Result&lt;U, V>> {
+        return Promise.resolve(fn(this));
+    }
+
+    map&lt;U, V>(
+        _: (value: unknown) => Result&lt;U, V>, 
+        onFailure: (error: TFailure) => Result&lt;U, V>
+    ): Result&lt;U, V> {
+        return onFailure(this.reason);    
+    }
+
+    mapAsync&lt;U, V>(
+        _: (value: unknown) => PromiseLikeOfOr&lt;Result&lt;U,V>>, 
+        onFailure: (error: TFailure) => PromiseLikeOfOr&lt;Result&lt;U,V>>
+    ): Promise&lt;Result&lt;U, V>> {
+        return Promise.resolve(onFailure(this.reason));    
+    }
+
+    mapSuccess&lt;U>(
+    ): Result&lt;U, TFailure> {
+        return this as Result&lt;U, TFailure>;    
+    }
+
+    mapSuccessAsync&lt;U>(
+    ): Promise&lt;Result&lt;U, TFailure>> {
+        return Promise.resolve(this as Result&lt;U, TFailure>);    
+    }
+
+    mapFailure&lt;V>(
+        onFailure: (error: TFailure) => Result&lt;unknown, V>
+    ): Result&lt;unknown, V> {
+        return onFailure(this.reason);    
+    }
+
+    mapFailureAsync&lt;V>(
+        onFailure: (error: TFailure) => PromiseLikeOfOr&lt;Result&lt;unknown, V>>
+    ): Promise&lt;Result&lt;unknown, V>> {
+        return Promise.resolve(onFailure(this.reason));    
+    }
+
+    swap&lt;U, V>(
+        _: (value: unknown) => U, 
+        onFailure: (error: TFailure) => V
+    ): Result&lt;U, V> {
+        return new FailureResult&lt;V>(onFailure(this.reason)) as Result&lt;U, V>;
+    }
+
+    async swapAsync&lt;U, V>(
+        _: (value: unknown) => PromiseLikeOfOr&lt;U>, 
+        onFailure: (error: TFailure) => PromiseLikeOfOr&lt;V>
+    ): Promise&lt;Result&lt;U, V>> {
+        return new FailureResult&lt;V>(await onFailure(this.reason)) as Result&lt;U, V>;
+    }
+
+    swapSuccess&lt;U>(
+    ): Result&lt;U, TFailure> {
+        return this as Result&lt;U, TFailure>;
+    }
+
+    swapSuccessAsync&lt;U>(
+    ): Promise&lt;Result&lt;U, TFailure>> {
+        return Promise.resolve(this as Result&lt;U, TFailure>);
+    }
+
+    swapFailure&lt;V>(
+        onFailure: (error: TFailure) => V
+    ): Result&lt;unknown, V> {
+        return new FailureResult&lt;V>(onFailure(this.reason));
+    }
+
+    async swapFailureAsync&lt;V>(
+        onFailure: (error: TFailure) => PromiseLikeOfOr&lt;V>
+    ): Promise&lt;Result&lt;unknown, V>> {
+        return new FailureResult&lt;V>(await onFailure(this.reason));
+    }
+    
+
+    fork(
+        handle: (result: Result&lt;unknown, TFailure>) => unknown
+    ): Result&lt;unknown, TFailure> {
+        handle(this);
+        return this;
+    }
+
+    async forkAsync(
+        handle: (result: Result&lt;unknown, TFailure>) => unknown
+    ): Promise&lt;Result&lt;unknown, TFailure>> {
+        return Promise.resolve(handle(this)).then(_ => this);
+    }
+
+    forkMap(
+        _: (value: unknown) => unknown, 
+        onFailure: (error: TFailure) => unknown
+    ): Result&lt;unknown, TFailure> {
+        onFailure(this.reason);
+        return this;
+    }
+
+    async forkMapAsync(
+        _: (value: unknown) => unknown, 
+        onFailure: (error: TFailure) => unknown
+    ): Promise&lt;Result&lt;unknown, TFailure>> {
+        return Promise.resolve(onFailure(this.reason)).then(_ => this);    
+    }
+
+    forkSuccess(
+    ): Result&lt;unknown, TFailure> {
+        return this;
+    }
+
+    async forkSuccessAsync(
+    ): Promise&lt;Result&lt;unknown, TFailure>> {
+        return Promise.resolve(this);
+    }
+
+    forkFailure(
+        onFailure: (error: TFailure) => unknown
+    ): Result&lt;unknown, TFailure> {
+        onFailure(this.reason);
+        return this;
+    }
+
+    async forkFailureAsync(
+        onFailure: (error: TFailure) => unknown
+    ): Promise&lt;Result&lt;unknown, TFailure>> {
+        return Promise.resolve(onFailure(this.reason)).then(_ => this);    
+    }
+
+}
+
+
+/**
+ * Creates an instance of Result representing a failure, using the given error
+ * @param error Result data for a failure
+ * @returns An instance of Result
+ */
+export const failure  = &lt;T,E>(error: E): Result&lt;T,E> => new FailureResult&lt;E>(error) as Result&lt;T,E>;
+
+class SuccessResult&lt;TSuccess> implements Result&lt;TSuccess, unknown>{
+
+    _value: TSuccess;
+
+    constructor(value: TSuccess){
+        this._value = value;
+    }
+
+    isSuccess(): boolean{
+        return true;
+    }
+    
+    value(): TSuccess | undefined {
+        return this._value;
+    }
+
+    error(): unknown {
+        return undefined;
+    }
+
+    payload(): unknown {
+        return this._value;
+    }
+
+    state(): ResultState&lt;TSuccess, unknown> {
+        return {
+            value: this._value,
+            isSuccess: true
+        }
+    }
+
+    bind&lt;U,V>(
+        fn: (result: Result&lt;TSuccess, unknown>) => Result&lt;U,V>
+    ): Result&lt;U,V>{
+        return fn(this);
+    }
+
+    bindAsync&lt;U,V>(
+        fn: (result: Result&lt;TSuccess, unknown>) => PromiseLikeOfOr&lt;Result&lt;U,V>>
+    ): Promise&lt;Result&lt;U,V>>{
+        return Promise.resolve(fn(this));
+    }
+
+    map&lt;U, V>(
+        onSuccess: (value: TSuccess) => Result&lt;U, V>, 
+        _: (error: unknown) => Result&lt;U, V>
+    ): Result&lt;U, V> {
+        return onSuccess(this._value);    
+    }
+
+    mapAsync&lt;U, V>(
+        onSuccess: (value: TSuccess) => PromiseLikeOfOr&lt;Result&lt;U,V>>, 
+        _: (error: unknown) => PromiseLikeOfOr&lt;Result&lt;U, V>>
+    ): Promise&lt;Result&lt;U, V>> {
+        return Promise.resolve(onSuccess(this._value));    
+    }
+
+    mapSuccess&lt;U>(
+        onSuccess: (value: TSuccess) => Result&lt;U, unknown>
+    ): Result&lt;U, unknown> {
+        return onSuccess(this._value);
+    }
+
+    mapSuccessAsync&lt;U>(
+        onSuccess: (value: TSuccess) => PromiseLikeOfOr&lt;Result&lt;U, unknown>>
+    ): Promise&lt;Result&lt;U, unknown>> {
+        return Promise.resolve(onSuccess(this._value));    
+    }
+
+    mapFailure&lt;V>(
+    ): Result&lt;TSuccess, V> {
+        return this as Result&lt;TSuccess, V>;    
+    }
+
+    mapFailureAsync&lt;V>(
+    ): Promise&lt;Result&lt;TSuccess, V>> {
+        return Promise.resolve(this as Result&lt;TSuccess, V>);    
+    }
+
+    swap&lt;U, V>(
+        onSuccess: (value: TSuccess) => U, 
+        _: (error: unknown) => V
+    ): Result&lt;U, V> {
+        return new SuccessResult&lt;U>(onSuccess(this._value)) as Result&lt;U, V>;    
+    }
+
+    async swapAsync&lt;U, V>(
+        onSuccess: (value: TSuccess) => PromiseLikeOfOr&lt;U>, 
+        _: (error: unknown) => PromiseLikeOfOr&lt;V>
+    ): Promise&lt;Result&lt;U, V>> {
+        return new SuccessResult&lt;U>(await onSuccess(this._value)) as Result&lt;U, V>; 
+    }
+
+    swapSuccess&lt;U>(
+        onSuccess: (value: TSuccess) => U,
+    ): Result&lt;U, unknown> {
+        return new SuccessResult&lt;U>(onSuccess(this._value)); 
+    }
+
+    async swapSuccessAsync&lt;U>(
+        onSuccess: (value: TSuccess) => PromiseLikeOfOr&lt;U>
+    ): Promise&lt;Result&lt;U, unknown>> {
+        return new SuccessResult&lt;U>(await onSuccess(this._value));     
+    }
+
+    swapFailure&lt;V>(
+    ): Result&lt;TSuccess, V> {
+        return this as Result&lt;TSuccess, V>;    
+    }
+
+    swapFailureAsync&lt;V>(
+    ): Promise&lt;Result&lt;TSuccess, V>> {
+        return Promise.resolve(this as Result&lt;TSuccess, V>);    
+    }
+
+
+    fork(
+        handle: (result: Result&lt;TSuccess, unknown>) => unknown
+    ): Result&lt;TSuccess, unknown> {
+        handle(this);
+        return this;    
+    }
+
+    async forkAsync(
+        handle: (result: Result&lt;TSuccess, unknown>) => unknown
+    ): Promise&lt;Result&lt;TSuccess, unknown>> {
+        return Promise.resolve(handle(this)).then(_ => this);
+    }
+
+    forkMap(
+        onSuccess: (value: TSuccess) => unknown, 
+        _: (error: unknown) => unknown,
+    ): Result&lt;TSuccess, unknown> {
+        onSuccess(this._value);
+        return this;    
+    }
+
+    async forkMapAsync(
+        onSuccess: (value: TSuccess) => unknown, 
+        _: (error: unknown) => unknown
+    ): Promise&lt;Result&lt;TSuccess, unknown>> {
+        return Promise.resolve(onSuccess(this._value)).then(_ => this);    
+    }
+
+    forkSuccess(
+        onSuccess: (value: TSuccess) => unknown
+    ): Result&lt;TSuccess, unknown> {
+        onSuccess(this._value);
+        return this; 
+    }
+
+    async forkSuccessAsync(
+        onSuccess: (value: TSuccess) => unknown
+    ): Promise&lt;Result&lt;TSuccess, unknown>> {
+        return Promise.resolve(onSuccess(this._value)).then(_ => this);      
+    }
+
+    forkFailure(
+    ): Result&lt;TSuccess, unknown> {
+        return this;    
+    }
+
+    async forkFailureAsync(
+    ): Promise&lt;Result&lt;TSuccess, unknown>> {
+        return Promise.resolve(this);
+    }
+}
+
+
+/**
+ * Creates an instance of Result representing a success, using the given value
+ * @param value Result data for a success
+ * @returns An instance of Result
+ */
+export const success = &lt;T,E>(value: T): Result&lt;T,E> => new SuccessResult&lt;T>(value) as Result&lt;T,E>;
+
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Interfaces</h3><ul><li><a href="Result.html">Result</a></li></ul><h3>Global</h3><ul><li><a href="global.html#failure">failure</a></li><li><a href="global.html#success">success</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.2</a> on Sun Aug 27 2023 11:03:26 GMT+0100 (GMT+01:00)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>
