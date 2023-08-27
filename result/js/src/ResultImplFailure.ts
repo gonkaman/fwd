@@ -1,4 +1,4 @@
-import { Result, ResultState } from "./Result";
+import { Result, ResultState, PromiseLikeOfOr } from "./Result";
 
 export class FailureResult<TFailure> implements Result<unknown, TFailure>{
 
@@ -38,9 +38,9 @@ export class FailureResult<TFailure> implements Result<unknown, TFailure>{
     }
 
     bindAsync<U, V>(
-        fn: (result: Result<unknown, TFailure>) => Promise<Result<U, V>>
+        fn: (result: Result<unknown, TFailure>) => PromiseLikeOfOr<Result<U,V>>
     ): Promise<Result<U, V>> {
-        return fn(this);
+        return Promise.resolve(fn(this));
     }
 
     map<U, V>(
@@ -51,10 +51,10 @@ export class FailureResult<TFailure> implements Result<unknown, TFailure>{
     }
 
     mapAsync<U, V>(
-        _: (value: unknown) => Promise<Result<U, V>>, 
-        onFailure: (error: TFailure) => Promise<Result<U, V>>
+        _: (value: unknown) => PromiseLikeOfOr<Result<U,V>>, 
+        onFailure: (error: TFailure) => PromiseLikeOfOr<Result<U,V>>
     ): Promise<Result<U, V>> {
-        return onFailure(this.reason);    
+        return Promise.resolve(onFailure(this.reason));    
     }
 
     mapSuccess<U>(
@@ -74,9 +74,9 @@ export class FailureResult<TFailure> implements Result<unknown, TFailure>{
     }
 
     mapFailureAsync<V>(
-        onFailure: (error: TFailure) => Promise<Result<unknown, V>>
+        onFailure: (error: TFailure) => PromiseLikeOfOr<Result<unknown, V>>
     ): Promise<Result<unknown, V>> {
-        return onFailure(this.reason);    
+        return Promise.resolve(onFailure(this.reason));    
     }
 
     swap<U, V>(
@@ -87,8 +87,8 @@ export class FailureResult<TFailure> implements Result<unknown, TFailure>{
     }
 
     async swapAsync<U, V>(
-        _: (value: unknown) => Promise<U>, 
-        onFailure: (error: TFailure) => Promise<V>
+        _: (value: unknown) => PromiseLikeOfOr<U>, 
+        onFailure: (error: TFailure) => PromiseLikeOfOr<V>
     ): Promise<Result<U, V>> {
         return new FailureResult<V>(await onFailure(this.reason)) as Result<U, V>;
     }
@@ -110,7 +110,7 @@ export class FailureResult<TFailure> implements Result<unknown, TFailure>{
     }
 
     async swapFailureAsync<V>(
-        onFailure: (error: TFailure) => Promise<V>
+        onFailure: (error: TFailure) => PromiseLikeOfOr<V>
     ): Promise<Result<unknown, V>> {
         return new FailureResult<V>(await onFailure(this.reason));
     }
@@ -123,6 +123,12 @@ export class FailureResult<TFailure> implements Result<unknown, TFailure>{
         return this;
     }
 
+    async forkAsync(
+        handle: (result: Result<unknown, TFailure>) => unknown
+    ): Promise<Result<unknown, TFailure>> {
+        return Promise.resolve(handle(this)).then(_ => this);
+    }
+
     forkMap(
         _: (value: unknown) => unknown, 
         onFailure: (error: TFailure) => unknown
@@ -131,9 +137,21 @@ export class FailureResult<TFailure> implements Result<unknown, TFailure>{
         return this;
     }
 
+    async forkMapAsync(
+        _: (value: unknown) => unknown, 
+        onFailure: (error: TFailure) => unknown
+    ): Promise<Result<unknown, TFailure>> {
+        return Promise.resolve(onFailure(this.reason)).then(_ => this);    
+    }
+
     forkSuccess(
     ): Result<unknown, TFailure> {
         return this;
+    }
+
+    async forkSuccessAsync(
+    ): Promise<Result<unknown, TFailure>> {
+        return Promise.resolve(this);
     }
 
     forkFailure(
@@ -143,6 +161,18 @@ export class FailureResult<TFailure> implements Result<unknown, TFailure>{
         return this;
     }
 
+    async forkFailureAsync(
+        onFailure: (error: TFailure) => unknown
+    ): Promise<Result<unknown, TFailure>> {
+        return Promise.resolve(onFailure(this.reason)).then(_ => this);    
+    }
+
 }
 
 
+/**
+ * Creates an instance of Result representing a failure, using the given error
+ * @param error Result data for a failure
+ * @returns An instance of Result
+ */
+export const failure  = <T,E>(error: E): Result<T,E> => new FailureResult<E>(error) as Result<T,E>;

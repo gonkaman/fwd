@@ -26,8 +26,7 @@ export type ResultState<TSuccess, TFailure> = {
     error?: TFailure
 }
 
-
-
+export type PromiseLikeOfOr<T> = T | PromiseLike<T>
 
 /**
  * Base interface for result objects.
@@ -93,7 +92,7 @@ export interface Result<TSuccess, TFailure>{
      * @returns Promise<Result<U,V>>
      */
     bindAsync<U,V>(
-        fn: (result: Result<TSuccess,TFailure>) => Promise<Result<U,V>>
+        fn: (result: Result<TSuccess,TFailure>) => PromiseLikeOfOr<Result<U,V>>
     ): Promise<Result<U,V>>,
 
 
@@ -120,8 +119,8 @@ export interface Result<TSuccess, TFailure>{
      * @returns Promise<Result<U,V>>
      */
     mapAsync<U,V>(
-        onSuccess: (value: TSuccess) => Promise<Result<U,V>>,
-        onFailure: (error: TFailure) => Promise<Result<U,V>>
+        onSuccess: (value: TSuccess) => PromiseLikeOfOr<Result<U,V>>,
+        onFailure: (error: TFailure) => PromiseLikeOfOr<Result<U,V>>
     ): Promise<Result<U,V>>,
 
 
@@ -145,7 +144,7 @@ export interface Result<TSuccess, TFailure>{
      * @returns Promise<Result<U,TFailure>>
      */
     mapSuccessAsync<U>(
-        onSuccess: (value: TSuccess) => Promise<Result<U,TFailure>>
+        onSuccess: (value: TSuccess) => PromiseLikeOfOr<Result<U,TFailure>>
     ): Promise<Result<U,TFailure>>,
 
 
@@ -169,7 +168,7 @@ export interface Result<TSuccess, TFailure>{
      * @returns Promise<Result<TSuccess,V>>
      */
     mapFailureAsync<V>(
-        onFailure: (error: TFailure) => Promise<Result<TSuccess,V>>
+        onFailure: (error: TFailure) => PromiseLikeOfOr<Result<TSuccess,V>>
     ): Promise<Result<TSuccess,V>>,
 
 
@@ -196,8 +195,8 @@ export interface Result<TSuccess, TFailure>{
      * @returns Promise<Result<U,V>>
      */
     swapAsync<U,V>(
-        onSuccess: (value: TSuccess) => Promise<U>,
-        onFailure: (error: TFailure) => Promise<V>
+        onSuccess: (value: TSuccess) => PromiseLikeOfOr<U>,
+        onFailure: (error: TFailure) => PromiseLikeOfOr<V>
     ): Promise<Result<U,V>>,
 
 
@@ -220,7 +219,7 @@ export interface Result<TSuccess, TFailure>{
      * @returns Promise<Result<U,TFailure>>
      */
     swapSuccessAsync<U>(
-        onSuccess: (value: TSuccess) => Promise<U>
+        onSuccess: (value: TSuccess) => PromiseLikeOfOr<U>
     ): Promise<Result<U,TFailure>>,
 
     /**
@@ -242,7 +241,7 @@ export interface Result<TSuccess, TFailure>{
      * @returns Promise<Result<TSuccess,V>>
      */
     swapFailureAsync<V>(
-        onFailure: (error: TFailure) => Promise<V>
+        onFailure: (error: TFailure) => PromiseLikeOfOr<V>
     ): Promise<Result<TSuccess,V>>,
 
     /**
@@ -254,6 +253,17 @@ export interface Result<TSuccess, TFailure>{
         handle: (result: Result<TSuccess,TFailure>) => unknown
     ): Result<TSuccess,TFailure>,
     
+    
+    /**
+     * Executes the given asynchronous handler, then returns the current result
+     * @param handle Asynchronous handler to execute using the current result
+     * @returns romise<Result<TSuccess,TFailure>>
+     */
+    forkAsync(
+        handle: (result: Result<TSuccess,TFailure>) => PromiseLikeOfOr<unknown>
+    ): Promise<Result<TSuccess,TFailure>>,
+
+
     /**
      * Executes the corresponding handler, then returns the current result
      * @param onSuccess Handler to execute in case of success using the current result payload
@@ -264,6 +274,18 @@ export interface Result<TSuccess, TFailure>{
         onSuccess: (value: TSuccess) => unknown,
         onFailure: (error: TFailure) => unknown
     ): Result<TSuccess,TFailure>,
+
+    
+    /**
+     * Executes the corresponding asynchronous handler, then returns the current result
+     * @param onSuccess Asynchronous handler to execute in case of success using the current result payload
+     * @param onFailure Asynchronous handler to execute in case of failure using the current result payload
+     * @returns Promise<Result<TSuccess,TFailure>>
+     */
+    forkMapAsync(
+        onSuccess: (value: TSuccess) => PromiseLikeOfOr<unknown>,
+        onFailure: (error: TFailure) => PromiseLikeOfOr<unknown>
+    ): Promise<Result<TSuccess,TFailure>>,
     
     /**
      * Executes the given handler, in case of success, then returns the current result
@@ -275,13 +297,31 @@ export interface Result<TSuccess, TFailure>{
     ): Result<TSuccess,TFailure>,
     
     /**
+     * Executes the given asynchronous handler, in case of success, then returns the current result
+     * @param onSuccess Asynchronous handler to execute in case of success using the current result payload
+     * @returns Promise<Result<TSuccess,TFailure>>
+     */
+    forkSuccessAsync(
+        onSuccess: (value: TSuccess) => PromiseLikeOfOr<unknown>
+    ): Promise<Result<TSuccess,TFailure>>,
+    
+    /**
      * Executes the given handler, in case of failure, then returns the current result
      * @param onFailure Handler to execute in case of failure using the current result payload
      * @returns Result<TSuccess,TFailure>
      */
     forkFailure(
         onFailure: (error: TFailure) => unknown
-    ): Result<TSuccess,TFailure>
+    ): Result<TSuccess,TFailure>,
+    
+    /**
+     * Executes the given asynchronous handler, in case of failure, then returns the current result
+     * @param onFailure Asynchronous handler to execute in case of failure using the current result payload
+     * @returns Promise<Result<TSuccess,TFailure>>
+     */
+    forkFailureAsync(
+        onFailure: (error: TFailure) => PromiseLikeOfOr<unknown>
+    ): Promise<Result<TSuccess,TFailure>>
 
     
 }

@@ -1,4 +1,4 @@
-import { Result, ResultState } from "./Result";
+import { Result, ResultState, PromiseLikeOfOr } from "./Result";
 
 export class SuccessResult<TSuccess> implements Result<TSuccess, unknown>{
 
@@ -38,9 +38,9 @@ export class SuccessResult<TSuccess> implements Result<TSuccess, unknown>{
     }
 
     bindAsync<U,V>(
-        fn: (result: Result<TSuccess, unknown>) => Promise<Result<U,V>>
+        fn: (result: Result<TSuccess, unknown>) => PromiseLikeOfOr<Result<U,V>>
     ): Promise<Result<U,V>>{
-        return fn(this);
+        return Promise.resolve(fn(this));
     }
 
     map<U, V>(
@@ -51,10 +51,10 @@ export class SuccessResult<TSuccess> implements Result<TSuccess, unknown>{
     }
 
     mapAsync<U, V>(
-        onSuccess: (value: TSuccess) => Promise<Result<U, V>>, 
-        _: (error: unknown) => Promise<Result<U, V>>
+        onSuccess: (value: TSuccess) => PromiseLikeOfOr<Result<U,V>>, 
+        _: (error: unknown) => PromiseLikeOfOr<Result<U, V>>
     ): Promise<Result<U, V>> {
-        return onSuccess(this._value);    
+        return Promise.resolve(onSuccess(this._value));    
     }
 
     mapSuccess<U>(
@@ -64,9 +64,9 @@ export class SuccessResult<TSuccess> implements Result<TSuccess, unknown>{
     }
 
     mapSuccessAsync<U>(
-        onSuccess: (value: TSuccess) => Promise<Result<U, unknown>>
+        onSuccess: (value: TSuccess) => PromiseLikeOfOr<Result<U, unknown>>
     ): Promise<Result<U, unknown>> {
-        return onSuccess(this._value);    
+        return Promise.resolve(onSuccess(this._value));    
     }
 
     mapFailure<V>(
@@ -87,8 +87,8 @@ export class SuccessResult<TSuccess> implements Result<TSuccess, unknown>{
     }
 
     async swapAsync<U, V>(
-        onSuccess: (value: TSuccess) => Promise<U>, 
-        _: (error: unknown) => Promise<V>
+        onSuccess: (value: TSuccess) => PromiseLikeOfOr<U>, 
+        _: (error: unknown) => PromiseLikeOfOr<V>
     ): Promise<Result<U, V>> {
         return new SuccessResult<U>(await onSuccess(this._value)) as Result<U, V>; 
     }
@@ -100,7 +100,7 @@ export class SuccessResult<TSuccess> implements Result<TSuccess, unknown>{
     }
 
     async swapSuccessAsync<U>(
-        onSuccess: (value: TSuccess) => Promise<U>
+        onSuccess: (value: TSuccess) => PromiseLikeOfOr<U>
     ): Promise<Result<U, unknown>> {
         return new SuccessResult<U>(await onSuccess(this._value));     
     }
@@ -123,12 +123,25 @@ export class SuccessResult<TSuccess> implements Result<TSuccess, unknown>{
         return this;    
     }
 
+    async forkAsync(
+        handle: (result: Result<TSuccess, unknown>) => unknown
+    ): Promise<Result<TSuccess, unknown>> {
+        return Promise.resolve(handle(this)).then(_ => this);
+    }
+
     forkMap(
         onSuccess: (value: TSuccess) => unknown, 
         _: (error: unknown) => unknown,
     ): Result<TSuccess, unknown> {
         onSuccess(this._value);
         return this;    
+    }
+
+    async forkMapAsync(
+        onSuccess: (value: TSuccess) => unknown, 
+        _: (error: unknown) => unknown
+    ): Promise<Result<TSuccess, unknown>> {
+        return Promise.resolve(onSuccess(this._value)).then(_ => this);    
     }
 
     forkSuccess(
@@ -138,10 +151,27 @@ export class SuccessResult<TSuccess> implements Result<TSuccess, unknown>{
         return this; 
     }
 
+    async forkSuccessAsync(
+        onSuccess: (value: TSuccess) => unknown
+    ): Promise<Result<TSuccess, unknown>> {
+        return Promise.resolve(onSuccess(this._value)).then(_ => this);      
+    }
+
     forkFailure(
     ): Result<TSuccess, unknown> {
         return this;    
     }
+
+    async forkFailureAsync(
+    ): Promise<Result<TSuccess, unknown>> {
+        return Promise.resolve(this);
+    }
 }
 
 
+/**
+ * Creates an instance of Result representing a success, using the given value
+ * @param value Result data for a success
+ * @returns An instance of Result
+ */
+export const success = <T,E>(value: T): Result<T,E> => new SuccessResult<T>(value) as Result<T,E>;

@@ -64,4 +64,3 @@ export const forkSuccess = <T,E>(
 export const forkFailure = <T,E>(
     onFailure: (error: E) => any
 ): PipeEntry<T,E,T,E> => (res: Result<T,E>) => res.forkFailure(onFailure);
-

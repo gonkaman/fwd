@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.failure = exports.success = exports.SuccessResult = exports.FailureResult = exports.forkFailure = exports.forkSuccess = exports.forkMap = exports.fork = exports.swapFailure = exports.swapSuccess = exports.swap = exports.mapFailure = exports.mapSuccess = exports.map = exports.exec = exports.pipe = void 0;
+exports.success = exports.SuccessResult = exports.failure = exports.FailureResult = exports.forkFailureAsync = exports.forkSuccessAsync = exports.forkMapAsync = exports.forkAsync = exports.swapFailureAsync = exports.swapSuccessAsync = exports.swapAsync = exports.mapFailureAsync = exports.mapSuccessAsync = exports.mapAsync = exports.execAsync = exports.pipeAsync = exports.forkFailure = exports.forkSuccess = exports.forkMap = exports.fork = exports.swapFailure = exports.swapSuccess = exports.swap = exports.mapFailure = exports.mapSuccess = exports.map = exports.exec = exports.pipe = void 0;
 const pipeEnd = (res) => res;
 const pipe = (fn) => {
     return (handle) => {
@@ -32,6 +32,37 @@ const forkSuccess = (onSuccess) => (res) => res.forkSuccess(onSuccess);
 exports.forkSuccess = forkSuccess;
 const forkFailure = (onFailure) => (res) => res.forkFailure(onFailure);
 exports.forkFailure = forkFailure;
+const asyncPipeEnd = (res) => res;
+const pipeAsync = (fn) => {
+    return (handle, onRejected) => {
+        if (handle === asyncPipeEnd)
+            return ((...params) => fn(...params).then(res => handle(res), onRejected));
+        return (0, exports.pipeAsync)((...params) => fn(...params).then(res => handle(res), onRejected));
+    };
+};
+exports.pipeAsync = pipeAsync;
+const execAsync = (pipeBuildAsync) => pipeBuildAsync(asyncPipeEnd);
+exports.execAsync = execAsync;
+const mapAsync = (onSuccess, onFailure) => (res) => res.mapAsync(onSuccess, onFailure);
+exports.mapAsync = mapAsync;
+const mapSuccessAsync = (onSuccess) => (res) => res.mapSuccessAsync(onSuccess);
+exports.mapSuccessAsync = mapSuccessAsync;
+const mapFailureAsync = (onFailure) => (res) => res.mapFailureAsync(onFailure);
+exports.mapFailureAsync = mapFailureAsync;
+const swapAsync = (onSuccess, onFailure) => (res) => res.swapAsync(onSuccess, onFailure);
+exports.swapAsync = swapAsync;
+const swapSuccessAsync = (onSuccess) => (res) => res.swapSuccessAsync(onSuccess);
+exports.swapSuccessAsync = swapSuccessAsync;
+const swapFailureAsync = (onFailure) => (res) => res.swapFailureAsync(onFailure);
+exports.swapFailureAsync = swapFailureAsync;
+const forkAsync = (handle) => (res) => res.forkAsync(handle);
+exports.forkAsync = forkAsync;
+const forkMapAsync = (onSuccess, onFailure) => (res) => res.forkMapAsync(onSuccess, onFailure);
+exports.forkMapAsync = forkMapAsync;
+const forkSuccessAsync = (onSuccess) => (res) => res.forkSuccessAsync(onSuccess);
+exports.forkSuccessAsync = forkSuccessAsync;
+const forkFailureAsync = (onFailure) => (res) => res.forkFailureAsync(onFailure);
+exports.forkFailureAsync = forkFailureAsync;
 class FailureResult {
     constructor(error) {
         this.reason = error;
@@ -58,13 +89,13 @@ class FailureResult {
         return fn(this);
     }
     bindAsync(fn) {
-        return fn(this);
+        return Promise.resolve(fn(this));
     }
     map(_, onFailure) {
         return onFailure(this.reason);
     }
     mapAsync(_, onFailure) {
-        return onFailure(this.reason);
+        return Promise.resolve(onFailure(this.reason));
     }
     mapSuccess() {
         return this;
@@ -76,7 +107,7 @@ class FailureResult {
         return onFailure(this.reason);
     }
     mapFailureAsync(onFailure) {
-        return onFailure(this.reason);
+        return Promise.resolve(onFailure(this.reason));
     }
     swap(_, onFailure) {
         return new FailureResult(onFailure(this.reason));
@@ -100,19 +131,38 @@ class FailureResult {
         handle(this);
         return this;
     }
+    async forkAsync(handle) {
+        return Promise.resolve(handle(this)).then(_ => this);
+    }
     forkMap(_, onFailure) {
         onFailure(this.reason);
         return this;
     }
+    async forkMapAsync(_, onFailure) {
+        return Promise.resolve(onFailure(this.reason)).then(_ => this);
+    }
     forkSuccess() {
         return this;
+    }
+    async forkSuccessAsync() {
+        return Promise.resolve(this);
     }
     forkFailure(onFailure) {
         onFailure(this.reason);
         return this;
     }
+    async forkFailureAsync(onFailure) {
+        return Promise.resolve(onFailure(this.reason)).then(_ => this);
+    }
 }
 exports.FailureResult = FailureResult;
+/**
+ * Creates an instance of Result representing a failure, using the given error
+ * @param error Result data for a failure
+ * @returns An instance of Result
+ */
+const failure = (error) => new FailureResult(error);
+exports.failure = failure;
 class SuccessResult {
     constructor(value) {
         this._value = value;
@@ -139,19 +189,19 @@ class SuccessResult {
         return fn(this);
     }
     bindAsync(fn) {
-        return fn(this);
+        return Promise.resolve(fn(this));
     }
     map(onSuccess, _) {
         return onSuccess(this._value);
     }
     mapAsync(onSuccess, _) {
-        return onSuccess(this._value);
+        return Promise.resolve(onSuccess(this._value));
     }
     mapSuccess(onSuccess) {
         return onSuccess(this._value);
     }
     mapSuccessAsync(onSuccess) {
-        return onSuccess(this._value);
+        return Promise.resolve(onSuccess(this._value));
     }
     mapFailure() {
         return this;
@@ -181,16 +231,28 @@ class SuccessResult {
         handle(this);
         return this;
     }
+    async forkAsync(handle) {
+        return Promise.resolve(handle(this)).then(_ => this);
+    }
     forkMap(onSuccess, _) {
         onSuccess(this._value);
         return this;
+    }
+    async forkMapAsync(onSuccess, _) {
+        return Promise.resolve(onSuccess(this._value)).then(_ => this);
     }
     forkSuccess(onSuccess) {
         onSuccess(this._value);
         return this;
     }
+    async forkSuccessAsync(onSuccess) {
+        return Promise.resolve(onSuccess(this._value)).then(_ => this);
+    }
     forkFailure() {
         return this;
+    }
+    async forkFailureAsync() {
+        return Promise.resolve(this);
     }
 }
 exports.SuccessResult = SuccessResult;
@@ -201,20 +263,3 @@ exports.SuccessResult = SuccessResult;
  */
 const success = (value) => new SuccessResult(value);
 exports.success = success;
-/**
- * Creates an instance of Result representing a failure, using the given error
- * @param error Result data for a failure
- * @returns An instance of Result
- */
-const failure = (error) => new FailureResult(error);
-exports.failure = failure;
-/*
-export type { Result }
-
-export {
-    Runner, PipeEntry, PipeBuilder, pipe, exec, map, swap,
-    mapSuccess, swapSuccess, mapFailure, swapFailure,
-    fork, forkMap, forkSuccess, forkFailure
-} from "./Pipe";
-
-*/ 
