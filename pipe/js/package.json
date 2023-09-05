@@ -1,31 +1,34 @@
 {
-  "name": "vitrail-js",
+  "name": "fwd-pipe",
   "version": "1.0.0",
-  "description": "Tiny front-end framework based on reactive and pipelines principles",
+  "description": "Custom pipe system",
   "main": "./lib/index",
+  "types": "./lib/index.d.ts",
   "directories": {
     "doc": "docs",
+    "test": "spec",
     "example": "examples",
     "lib": "lib"
   },
+  "files": [
+    "lib/**/*.{js,mjs,ts}"
+  ],
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/gonkaman/fwd/vitrail"
+    "url": "https://github.com/gonkaman/fwd/pipe/js"
   },
-  "files": [
-    "lib/**/*.{js,mjs,ts}"
-  ],
   "keywords": [
-    "Vitrail",
-    "ROP",
-    "front-end"
+    "pipe",
+    "composition",
+    "functionnal programming"
   ],
   "author": "Joël GONKAMAN",
   "license": "MIT",
   "dependencies": {
-    "fwd-result": "file:../result/js"
+    "tsc": "^2.0.4",
+    "typescript": "^5.2.2"
   }
 }
