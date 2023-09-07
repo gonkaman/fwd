@@ -24,44 +24,6 @@ SOFTWARE.
 
 */
 
-const pipeEnd = (res) => res;
-export const pipe = (fn) => {
-    return (handle) => {
-        if (handle === pipeEnd)
-            return ((...params) => handle(fn(...params)));
-        return pipe((...params) => handle(fn(...params)));
-    };
-};
-export const exec = (pipeBuild) => pipeBuild(pipeEnd);
-export const map = (onSuccess, onFailure) => (res) => res.map(onSuccess, onFailure);
-export const mapSuccess = (onSuccess) => (res) => res.mapSuccess(onSuccess);
-export const mapFailure = (onFailure) => (res) => res.mapFailure(onFailure);
-export const swap = (onSuccess, onFailure) => (res) => res.swap(onSuccess, onFailure);
-export const swapSuccess = (onSuccess) => (res) => res.swapSuccess(onSuccess);
-export const swapFailure = (onFailure) => (res) => res.swapFailure(onFailure);
-export const fork = (handle) => (res) => res.fork(handle);
-export const forkMap = (onSuccess, onFailure) => (res) => res.forkMap(onSuccess, onFailure);
-export const forkSuccess = (onSuccess) => (res) => res.forkSuccess(onSuccess);
-export const forkFailure = (onFailure) => (res) => res.forkFailure(onFailure);
-const asyncPipeEnd = (res) => res;
-export const pipeAsync = (fn) => {
-    return (handle, onRejected) => {
-        if (handle === asyncPipeEnd)
-            return ((...params) => fn(...params).then(res => handle(res), onRejected));
-        return pipeAsync((...params) => fn(...params).then(res => handle(res), onRejected));
-    };
-};
-export const execAsync = (pipeBuildAsync) => pipeBuildAsync(asyncPipeEnd);
-export const mapAsync = (onSuccess, onFailure) => (res) => res.mapAsync(onSuccess, onFailure);
-export const mapSuccessAsync = (onSuccess) => (res) => res.mapSuccessAsync(onSuccess);
-export const mapFailureAsync = (onFailure) => (res) => res.mapFailureAsync(onFailure);
-export const swapAsync = (onSuccess, onFailure) => (res) => res.swapAsync(onSuccess, onFailure);
-export const swapSuccessAsync = (onSuccess) => (res) => res.swapSuccessAsync(onSuccess);
-export const swapFailureAsync = (onFailure) => (res) => res.swapFailureAsync(onFailure);
-export const forkAsync = (handle) => (res) => res.forkAsync(handle);
-export const forkMapAsync = (onSuccess, onFailure) => (res) => res.forkMapAsync(onSuccess, onFailure);
-export const forkSuccessAsync = (onSuccess) => (res) => res.forkSuccessAsync(onSuccess);
-export const forkFailureAsync = (onFailure) => (res) => res.forkFailureAsync(onFailure);
 class FailureResult {
     constructor(error) {
         this.reason = error;

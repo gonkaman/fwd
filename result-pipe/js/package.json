@@ -1,0 +1,35 @@
+{
+  "name": "fwd-result-pipe",
+  "version": "1.0.0",
+  "description": "Utility methods for building Result based pipes",
+  "main": "./lib/index",
+  "types": "./lib/index.d.ts",
+  "directories": {
+    "doc": "docs",
+    "test": "spec",
+    "example": "examples",
+    "lib": "lib"
+  },
+  "files": [
+    "lib/**/*.{js,mjs,ts}"
+  ],
+  "scripts": {
+    "build": "sh scripts/build.sh ."
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/gonkaman/fwd/result-pipe/js"
+  },
+  "keywords": [
+    "Result",
+    "pipe",
+    "ROP"
+  ],
+  "author": "Joël GONKAMAN",
+  "license": "MIT",
+  "dependencies": {
+    "fwd-pipe": "file:../../pipe/js",
+    "fwd-result": "file:../../result/js",
+    "typescript": "^5.2.2"
+  }
+}

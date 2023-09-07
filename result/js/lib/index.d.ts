@@ -24,37 +24,6 @@ SOFTWARE.
 
 */
 
-export type Runner<T, E> = (...args: any) => Result<T, E>;
-export type PipeEntry<T, E, U, V> = (res: Result<T, E>) => Result<U, V>;
-export type PipeBuilder<T, E> = <U, V>(fn: PipeEntry<T, E, U, V>) => PipeBuilder<U, V>;
-export declare const pipe: <TSuccess, TFailure>(fn: Runner<TSuccess, TFailure>) => PipeBuilder<TSuccess, TFailure>;
-export declare const exec: <TSuccess, TFailure>(pipeBuild: PipeBuilder<TSuccess, TFailure>) => Runner<TSuccess, TFailure>;
-export declare const map: <T, E, U, V>(onSuccess: (value: T) => Result<U, V>, onFailure: (error: E) => Result<U, V>) => PipeEntry<T, E, U, V>;
-export declare const mapSuccess: <T, E, U>(onSuccess: (value: T) => Result<U, E>) => PipeEntry<T, E, U, E>;
-export declare const mapFailure: <T, E, V>(onFailure: (error: E) => Result<T, V>) => PipeEntry<T, E, T, V>;
-export declare const swap: <T, E, U, V>(onSuccess: (value: T) => U, onFailure: (error: E) => V) => PipeEntry<T, E, U, V>;
-export declare const swapSuccess: <T, E, U>(onSuccess: (value: T) => U) => PipeEntry<T, E, U, E>;
-export declare const swapFailure: <T, E, V>(onFailure: (error: E) => V) => PipeEntry<T, E, T, V>;
-export declare const fork: <T, E>(handle: (res: Result<T, E>) => any) => PipeEntry<T, E, T, E>;
-export declare const forkMap: <T, E>(onSuccess: (value: T) => any, onFailure: (error: E) => any) => PipeEntry<T, E, T, E>;
-export declare const forkSuccess: <T, E>(onSuccess: (value: T) => any) => PipeEntry<T, E, T, E>;
-export declare const forkFailure: <T, E>(onFailure: (error: E) => any) => PipeEntry<T, E, T, E>;
-export type AsyncRunner<T, E> = (...args: any) => Promise<Result<T, E>>;
-export type AsyncPipeEntry<T, E, U, V> = (res: Result<T, E>) => PromiseLikeOfOr<Result<U, V>>;
-export type AsyncErrorHandler<U, V> = (error: any) => PromiseLikeOfOr<Result<U, V>>;
-export type AsyncPipeBuilder<T, E> = <U, V>(fn: AsyncPipeEntry<T, E, U, V>, onRejected?: AsyncErrorHandler<U, V>) => AsyncPipeBuilder<U, V>;
-export declare const pipeAsync: <TSuccess, TFailure>(fn: AsyncRunner<TSuccess, TFailure>) => AsyncPipeBuilder<TSuccess, TFailure>;
-export declare const execAsync: <TSuccess, TFailure>(pipeBuildAsync: AsyncPipeBuilder<TSuccess, TFailure>) => AsyncRunner<TSuccess, TFailure>;
-export declare const mapAsync: <T, E, U, V>(onSuccess: (value: T) => PromiseLikeOfOr<Result<U, V>>, onFailure: (error: E) => PromiseLikeOfOr<Result<U, V>>) => AsyncPipeEntry<T, E, U, V>;
-export declare const mapSuccessAsync: <T, E, U>(onSuccess: (value: T) => PromiseLikeOfOr<Result<U, E>>) => AsyncPipeEntry<T, E, U, E>;
-export declare const mapFailureAsync: <T, E, V>(onFailure: (error: E) => PromiseLikeOfOr<Result<T, V>>) => AsyncPipeEntry<T, E, T, V>;
-export declare const swapAsync: <T, E, U, V>(onSuccess: (value: T) => PromiseLikeOfOr<U>, onFailure: (error: E) => PromiseLikeOfOr<V>) => AsyncPipeEntry<T, E, U, V>;
-export declare const swapSuccessAsync: <T, E, U>(onSuccess: (value: T) => PromiseLikeOfOr<U>) => AsyncPipeEntry<T, E, U, E>;
-export declare const swapFailureAsync: <T, E, V>(onFailure: (error: E) => PromiseLikeOfOr<V>) => AsyncPipeEntry<T, E, T, V>;
-export declare const forkAsync: <T, E>(handle: (res: Result<T, E>) => any) => AsyncPipeEntry<T, E, T, E>;
-export declare const forkMapAsync: <T, E>(onSuccess: (value: T) => any, onFailure: (error: E) => any) => AsyncPipeEntry<T, E, T, E>;
-export declare const forkSuccessAsync: <T, E>(onSuccess: (value: T) => any) => AsyncPipeEntry<T, E, T, E>;
-export declare const forkFailureAsync: <T, E>(onFailure: (error: E) => any) => AsyncPipeEntry<T, E, T, E>;
 /**
  * Normalized representation of a result object's state
  *

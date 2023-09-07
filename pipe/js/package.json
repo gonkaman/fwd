@@ -1,6 +1,6 @@
 {
   "name": "fwd-pipe",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "Custom pipe system",
   "main": "./lib/index",
   "types": "./lib/index.d.ts",
@@ -14,7 +14,7 @@
     "lib/**/*.{js,mjs,ts}"
   ],
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "sh scripts/build.sh ."
   },
   "repository": {
     "type": "git",
@@ -28,7 +28,6 @@
   "author": "Joël GONKAMAN",
   "license": "MIT",
   "dependencies": {
-    "tsc": "^2.0.4",
     "typescript": "^5.2.2"
   }
 }

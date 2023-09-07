@@ -14,7 +14,7 @@ cat $1/src/* | sed /import/d | sed '/^export {.*$/,/^.*from.*$/d' > $1/build/ind
 echo "building es6 packages ..."
 mkdir -p $1/build/es6 \
 && cp $1/build/index.ts $1/build/es6/ \
-&& npx tsc --target es2020 --module nodenext --moduleResolution nodenext $1/build/es6/index.ts \
+&& npx tsc --target es2020 $1/build/es6/index.ts \
 && cat $1/scripts/license.txt $1/build/es6/index.js > $1/lib/index.mjs 
 
 #echo "generating docs ..."

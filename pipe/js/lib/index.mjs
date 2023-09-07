@@ -24,17 +24,19 @@ SOFTWARE.
 
 */
 
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.resolve = exports.build = void 0;
 const pipeEnd = (arg) => arg;
-const build = (init) => {
+export const pipe = (init) => {
     if (init === pipeEnd)
         return init;
     return (entry) => entry === pipeEnd ?
         init :
-        (0, exports.build)((arg) => entry(init(arg)));
+        pipe((arg) => entry(init(arg)));
 };
-exports.build = build;
-const resolve = (builder) => builder(pipeEnd);
-exports.resolve = resolve;
+export const pipeAsync = (init) => {
+    if (init === pipeEnd)
+        return init;
+    return (entry, onRejected) => entry === pipeEnd ?
+        init :
+        pipeAsync((arg) => Promise.resolve(init(arg)).then(value => entry(value), onRejected));
+};
+export const resolve = (builder) => builder(pipeEnd);

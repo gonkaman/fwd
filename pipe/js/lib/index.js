@@ -26,15 +26,23 @@ SOFTWARE.
 
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.resolve = exports.build = void 0;
+exports.resolve = exports.pipeAsync = exports.pipe = void 0;
 const pipeEnd = (arg) => arg;
-const build = (init) => {
+const pipe = (init) => {
     if (init === pipeEnd)
         return init;
     return (entry) => entry === pipeEnd ?
         init :
-        (0, exports.build)((arg) => entry(init(arg)));
+        (0, exports.pipe)((arg) => entry(init(arg)));
 };
-exports.build = build;
+exports.pipe = pipe;
+const pipeAsync = (init) => {
+    if (init === pipeEnd)
+        return init;
+    return (entry, onRejected) => entry === pipeEnd ?
+        init :
+        (0, exports.pipeAsync)((arg) => Promise.resolve(init(arg)).then(value => entry(value), onRejected));
+};
+exports.pipeAsync = pipeAsync;
 const resolve = (builder) => builder(pipeEnd);
 exports.resolve = resolve;
