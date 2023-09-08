@@ -26,6 +26,9 @@
   "author": "Joël GONKAMAN",
   "license": "MIT",
   "dependencies": {
-    "fwd-result": "file:../result/js"
+    "fwd-pipe": "file:../pipe/js",
+    "fwd-result": "file:../result/js",
+    "fwd-result-pipe": "file:../result-pipe/js",
+    "typescript": "^5.2.2"
   }
 }

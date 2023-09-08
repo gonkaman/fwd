@@ -175,3 +175,6 @@ class SuccessResult<TSuccess> implements Result<TSuccess, unknown>{
  * @returns An instance of Result
  */
 export const success = <T,E>(value: T): Result<T,E> => new SuccessResult<T>(value) as Result<T,E>;
+
+export const isSuccessResult = (value: unknown): boolean => value instanceof SuccessResult;
+

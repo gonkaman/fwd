@@ -530,6 +530,8 @@ class FailureResult<TFailure> implements Result<unknown, TFailure>{
  */
 export const failure  = <T,E>(error: E): Result<T,E> => new FailureResult<E>(error) as Result<T,E>;
 
+export const isFailureResult = (value: unknown): boolean =>  value instanceof FailureResult;
+
 class SuccessResult<TSuccess> implements Result<TSuccess, unknown>{
 
     _value: TSuccess;
@@ -705,4 +707,11 @@ class SuccessResult<TSuccess> implements Result<TSuccess, unknown>{
  * @returns An instance of Result
  */
 export const success = <T,E>(value: T): Result<T,E> => new SuccessResult<T>(value) as Result<T,E>;
+
+export const isSuccessResult = (value: unknown): boolean => value instanceof SuccessResult;
+
+
+
+export const isResultInstance = (value: unknown): boolean => isSuccessResult(value) || isFailureResult(value);
+
 

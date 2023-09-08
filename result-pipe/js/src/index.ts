@@ -105,3 +105,6 @@ export const rpipeAsync = <TSuccess, TFailure, TEntry extends AsyncPipeEntry<any
     entry: TEntry
 ): AsyncPipeBuilder<FnArgs<TEntry>, Result<TSuccess,TFailure>> => pipeAsync(entry);
 
+
+export type RPipeEntry<T,E,U,V> = PipeEntry<Result<T,E>, Result<U,V>>;
+export type AsyncRPipeEntry<T,E,U,V> = AsyncPipeEntry<Result<T,E>, Result<U,V>>;

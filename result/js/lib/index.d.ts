@@ -264,9 +264,12 @@ export interface Result<TSuccess, TFailure> {
  * @returns An instance of Result
  */
 export declare const failure: <T, E>(error: E) => Result<T, E>;
+export declare const isFailureResult: (value: unknown) => boolean;
 /**
  * Creates an instance of Result representing a success, using the given value
  * @param value Result data for a success
  * @returns An instance of Result
  */
 export declare const success: <T, E>(value: T) => Result<T, E>;
+export declare const isSuccessResult: (value: unknown) => boolean;
+export declare const isResultInstance: (value: unknown) => boolean;

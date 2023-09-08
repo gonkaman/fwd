@@ -1,6 +1,6 @@
 {
   "name": "fwd-result-pipe",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Utility methods for building Result based pipes",
   "main": "./lib/index",
   "types": "./lib/index.d.ts",

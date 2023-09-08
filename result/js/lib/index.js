@@ -26,7 +26,7 @@ SOFTWARE.
 
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.success = exports.failure = void 0;
+exports.isResultInstance = exports.isSuccessResult = exports.success = exports.isFailureResult = exports.failure = void 0;
 class FailureResult {
     constructor(error) {
         this.reason = error;
@@ -126,6 +126,8 @@ class FailureResult {
  */
 const failure = (error) => new FailureResult(error);
 exports.failure = failure;
+const isFailureResult = (value) => value instanceof FailureResult;
+exports.isFailureResult = isFailureResult;
 class SuccessResult {
     constructor(value) {
         this._value = value;
@@ -225,3 +227,7 @@ class SuccessResult {
  */
 const success = (value) => new SuccessResult(value);
 exports.success = success;
+const isSuccessResult = (value) => value instanceof SuccessResult;
+exports.isSuccessResult = isSuccessResult;
+const isResultInstance = (value) => (0, exports.isSuccessResult)(value) || (0, exports.isFailureResult)(value);
+exports.isResultInstance = isResultInstance;

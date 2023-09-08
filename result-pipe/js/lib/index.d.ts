@@ -49,3 +49,5 @@ export declare const forkFailureAsync: <T, E>(onFailure: (error: E) => any) => A
 export type FnArgs<F extends Function> = F extends (...args: infer A) => any ? A : never;
 export declare const rpipe: <TSuccess, TFailure, TEntry extends PipeEntry<any, Result<TSuccess, TFailure>>>(entry: TEntry) => PipeBuilder<FnArgs<TEntry>, Result<TSuccess, TFailure>>;
 export declare const rpipeAsync: <TSuccess, TFailure, TEntry extends AsyncPipeEntry<any, Result<TSuccess, TFailure>>>(entry: TEntry) => AsyncPipeBuilder<FnArgs<TEntry>, Result<TSuccess, TFailure>>;
+export type RPipeEntry<T, E, U, V> = PipeEntry<Result<T, E>, Result<U, V>>;
+export type AsyncRPipeEntry<T, E, U, V> = AsyncPipeEntry<Result<T, E>, Result<U, V>>;

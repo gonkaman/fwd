@@ -122,6 +122,7 @@ class FailureResult {
  * @returns An instance of Result
  */
 export const failure = (error) => new FailureResult(error);
+export const isFailureResult = (value) => value instanceof FailureResult;
 class SuccessResult {
     constructor(value) {
         this._value = value;
@@ -220,3 +221,5 @@ class SuccessResult {
  * @returns An instance of Result
  */
 export const success = (value) => new SuccessResult(value);
+export const isSuccessResult = (value) => value instanceof SuccessResult;
+export const isResultInstance = (value) => isSuccessResult(value) || isFailureResult(value);

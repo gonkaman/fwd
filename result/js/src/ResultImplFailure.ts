@@ -176,3 +176,5 @@ class FailureResult<TFailure> implements Result<unknown, TFailure>{
  * @returns An instance of Result
  */
 export const failure  = <T,E>(error: E): Result<T,E> => new FailureResult<E>(error) as Result<T,E>;
+
+export const isFailureResult = (value: unknown): boolean =>  value instanceof FailureResult;

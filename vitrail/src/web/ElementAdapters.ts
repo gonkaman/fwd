@@ -1,19 +1,20 @@
-import { PipeEntry, Result, forkSuccess, pipe, success } from "fwd-result";
+import { Result } from "fwd-result";
+import { forkSuccess, RPipeEntry } from "fwd-result-pipe";
 
 
-export type ElementAdapter = (...args: any) => PipeEntry<Element,unknown, Element,unknown>;
+export type ElementAdapter = <TError>(...args: any) => RPipeEntry<Element,TError, Element,TError>;
 
-export const attr: ElementAdapter = (
+export const attr: ElementAdapter = <TError>(
     name: string,
     value: string | ((previousValue: string | null) => string)
-): PipeEntry<Element,unknown, Element,unknown> => 
+): RPipeEntry<Element,TError, Element,TError> => 
     typeof value === 'function' ?
-        forkSuccess<Element,unknown>(elt => elt.setAttribute(name, value(elt.getAttribute(name)))) :
-        forkSuccess<Element,unknown>(elt => elt.setAttribute(name, value));
+        forkSuccess<Element,TError>(elt => elt.setAttribute(name, value(elt.getAttribute(name)))) :
+        forkSuccess<Element,TError>(elt => elt.setAttribute(name, value));
 
-export const attrMap: ElementAdapter = (
-    attributes: Record<string, unknown>
-): PipeEntry<Element,unknown, Element,unknown> => {
+export const attrMap: ElementAdapter = <TError>(
+    attributes: Record<string, TError>
+): RPipeEntry<Element,TError, Element,TError> => {
     const updaters = Object.entries(attributes).map(
         entry => typeof entry[1] === 'function' ?
             (elt: Element) => elt.setAttribute(
@@ -22,36 +23,36 @@ export const attrMap: ElementAdapter = (
             ) :
             (elt: Element) => elt.setAttribute(entry[0], entry[1]+"")
     );
-    return (res: Result<Element,unknown>) => {
+    return (res: Result<Element,TError>) => {
         updaters.forEach(updater => res.forkSuccess(updater));
         return res;
     }
 }
 
-export const removeAttr: ElementAdapter = (name: string): PipeEntry<Element,unknown, Element,unknown> => 
-    forkSuccess<Element,unknown>(elt => elt.removeAttribute(name));
+export const removeAttr: ElementAdapter = <TError>(name: string): RPipeEntry<Element,TError, Element,TError> => 
+    forkSuccess<Element,TError>(elt => elt.removeAttribute(name));
 
-export const removeAttrMap: ElementAdapter = (
+export const removeAttrMap: ElementAdapter = <TError>(
     attributes: string[]
-): PipeEntry<Element,unknown, Element,unknown> => {
+): RPipeEntry<Element,TError, Element,TError> => {
     const updaters = attributes.map(attr => (elt: Element) => elt.removeAttribute(attr));
-    return (res: Result<Element,unknown>) => {
+    return (res: Result<Element,TError>) => {
         updaters.forEach(updater => res.forkSuccess(updater));
         return res;
     }
 }
     
-export const aria: ElementAdapter = (
+export const aria: ElementAdapter = <TError>(
     name: string,
     value: string | ((previousValue: string | null) => string)
-): PipeEntry<Element,unknown, Element,unknown> => 
+): RPipeEntry<Element,TError, Element,TError> => 
     typeof value === 'function' ?
-        forkSuccess<Element,unknown>(elt => elt.setAttribute('aria-'+name, value(elt.getAttribute('aria-'+name)))) :
-        forkSuccess<Element,unknown>(elt => elt.setAttribute('aria-'+name, value));
+        forkSuccess<Element,TError>(elt => elt.setAttribute('aria-'+name, value(elt.getAttribute('aria-'+name)))) :
+        forkSuccess<Element,TError>(elt => elt.setAttribute('aria-'+name, value));
 
-export const ariaMap: ElementAdapter = (
-    attributes: Record<string, unknown>
-): PipeEntry<Element,unknown, Element,unknown> => {
+export const ariaMap: ElementAdapter = <TError>(
+    attributes: Record<string, TError>
+): RPipeEntry<Element,TError, Element,TError> => {
     const updaters = Object.entries(attributes).map(
         entry => typeof entry[1] === 'function' ?
             (elt: Element) => elt.setAttribute(
@@ -60,20 +61,20 @@ export const ariaMap: ElementAdapter = (
             ) :
             (elt: Element) => elt.setAttribute('aria-'+entry[0], entry[1]+"")
     );
-    return (res: Result<Element,unknown>) => {
+    return (res: Result<Element,TError>) => {
         updaters.forEach(updater => res.forkSuccess(updater));
         return res;
     }
 }
 
-export const removeAria: ElementAdapter = (name: string): PipeEntry<Element,unknown, Element,unknown> => 
-    forkSuccess<Element,unknown>(elt => elt.removeAttribute('aria-'+name));
+export const removeAria: ElementAdapter = <TError>(name: string): RPipeEntry<Element,TError, Element,TError> => 
+    forkSuccess<Element,TError>(elt => elt.removeAttribute('aria-'+name));
 
-export const removeAriaMap: ElementAdapter = (
+export const removeAriaMap: ElementAdapter = <TError>(
     attributes: string[]
-): PipeEntry<Element,unknown, Element,unknown> => {
+): RPipeEntry<Element,TError, Element,TError> => {
     const updaters = attributes.map(attr => (elt: Element) => elt.removeAttribute('aria-'+attr));
-    return (res: Result<Element,unknown>) => {
+    return (res: Result<Element,TError>) => {
         updaters.forEach(updater => res.forkSuccess(updater));
         return res;
     }
