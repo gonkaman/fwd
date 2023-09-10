@@ -1,3 +1,29 @@
+/*
+
+MIT License
+
+Copyright (c) 2023 Joël GONKAMAN
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+*/
+
 import { Result, success } from "fwd-result";
 import { pipe, resolve } from "fwd-pipe";
 import { RPipeEntry, forkSuccess } from "fwd-result-pipe";
@@ -16,6 +42,20 @@ const createBuilder = <T extends HTMLElement, E>(tagName: string): ElementBuilde
     }
 }
 
+export const custom = createBuilder;
+
+export const address = createBuilder<HTMLElement,any>('address');
+export const article = createBuilder<HTMLElement,any>('article');
+export const aside = createBuilder<HTMLElement,any>('aside');
+export const b = createBuilder<HTMLElement,any>('b');
+export const em = createBuilder<HTMLElement,any>('em');
+export const footer = createBuilder<HTMLElement,any>('footer');
+export const header = createBuilder<HTMLElement,any>('header');
+export const hgroup = createBuilder<HTMLElement,any>('hgroup');
+export const i = createBuilder<HTMLElement,any>('i');
+export const nav = createBuilder<HTMLElement,any>('nav');
+export const s = createBuilder<HTMLElement,any>('s');
+export const section = createBuilder<HTMLElement,any>('section');
 export const a = createBuilder<HTMLAnchorElement,any>('a');
 export const area = createBuilder<HTMLAreaElement,any>('area');
 export const audio = createBuilder<HTMLAudioElement,any>('audio');
@@ -85,11 +125,6 @@ export const track = createBuilder<HTMLTrackElement,any>('track');
 export const ul = createBuilder<HTMLUListElement,any>('ul');
 export const video = createBuilder<HTMLVideoElement,any>('video');
 
-
-
-const attach = <T extends Element,E>(target: T | string, update: RPipeEntry<T,E,T,E>) => typeof target === 'string' ?
-    () => update(success(document.querySelector(target) as T)) :
-    () => update(success(target as T));
 
 
 

@@ -1,4 +1,8 @@
-import { PipeBuilder, pipe, success } from "fwd-result";
+import { PipeBuilder, pipe } from "fwd-pipe"
+
+import { success } from "fwd-result"
+
+
 
 const empty: PipeBuilder<unknown, unknown> = pipe(() => success(undefined));
 

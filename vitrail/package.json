@@ -1,15 +1,13 @@
 {
-  "name": "vitrail-js",
+  "name": "fwd-vitrail",
   "version": "1.0.0",
   "description": "Tiny front-end framework based on reactive and pipelines principles",
-  "main": "./lib/index",
+  "main": "./builders/index",
   "directories": {
-    "doc": "docs",
-    "example": "examples",
-    "lib": "lib"
+    "lib": ["adapters","builders"]
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "sh scripts/build.sh ."
   },
   "repository": {
     "type": "git",
