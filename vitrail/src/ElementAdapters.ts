@@ -27,13 +27,99 @@ import { forkSuccess, RPipeEntry } from "fwd-result-pipe";
 //     ): TOrigin
 // }
 
-export const attach = <T extends Element,E>(target: T | string, update: RPipeEntry<T,E,T,E>) => typeof target === 'string' ?
+export const render = <T extends Element,E>(target: T | string, update: RPipeEntry<T,E,T,E>) => typeof target === 'string' ?
     () => update(success(document.querySelector(target) as T)) :
     () => update(success(target as T));
 
 
+// export type Adapter<TBase> = <T extends TBase, E>(...args: any[]) => RPipeEntry<T,E,T,E>;
 
-export type Adapter<TBase> = <T extends TBase, E>(...args: any[]) => RPipeEntry<T,E,T,E>;
+//Adapter<EventTarget>
+export const subscribe = <T extends EventTarget,E>(
+    eventType: string, 
+    listener: EventListenerOrEventListenerObject, 
+    options?: boolean | AddEventListenerOptions
+): RPipeEntry<T,E,T,E> =>
+    forkSuccess<T,E>(elt => elt.addEventListener(eventType, listener, options));
+
+//Adapter<EventTarget>
+export const subscribeMap = <T extends EventTarget,E>(
+    listenerMap: Record<string, EventListenerOrEventListenerObject | {
+                    listener: EventListenerOrEventListenerObject,
+                    options?: boolean | AddEventListenerOptions
+                }>
+): RPipeEntry<T,E,T,E> => {
+    const updaters = Object.entries(listenerMap).map(
+        entry => typeof entry[1] === 'function' ?
+            (elt: EventTarget) => elt.addEventListener(entry[0], entry[1] as EventListener) :
+            (
+                typeof entry[1]['handleEvent'] === 'function' ?
+                (elt: EventTarget) => elt.addEventListener(entry[0], entry[1] as EventListenerObject) :
+                (elt: EventTarget) => elt.addEventListener(
+                    entry[0], 
+                    entry[1]['listener'] as EventListenerOrEventListenerObject,
+                    entry[1]['options'] as boolean | AddEventListenerOptions
+                ) 
+            )
+    );
+    return (res: Result<T,E>) => {
+        updaters.forEach(updater => res.forkSuccess(updater));
+        return res;
+    }
+}
+
+//Adapter<EventTarget>
+export const unsubscribe = <T extends EventTarget,E>(
+    eventType: string, 
+    listener: EventListenerOrEventListenerObject, 
+    options?: boolean | AddEventListenerOptions
+): RPipeEntry<T,E,T,E> =>
+    forkSuccess<T,E>(elt => elt.removeEventListener(eventType, listener, options));
+
+//Adapter<EventTarget>
+export const unsubscribeMap = <T extends EventTarget,E>(
+    listenerMap: Record<string, EventListenerOrEventListenerObject | {
+                    listener: EventListenerOrEventListenerObject,
+                    options?: boolean | AddEventListenerOptions
+                }>
+): RPipeEntry<T,E,T,E> => {
+    const updaters = Object.entries(listenerMap).map(
+        entry => typeof entry[1] === 'function' ?
+            (elt: EventTarget) => elt.removeEventListener(entry[0], entry[1] as EventListener) :
+            (
+                typeof entry[1]['handleEvent'] === 'function' ?
+                (elt: EventTarget) => elt.removeEventListener(entry[0], entry[1] as EventListenerObject) :
+                (elt: EventTarget) => elt.removeEventListener(
+                    entry[0], 
+                    entry[1]['listener'] as EventListenerOrEventListenerObject,
+                    entry[1]['options'] as boolean | AddEventListenerOptions
+                ) 
+            )
+    );
+    return (res: Result<T,E>) => {
+        updaters.forEach(updater => res.forkSuccess(updater));
+        return res;
+    }
+}
+
+//Adapter<EventTarget>
+export const dispatch = <T extends EventTarget,E>(event: Event): RPipeEntry<T,E,T,E> =>
+    forkSuccess<T,E>(elt => elt.dispatchEvent(event));
+
+
+
+
+//Adapter<Element>
+export const attach = <T extends Element,E>(
+    target: T | string
+): RPipeEntry<T,E,T,E> => 
+    typeof target === 'string' ?
+        forkSuccess<T,E>(elt => document.querySelector(target)?.append(elt)) :
+        forkSuccess<T,E>(elt => target.append(elt));
+
+//Adapter<Element>
+export const dettach = <T extends Element,E>(): RPipeEntry<T,E,T,E> => 
+        forkSuccess<T,E>(elt => elt.remove());
 
 //Adapter<Element>
 export const attr = <T extends Element,E>(
@@ -118,6 +204,9 @@ export const removeAriaMap = <T extends Element,E>(
         return res;
     }
 }
+
+
+
 
 //Adapter<HTMLElement>
 export const dataAttr = <T extends HTMLElement, E>(
