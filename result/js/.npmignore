@@ -1,4 +1,8 @@
 node_modules
-build/*
-tscbuild/*
-src/*
+build
+tscbuild
+src
+docs
+examples
+scripts
+spec

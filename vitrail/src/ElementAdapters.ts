@@ -1,38 +1,55 @@
 import { Result, success } from "fwd-result";
 import { forkSuccess, RPipeEntry } from "fwd-result-pipe";
 
-//deriveEffect => adapter
-//deriveQuery => adapter
+// const loginPage = section(
+//     attr('className', "ftco-section"),
+//     div(
+//         attr('className','container'),
+//         div(
+//             attr('className','row justify-content-center'),
+//             div(
+//                 attr('className','col-md-6 text-center mb-5'),
+//                 h2(
+//                     attrMap({
+//                         className: 'heading-section',
+//                         textContent: "Login #08" 
+//                     }),
+// 		    createAdapter(
+// 			resultingAdapter => handle(resultingAdapter), //handler ---> spotSetter
+// 			adapter1, adapter1, adapter1, ... //effect
+// 		    ),
+// 		    createQuery(
+// 			resultingQuery => handle(resultingQuery), //handler ----> spotSetter
+// 			query1, query2, query3, ...//query
+// 		    )
+//                 )
+//             )
+//         )
+//     )
+// )
 
-// export interface EffectBuilder<T,E>{
-//     pipe(): PipeBuilder<T,E>,
-//     runner(): Runner<T,E>
-// }
 
-// export interface QueryBuilder<T,E>{
-//     source(): T,
-//     pipe(): PipeBuilder<[string, any][], E>,
-//     runner(): Runner<[string, any][], E>
-// }
+// query = [r<t,e>, [key, value][]] => [r<t,e>, [key, value][]]
 
-// export interface DeriveEffect<TOrigin, TBuilder>{
-//     handleEffect(
-//         handler: (builder: TBuilder) => any
-//     ): TOrigin
-// }
+// query = [t, [key, value][]] => [t, [key, value][]]
 
-// export interface DeriveQuery<TOrigin, TBuilder>{
-//     handleQuery(
-//         handler: (builder: TBuilder) => any
-//     ): TOrigin
-// }
+// (elt => [key, value][])
+
+// [declareLoginData, collectLoginData] = useQuery()
+
+// getUsername = declareLoginData('username')
+// getPassword = declareLoginData('password')
+
+// getLoginData = declare('loginData')
+
+
 
 export const render = <T extends Element,E>(target: T | string, update: RPipeEntry<T,E,T,E>) => typeof target === 'string' ?
     () => update(success(document.querySelector(target) as T)) :
     () => update(success(target as T));
 
 
-// export type Adapter<TBase> = <T extends TBase, E>(...args: any[]) => RPipeEntry<T,E,T,E>;
+// export type Adapter<TBase> = <T extends TBase, E>(...args: any) => RPipeEntry<T,E,T,E>;
 
 //Adapter<EventTarget>
 export const subscribe = <T extends EventTarget,E>(

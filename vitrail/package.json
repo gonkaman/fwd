@@ -4,7 +4,10 @@
   "description": "Tiny front-end framework based on reactive and pipelines principles",
   "main": "./builders/index",
   "directories": {
-    "lib": ["adapters","builders"]
+    "lib": [
+      "adapters",
+      "builders"
+    ]
   },
   "scripts": {
     "build": "sh scripts/build.sh ."
