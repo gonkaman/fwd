@@ -24,44 +24,127 @@ SOFTWARE.
 
 */
 
-import { Result, success } from "fwd-result";
+import { pipe, resolve } from "fwd-pipe";
+import { Result, failure, success } from "fwd-result";
 import { forkSuccess, RPipeEntry } from "fwd-result-pipe";
 
-//deriveEffect => adapter
-//deriveQuery => adapter
 
-// export interface EffectBuilder<T,E>{
-//     pipe(): PipeBuilder<T,E>,
-//     runner(): Runner<T,E>
-// }
+export type Effect<T, E> = () => Result<T,E>;
+export type EffectHandler<T,E> = (handle: Effect<T,E>) => any;
+// export type EffectComponent<TBase> = <T extends TBase, E>(...args: any) => RPipeEntry<T,E,T,E>;
 
-// export interface QueryBuilder<T,E>{
-//     source(): T,
-//     pipe(): PipeBuilder<[string, any][], E>,
-//     runner(): Runner<[string, any][], E>
-// }
 
-// export interface DeriveEffect<TOrigin, TBuilder>{
-//     handleEffect(
-//         handler: (builder: TBuilder) => any
-//     ): TOrigin
-// }
-
-// export interface DeriveQuery<TOrigin, TBuilder>{
-//     handleQuery(
-//         handler: (builder: TBuilder) => any
-//     ): TOrigin
-// }
-
-export const attach = <T extends Element,E>(target: T | string, update: RPipeEntry<T,E,T,E>) => typeof target === 'string' ?
+export const render = <T extends Element,E>(target: T | string, update: RPipeEntry<T,E,T,E>) => typeof target === 'string' ?
     () => update(success(document.querySelector(target) as T)) :
     () => update(success(target as T));
 
+    
+export const useEffect = <T,E>(): [EffectHandler<T,E>, Effect<T,E>] => {
+    let innerEffect: Effect<T,E> = () => failure<T,E>(undefined as E);
+    return [
+        (handle: Effect<T,E>) => { innerEffect = handle; },
+        () => innerEffect()
+    ]
+}
+
+//Adapter<T>
+export const createEffect = <T,E>(
+    handle: (resultingEffect: () => Result<T,E>) => any,
+    ...components: RPipeEntry<T,E,T,E>[]
+): RPipeEntry<T,E,T,E> => forkSuccess<T,E>(target => handle(
+    (resolve(components.reduce(
+        (p, effect) => p(effect), pipe(() => success<T,E>(target))
+    ))) as (() => Result<T,E>)
+));
+
+//Effect<EventTarget>
+export const subscribe = <T extends EventTarget,E>(
+    eventType: string, 
+    listener: EventListenerOrEventListenerObject, 
+    options?: boolean | AddEventListenerOptions
+): RPipeEntry<T,E,T,E> =>
+    forkSuccess<T,E>(elt => elt.addEventListener(eventType, listener, options));
+
+//Effect<EventTarget>
+export const subscribeMap = <T extends EventTarget,E>(
+    listenerMap: Record<string, EventListenerOrEventListenerObject | {
+                    listener: EventListenerOrEventListenerObject,
+                    options?: boolean | AddEventListenerOptions
+                }>
+): RPipeEntry<T,E,T,E> => {
+    const updaters = Object.entries(listenerMap).map(
+        entry => typeof entry[1] === 'function' ?
+            (elt: EventTarget) => elt.addEventListener(entry[0], entry[1] as EventListener) :
+            (
+                typeof entry[1]['handleEvent'] === 'function' ?
+                (elt: EventTarget) => elt.addEventListener(entry[0], entry[1] as EventListenerObject) :
+                (elt: EventTarget) => elt.addEventListener(
+                    entry[0], 
+                    entry[1]['listener'] as EventListenerOrEventListenerObject,
+                    entry[1]['options'] as boolean | AddEventListenerOptions
+                ) 
+            )
+    );
+    return (res: Result<T,E>) => {
+        updaters.forEach(updater => res.forkSuccess(updater));
+        return res;
+    }
+}
+
+//Effect<EventTarget>
+export const unsubscribe = <T extends EventTarget,E>(
+    eventType: string, 
+    listener: EventListenerOrEventListenerObject, 
+    options?: boolean | AddEventListenerOptions
+): RPipeEntry<T,E,T,E> =>
+    forkSuccess<T,E>(elt => elt.removeEventListener(eventType, listener, options));
+
+//Effect<EventTarget>
+export const unsubscribeMap = <T extends EventTarget,E>(
+    listenerMap: Record<string, EventListenerOrEventListenerObject | {
+                    listener: EventListenerOrEventListenerObject,
+                    options?: boolean | AddEventListenerOptions
+                }>
+): RPipeEntry<T,E,T,E> => {
+    const updaters = Object.entries(listenerMap).map(
+        entry => typeof entry[1] === 'function' ?
+            (elt: EventTarget) => elt.removeEventListener(entry[0], entry[1] as EventListener) :
+            (
+                typeof entry[1]['handleEvent'] === 'function' ?
+                (elt: EventTarget) => elt.removeEventListener(entry[0], entry[1] as EventListenerObject) :
+                (elt: EventTarget) => elt.removeEventListener(
+                    entry[0], 
+                    entry[1]['listener'] as EventListenerOrEventListenerObject,
+                    entry[1]['options'] as boolean | AddEventListenerOptions
+                ) 
+            )
+    );
+    return (res: Result<T,E>) => {
+        updaters.forEach(updater => res.forkSuccess(updater));
+        return res;
+    }
+}
+
+//Effect<EventTarget>
+export const dispatch = <T extends EventTarget,E>(event: Event): RPipeEntry<T,E,T,E> =>
+    forkSuccess<T,E>(elt => elt.dispatchEvent(event));
 
 
-export type Adapter<TBase> = <T extends TBase, E>(...args: any[]) => RPipeEntry<T,E,T,E>;
 
-//Adapter<Element>
+
+//Effect<Element>
+export const attach = <T extends Element,E>(
+    target: T | string
+): RPipeEntry<T,E,T,E> => 
+    typeof target === 'string' ?
+        forkSuccess<T,E>(elt => document.querySelector(target)?.append(elt)) :
+        forkSuccess<T,E>(elt => target.append(elt));
+
+//Effect<Element>
+export const dettach = <T extends Element,E>(): RPipeEntry<T,E,T,E> => 
+        forkSuccess<T,E>(elt => elt.remove());
+
+//Effect<Element>
 export const attr = <T extends Element,E>(
     name: string,
     value: string | ((previousValue: string | null) => string)
@@ -70,7 +153,7 @@ export const attr = <T extends Element,E>(
         forkSuccess<T,E>(elt => elt.setAttribute(name, value(elt.getAttribute(name)))) :
         forkSuccess<T,E>(elt => elt.setAttribute(name, value));
 
-//Adapter<Element>
+//Effect<Element>
 export const attrMap  = <T extends Element,E>(
     attributes: Record<string, E>
 ): RPipeEntry<T,E, T,E> => {
@@ -88,11 +171,11 @@ export const attrMap  = <T extends Element,E>(
     }
 }
 
-//Adapter<Element>
+//Effect<Element>
 export const removeAttr = <T extends Element,E>(name: string): RPipeEntry<T,E, T,E> => 
     forkSuccess<T,E>(elt => elt.removeAttribute(name));
 
-//Adapter<Element>
+//Effect<Element>
 export const removeAttrMap  = <T extends Element,E>(
     attributes: string[]
 ): RPipeEntry<T,E, T,E> => {
@@ -103,7 +186,7 @@ export const removeAttrMap  = <T extends Element,E>(
     }
 }
 
-//Adapter<Element>
+//Effect<Element>
 export const aria = <T extends Element,E>(
     name: string,
     value: string | ((previousValue: string | null) => string)
@@ -112,7 +195,7 @@ export const aria = <T extends Element,E>(
         forkSuccess<T,E>(elt => elt.setAttribute('aria-'+name, value(elt.getAttribute('aria-'+name)))) :
         forkSuccess<T,E>(elt => elt.setAttribute('aria-'+name, value));
 
-//Adapter<Element>
+//Effect<Element>
 export const ariaMap = <T extends Element,E>(
     attributes: Record<string, E>
 ): RPipeEntry<T,E, T,E> => {
@@ -130,11 +213,11 @@ export const ariaMap = <T extends Element,E>(
     }
 }
 
-//Adapter<Element>
+//Effect<Element>
 export const removeAria = <T extends Element,E>(name: string): RPipeEntry<T,E, T,E> => 
     forkSuccess<T,E>(elt => elt.removeAttribute('aria-'+name));
 
-//Adapter<Element>
+//Effect<Element>
 export const removeAriaMap = <T extends Element,E>(
     attributes: string[]
 ): RPipeEntry<T,E, T,E> => {
@@ -145,16 +228,19 @@ export const removeAriaMap = <T extends Element,E>(
     }
 }
 
-//Adapter<HTMLElement>
+
+
+
+//Effect<HTMLElement>
 export const dataAttr = <T extends HTMLElement, E>(
     name: string,
-    value: string | ((previousValue: string | null) => string)
+    value: string | ((previousValue: string | undefined) => string)
 ): RPipeEntry<T,E, T,E> => 
     typeof value === 'function' ?
-        forkSuccess<T,E>(elt => { elt.dataset[name] = value(elt.getAttribute(name)); }) :
+        forkSuccess<T,E>(elt => { elt.dataset[name] = value(elt.dataset[name]); }) :
         forkSuccess<T,E>(elt => { elt.dataset[name] = value; });
 
-//Adapter<HTMLElement>
+//Effect<HTMLElement>
 export const dataMap = <T extends HTMLElement, E>(
     attributes: Record<string, E>
 ): RPipeEntry<T,E, T,E> => {
@@ -171,7 +257,7 @@ export const dataMap = <T extends HTMLElement, E>(
     }
 }
 
-//Adapter<HTMLElement>
+//Effect<HTMLElement>
 export const removeDataAttr = <T extends HTMLElement, E>(name: string): RPipeEntry<T,E, T,E> => 
     forkSuccess<T,E>(elt => {delete elt.dataset[name];} );
 
@@ -185,7 +271,7 @@ export const removeDataMap = <T extends HTMLElement, E>(
     }
 }
 
-//Adapter<HTMLElement>
+//Effect<HTMLElement>
 export const styleAttr = <T extends HTMLElement, E>(
     name: string,
     value: string | ((previousValue: string | null) => string)
@@ -194,13 +280,13 @@ export const styleAttr = <T extends HTMLElement, E>(
         forkSuccess<T,E>(elt => { elt.style[name] = value(elt.getAttribute(name)); }) :
         forkSuccess<T,E>(elt => elt.setAttribute(name, value));
 
-//Adapter<HTMLElement>
+//Effect<HTMLElement>
 export const cssText = <T extends HTMLElement, E>(
     css: string
 ): RPipeEntry<T,E, T,E> => 
     forkSuccess<T,E>(elt => {elt.style.cssText = css;})
 
-//Adapter<HTMLElement>
+//Effect<HTMLElement>
 export const styleMap = <T extends HTMLElement, E>(
     attributes: Record<string, E>
 ): RPipeEntry<T,E, T,E> => {
@@ -216,11 +302,11 @@ export const styleMap = <T extends HTMLElement, E>(
     }
 }
 
-//Adapter<HTMLElement>
+//Effect<HTMLElement>
 export const removeStyleAttr = <T extends HTMLElement, E>(name: string): RPipeEntry<T,E, T,E> => 
     forkSuccess<T,E>(elt => { elt.style[name] = null; });
 
-//Adapter<HTMLElement>
+//Effect<HTMLElement>
 export const removeStyleMap = <T extends HTMLElement, E>(
     attributes: string[]
 ): RPipeEntry<T,E, T,E> => {

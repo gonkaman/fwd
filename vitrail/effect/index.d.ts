@@ -26,8 +26,24 @@ SOFTWARE.
 
 import { Result } from "fwd-result";
 import { RPipeEntry } from "fwd-result-pipe";
-export declare const attach: <T extends Element, E>(target: string | T, update: RPipeEntry<T, E, T, E>) => () => Result<T, E>;
-export type Adapter<TBase> = <T extends TBase, E>(...args: any[]) => RPipeEntry<T, E, T, E>;
+export type Effect<T, E> = () => Result<T, E>;
+export type EffectHandler<T, E> = (handle: Effect<T, E>) => any;
+export declare const render: <T extends Element, E>(target: string | T, update: RPipeEntry<T, E, T, E>) => () => Result<T, E>;
+export declare const useEffect: <T, E>() => [EffectHandler<T, E>, Effect<T, E>];
+export declare const createEffect: <T, E>(handle: (resultingEffect: () => Result<T, E>) => any, ...components: RPipeEntry<T, E, T, E>[]) => RPipeEntry<T, E, T, E>;
+export declare const subscribe: <T extends EventTarget, E>(eventType: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions) => RPipeEntry<T, E, T, E>;
+export declare const subscribeMap: <T extends EventTarget, E>(listenerMap: Record<string, EventListenerOrEventListenerObject | {
+    listener: EventListenerOrEventListenerObject;
+    options?: boolean | AddEventListenerOptions;
+}>) => RPipeEntry<T, E, T, E>;
+export declare const unsubscribe: <T extends EventTarget, E>(eventType: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions) => RPipeEntry<T, E, T, E>;
+export declare const unsubscribeMap: <T extends EventTarget, E>(listenerMap: Record<string, EventListenerOrEventListenerObject | {
+    listener: EventListenerOrEventListenerObject;
+    options?: boolean | AddEventListenerOptions;
+}>) => RPipeEntry<T, E, T, E>;
+export declare const dispatch: <T extends EventTarget, E>(event: Event) => RPipeEntry<T, E, T, E>;
+export declare const attach: <T extends Element, E>(target: string | T) => RPipeEntry<T, E, T, E>;
+export declare const dettach: <T extends Element, E>() => RPipeEntry<T, E, T, E>;
 export declare const attr: <T extends Element, E>(name: string, value: string | ((previousValue: string | null) => string)) => RPipeEntry<T, E, T, E>;
 export declare const attrMap: <T extends Element, E>(attributes: Record<string, E>) => RPipeEntry<T, E, T, E>;
 export declare const removeAttr: <T extends Element, E>(name: string) => RPipeEntry<T, E, T, E>;
@@ -36,7 +52,7 @@ export declare const aria: <T extends Element, E>(name: string, value: string | 
 export declare const ariaMap: <T extends Element, E>(attributes: Record<string, E>) => RPipeEntry<T, E, T, E>;
 export declare const removeAria: <T extends Element, E>(name: string) => RPipeEntry<T, E, T, E>;
 export declare const removeAriaMap: <T extends Element, E>(attributes: string[]) => RPipeEntry<T, E, T, E>;
-export declare const dataAttr: <T extends HTMLElement, E>(name: string, value: string | ((previousValue: string | null) => string)) => RPipeEntry<T, E, T, E>;
+export declare const dataAttr: <T extends HTMLElement, E>(name: string, value: string | ((previousValue: string | undefined) => string)) => RPipeEntry<T, E, T, E>;
 export declare const dataMap: <T extends HTMLElement, E>(attributes: Record<string, E>) => RPipeEntry<T, E, T, E>;
 export declare const removeDataAttr: <T extends HTMLElement, E>(name: string) => RPipeEntry<T, E, T, E>;
 export declare const removeDataMap: <T extends HTMLElement, E>(attributes: string[]) => RPipeEntry<T, E, T, E>;

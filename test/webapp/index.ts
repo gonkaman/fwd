@@ -1,5 +1,5 @@
-import { section, div, h2 } from "fwd-vitrail/builders"
-import { attr, attrMap } from "fwd-vitrail/adapters"
+import { section, div, h2 } from "fwd-vitrail/builder"
+import { attr, attrMap } from "fwd-vitrail/effect"
 
 
 const loginPage = section(

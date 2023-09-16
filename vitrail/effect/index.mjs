@@ -24,43 +24,64 @@ SOFTWARE.
 
 */
 
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.removeStyleMap = exports.removeStyleAttr = exports.styleMap = exports.cssText = exports.styleAttr = exports.removeDataMap = exports.removeDataAttr = exports.dataMap = exports.dataAttr = exports.removeAriaMap = exports.removeAria = exports.ariaMap = exports.aria = exports.removeAttrMap = exports.removeAttr = exports.attrMap = exports.attr = exports.attach = void 0;
-const fwd_result_1 = require("fwd-result");
-const fwd_result_pipe_1 = require("fwd-result-pipe");
-//deriveEffect => adapter
-//deriveQuery => adapter
-// export interface EffectBuilder<T,E>{
-//     pipe(): PipeBuilder<T,E>,
-//     runner(): Runner<T,E>
-// }
-// export interface QueryBuilder<T,E>{
-//     source(): T,
-//     pipe(): PipeBuilder<[string, any][], E>,
-//     runner(): Runner<[string, any][], E>
-// }
-// export interface DeriveEffect<TOrigin, TBuilder>{
-//     handleEffect(
-//         handler: (builder: TBuilder) => any
-//     ): TOrigin
-// }
-// export interface DeriveQuery<TOrigin, TBuilder>{
-//     handleQuery(
-//         handler: (builder: TBuilder) => any
-//     ): TOrigin
-// }
-const attach = (target, update) => typeof target === 'string' ?
-    () => update((0, fwd_result_1.success)(document.querySelector(target))) :
-    () => update((0, fwd_result_1.success)(target));
-exports.attach = attach;
-//Adapter<Element>
-const attr = (name, value) => typeof value === 'function' ?
-    (0, fwd_result_pipe_1.forkSuccess)(elt => elt.setAttribute(name, value(elt.getAttribute(name)))) :
-    (0, fwd_result_pipe_1.forkSuccess)(elt => elt.setAttribute(name, value));
-exports.attr = attr;
-//Adapter<Element>
-const attrMap = (attributes) => {
+import { pipe, resolve } from "fwd-pipe";
+import { failure, success } from "fwd-result";
+import { forkSuccess } from "fwd-result-pipe";
+// export type EffectComponent<TBase> = <T extends TBase, E>(...args: any) => RPipeEntry<T,E,T,E>;
+export const render = (target, update) => typeof target === 'string' ?
+    () => update(success(document.querySelector(target))) :
+    () => update(success(target));
+export const useEffect = () => {
+    let innerEffect = () => failure(undefined);
+    return [
+        (handle) => { innerEffect = handle; },
+        () => innerEffect()
+    ];
+};
+//Adapter<T>
+export const createEffect = (handle, ...components) => forkSuccess(target => handle((resolve(components.reduce((p, effect) => p(effect), pipe(() => success(target)))))));
+//Effect<EventTarget>
+export const subscribe = (eventType, listener, options) => forkSuccess(elt => elt.addEventListener(eventType, listener, options));
+//Effect<EventTarget>
+export const subscribeMap = (listenerMap) => {
+    const updaters = Object.entries(listenerMap).map(entry => typeof entry[1] === 'function' ?
+        (elt) => elt.addEventListener(entry[0], entry[1]) :
+        (typeof entry[1]['handleEvent'] === 'function' ?
+            (elt) => elt.addEventListener(entry[0], entry[1]) :
+            (elt) => elt.addEventListener(entry[0], entry[1]['listener'], entry[1]['options'])));
+    return (res) => {
+        updaters.forEach(updater => res.forkSuccess(updater));
+        return res;
+    };
+};
+//Effect<EventTarget>
+export const unsubscribe = (eventType, listener, options) => forkSuccess(elt => elt.removeEventListener(eventType, listener, options));
+//Effect<EventTarget>
+export const unsubscribeMap = (listenerMap) => {
+    const updaters = Object.entries(listenerMap).map(entry => typeof entry[1] === 'function' ?
+        (elt) => elt.removeEventListener(entry[0], entry[1]) :
+        (typeof entry[1]['handleEvent'] === 'function' ?
+            (elt) => elt.removeEventListener(entry[0], entry[1]) :
+            (elt) => elt.removeEventListener(entry[0], entry[1]['listener'], entry[1]['options'])));
+    return (res) => {
+        updaters.forEach(updater => res.forkSuccess(updater));
+        return res;
+    };
+};
+//Effect<EventTarget>
+export const dispatch = (event) => forkSuccess(elt => elt.dispatchEvent(event));
+//Effect<Element>
+export const attach = (target) => typeof target === 'string' ?
+    forkSuccess(elt => document.querySelector(target)?.append(elt)) :
+    forkSuccess(elt => target.append(elt));
+//Effect<Element>
+export const dettach = () => forkSuccess(elt => elt.remove());
+//Effect<Element>
+export const attr = (name, value) => typeof value === 'function' ?
+    forkSuccess(elt => elt.setAttribute(name, value(elt.getAttribute(name)))) :
+    forkSuccess(elt => elt.setAttribute(name, value));
+//Effect<Element>
+export const attrMap = (attributes) => {
     const updaters = Object.entries(attributes).map(entry => typeof entry[1] === 'function' ?
         (elt) => elt.setAttribute(entry[0], entry[1](elt.getAttribute(entry[0]))) :
         (elt) => elt.setAttribute(entry[0], entry[1] + ""));
@@ -69,26 +90,22 @@ const attrMap = (attributes) => {
         return res;
     };
 };
-exports.attrMap = attrMap;
-//Adapter<Element>
-const removeAttr = (name) => (0, fwd_result_pipe_1.forkSuccess)(elt => elt.removeAttribute(name));
-exports.removeAttr = removeAttr;
-//Adapter<Element>
-const removeAttrMap = (attributes) => {
+//Effect<Element>
+export const removeAttr = (name) => forkSuccess(elt => elt.removeAttribute(name));
+//Effect<Element>
+export const removeAttrMap = (attributes) => {
     const updaters = attributes.map(attr => (elt) => elt.removeAttribute(attr));
     return (res) => {
         updaters.forEach(updater => res.forkSuccess(updater));
         return res;
     };
 };
-exports.removeAttrMap = removeAttrMap;
-//Adapter<Element>
-const aria = (name, value) => typeof value === 'function' ?
-    (0, fwd_result_pipe_1.forkSuccess)(elt => elt.setAttribute('aria-' + name, value(elt.getAttribute('aria-' + name)))) :
-    (0, fwd_result_pipe_1.forkSuccess)(elt => elt.setAttribute('aria-' + name, value));
-exports.aria = aria;
-//Adapter<Element>
-const ariaMap = (attributes) => {
+//Effect<Element>
+export const aria = (name, value) => typeof value === 'function' ?
+    forkSuccess(elt => elt.setAttribute('aria-' + name, value(elt.getAttribute('aria-' + name)))) :
+    forkSuccess(elt => elt.setAttribute('aria-' + name, value));
+//Effect<Element>
+export const ariaMap = (attributes) => {
     const updaters = Object.entries(attributes).map(entry => typeof entry[1] === 'function' ?
         (elt) => elt.setAttribute('aria-' + entry[0], entry[1](elt.getAttribute('aria-' + entry[0]))) :
         (elt) => elt.setAttribute('aria-' + entry[0], entry[1] + ""));
@@ -97,26 +114,22 @@ const ariaMap = (attributes) => {
         return res;
     };
 };
-exports.ariaMap = ariaMap;
-//Adapter<Element>
-const removeAria = (name) => (0, fwd_result_pipe_1.forkSuccess)(elt => elt.removeAttribute('aria-' + name));
-exports.removeAria = removeAria;
-//Adapter<Element>
-const removeAriaMap = (attributes) => {
+//Effect<Element>
+export const removeAria = (name) => forkSuccess(elt => elt.removeAttribute('aria-' + name));
+//Effect<Element>
+export const removeAriaMap = (attributes) => {
     const updaters = attributes.map(attr => (elt) => elt.removeAttribute('aria-' + attr));
     return (res) => {
         updaters.forEach(updater => res.forkSuccess(updater));
         return res;
     };
 };
-exports.removeAriaMap = removeAriaMap;
-//Adapter<HTMLElement>
-const dataAttr = (name, value) => typeof value === 'function' ?
-    (0, fwd_result_pipe_1.forkSuccess)(elt => { elt.dataset[name] = value(elt.getAttribute(name)); }) :
-    (0, fwd_result_pipe_1.forkSuccess)(elt => { elt.dataset[name] = value; });
-exports.dataAttr = dataAttr;
-//Adapter<HTMLElement>
-const dataMap = (attributes) => {
+//Effect<HTMLElement>
+export const dataAttr = (name, value) => typeof value === 'function' ?
+    forkSuccess(elt => { elt.dataset[name] = value(elt.dataset[name]); }) :
+    forkSuccess(elt => { elt.dataset[name] = value; });
+//Effect<HTMLElement>
+export const dataMap = (attributes) => {
     const updaters = Object.entries(attributes).map(entry => typeof entry[1] === 'function' ?
         (elt) => {
             elt.dataset[entry[0]] = entry[1](elt.dataset[entry[0]]);
@@ -127,28 +140,23 @@ const dataMap = (attributes) => {
         return res;
     };
 };
-exports.dataMap = dataMap;
-//Adapter<HTMLElement>
-const removeDataAttr = (name) => (0, fwd_result_pipe_1.forkSuccess)(elt => { delete elt.dataset[name]; });
-exports.removeDataAttr = removeDataAttr;
-const removeDataMap = (attributes) => {
+//Effect<HTMLElement>
+export const removeDataAttr = (name) => forkSuccess(elt => { delete elt.dataset[name]; });
+export const removeDataMap = (attributes) => {
     const updaters = attributes.map(name => (elt) => { delete elt.dataset[name]; });
     return (res) => {
         updaters.forEach(updater => res.forkSuccess(updater));
         return res;
     };
 };
-exports.removeDataMap = removeDataMap;
-//Adapter<HTMLElement>
-const styleAttr = (name, value) => typeof value === 'function' ?
-    (0, fwd_result_pipe_1.forkSuccess)(elt => { elt.style[name] = value(elt.getAttribute(name)); }) :
-    (0, fwd_result_pipe_1.forkSuccess)(elt => elt.setAttribute(name, value));
-exports.styleAttr = styleAttr;
-//Adapter<HTMLElement>
-const cssText = (css) => (0, fwd_result_pipe_1.forkSuccess)(elt => { elt.style.cssText = css; });
-exports.cssText = cssText;
-//Adapter<HTMLElement>
-const styleMap = (attributes) => {
+//Effect<HTMLElement>
+export const styleAttr = (name, value) => typeof value === 'function' ?
+    forkSuccess(elt => { elt.style[name] = value(elt.getAttribute(name)); }) :
+    forkSuccess(elt => elt.setAttribute(name, value));
+//Effect<HTMLElement>
+export const cssText = (css) => forkSuccess(elt => { elt.style.cssText = css; });
+//Effect<HTMLElement>
+export const styleMap = (attributes) => {
     const updaters = Object.entries(attributes).map(entry => typeof entry[1] === 'function' ?
         (elt) => elt.style[entry[0]] =
             entry[1](elt.style[entry[0]]) :
@@ -158,16 +166,13 @@ const styleMap = (attributes) => {
         return res;
     };
 };
-exports.styleMap = styleMap;
-//Adapter<HTMLElement>
-const removeStyleAttr = (name) => (0, fwd_result_pipe_1.forkSuccess)(elt => { elt.style[name] = null; });
-exports.removeStyleAttr = removeStyleAttr;
-//Adapter<HTMLElement>
-const removeStyleMap = (attributes) => {
+//Effect<HTMLElement>
+export const removeStyleAttr = (name) => forkSuccess(elt => { elt.style[name] = null; });
+//Effect<HTMLElement>
+export const removeStyleMap = (attributes) => {
     const updaters = attributes.map(name => (elt) => { elt.style[name] = null; });
     return (res) => {
         updaters.forEach(updater => res.forkSuccess(updater));
         return res;
     };
 };
-exports.removeStyleMap = removeStyleMap;

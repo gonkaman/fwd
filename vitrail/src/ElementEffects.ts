@@ -1,14 +1,25 @@
-import { PipeEntry, pipe, resolve } from "fwd-pipe";
-import { Result, success } from "fwd-result";
+import { pipe, resolve } from "fwd-pipe";
+import { Result, failure, success } from "fwd-result";
 import { forkSuccess, RPipeEntry } from "fwd-result-pipe";
+
+
+export type Effect<T, E> = () => Result<T,E>;
+export type EffectHandler<T,E> = (handle: Effect<T,E>) => any;
+// export type EffectComponent<TBase> = <T extends TBase, E>(...args: any) => RPipeEntry<T,E,T,E>;
 
 
 export const render = <T extends Element,E>(target: T | string, update: RPipeEntry<T,E,T,E>) => typeof target === 'string' ?
     () => update(success(document.querySelector(target) as T)) :
     () => update(success(target as T));
 
-
-// export type Effect<TBase> = <T extends TBase, E>(...args: any) => RPipeEntry<T,E,T,E>;
+    
+export const useEffect = <T,E>(): [EffectHandler<T,E>, Effect<T,E>] => {
+    let innerEffect: Effect<T,E> = () => failure<T,E>(undefined as E);
+    return [
+        (handle: Effect<T,E>) => { innerEffect = handle; },
+        () => innerEffect()
+    ]
+}
 
 //Adapter<T>
 export const createEffect = <T,E>(
