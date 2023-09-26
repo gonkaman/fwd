@@ -33,3 +33,5 @@ export type AsyncPipeBuilder<U, V> = <T>(entry: AsyncPipeEntry<V, T>, onRejected
 export declare const pipeAsync: <U, V>(init: AsyncPipeEntry<U, V>) => AsyncPipeBuilder<U, V>;
 export type PipeResolve<T, U, V> = T extends AsyncPipeBuilder<U, V> ? AsyncPipeEntry<U, V> : PipeEntry<U, V>;
 export declare const resolve: <T extends PipeBuilder<U, V> | AsyncPipeBuilder<U, V>, U, V>(builder: T) => PipeResolve<T, U, V>;
+export declare const fork: <T>(handle: (_: T) => any) => PipeEntry<T, T>;
+export declare const forkAsync: <T>(handle: (_: T) => any) => AsyncPipeEntry<T, T>;

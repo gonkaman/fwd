@@ -24,15 +24,18 @@ SOFTWARE.
 
 */
 
-import { success } from "fwd-result";
-import { pipe, resolve } from "fwd-pipe";
-import { forkSuccess } from "fwd-result-pipe";
-const createBuilder = (tagName) => {
+import { fork, pipe, resolve } from "fwd-pipe";
+export const nodeValue = (value) => typeof value === 'function' ?
+    fork(node => { node.nodeValue = value(node.nodeValue); }) :
+    fork(node => { node.nodeValue = value; });
+export const text = (...entries) => {
+    return fork((parent) => resolve(entries.reduce((p, entry) => p(typeof entry === 'string' ? nodeValue(entry) : entry), pipe(() => document.createTextNode("")))(fork(elt => parent.append(elt))))(undefined));
+};
+export const createBuilder = (tagName) => {
     return (...entries) => {
-        return (arg) => arg.forkSuccess(parent => resolve(entries.reduce((p, entry) => p(entry), pipe(() => success(document.createElement(tagName))))(forkSuccess(elt => parent.append(elt)))));
+        return fork((parent) => resolve(entries.reduce((p, entry) => p(typeof entry === 'string' ? text(entry) : entry), pipe(() => document.createElement(tagName)))(fork(elt => parent.append(elt))))(undefined));
     };
 };
-export const custom = createBuilder;
 export const address = createBuilder('address');
 export const article = createBuilder('article');
 export const aside = createBuilder('aside');

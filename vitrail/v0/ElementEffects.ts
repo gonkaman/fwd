@@ -12,7 +12,7 @@ export const render = <T extends Element,E>(target: T | string, update: RPipeEnt
     () => update(success(document.querySelector(target) as T)) :
     () => update(success(target as T));
 
-    
+
 export const useEffect = <T,E>(): [EffectHandler<T,E>, Effect<T,E>] => {
     let innerEffect: Effect<T,E> = () => failure<T,E>(undefined as E);
     return [
@@ -117,6 +117,7 @@ export const attach = <T extends Element,E>(
 //Effect<Element>
 export const dettach = <T extends Element,E>(): RPipeEntry<T,E,T,E> => 
         forkSuccess<T,E>(elt => elt.remove());
+
 
 //Effect<Element>
 export const attr = <T extends Element,E>(
@@ -290,3 +291,15 @@ export const removeStyleMap = <T extends HTMLElement, E>(
         return res;
     }
 }
+
+
+//'id','className','title','tabIndex','lang','dir','accessKey','slot','part'
+//Element properties
+export const id = <T extends Element, E>(value: string): RPipeEntry<T,E, T,E> => attr('id', value);
+export const className = <T extends Element, E>(value: string): RPipeEntry<T,E, T,E> => attr('className', value);
+export const title = <T extends Element, E>(value: string): RPipeEntry<T,E, T,E> => attr('title', value);
+export const tabIndex = <T extends Element, E>(value: string): RPipeEntry<T,E, T,E> => attr('tabIndex', value);
+export const lang = <T extends Element, E>(value: string): RPipeEntry<T,E, T,E> => attr('lang', value);
+export const dir = <T extends Element, E>(value: string): RPipeEntry<T,E, T,E> => attr('dir', value);
+export const accessKey = <T extends Element, E>(value: string): RPipeEntry<T,E, T,E> => attr('accessKey', value);
+export const part = <T extends Element, E>(value: string): RPipeEntry<T,E, T,E> => attr('part', value);

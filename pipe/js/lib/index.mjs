@@ -40,3 +40,5 @@ export const pipeAsync = (init) => {
         pipeAsync((arg) => Promise.resolve(init(arg)).then(value => entry(value), onRejected));
 };
 export const resolve = (builder) => builder(pipeEnd);
+export const fork = (handle) => (arg) => { handle(arg); return arg; };
+export const forkAsync = (handle) => (arg) => { handle(arg); return arg; };

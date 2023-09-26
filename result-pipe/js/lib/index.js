@@ -26,7 +26,7 @@ SOFTWARE.
 
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.rpipeAsync = exports.rpipe = exports.forkFailureAsync = exports.forkSuccessAsync = exports.forkMapAsync = exports.forkAsync = exports.swapFailureAsync = exports.swapSuccessAsync = exports.swapAsync = exports.mapFailureAsync = exports.mapSuccessAsync = exports.mapAsync = exports.forkFailure = exports.forkSuccess = exports.forkMap = exports.fork = exports.swapFailure = exports.swapSuccess = exports.swap = exports.mapFailure = exports.mapSuccess = exports.map = void 0;
+exports.rpipeAsync = exports.rpipe = exports.forkFailureAsync = exports.forkSuccessAsync = exports.forkMapAsync = exports.swapFailureAsync = exports.swapSuccessAsync = exports.swapAsync = exports.mapFailureAsync = exports.mapSuccessAsync = exports.mapAsync = exports.forkFailure = exports.forkSuccess = exports.forkMap = exports.swapFailure = exports.swapSuccess = exports.swap = exports.mapFailure = exports.mapSuccess = exports.map = void 0;
 const fwd_pipe_1 = require("fwd-pipe");
 const map = (onSuccess, onFailure) => (res) => res.map(onSuccess, onFailure);
 exports.map = map;
@@ -40,8 +40,6 @@ const swapSuccess = (onSuccess) => (res) => res.swapSuccess(onSuccess);
 exports.swapSuccess = swapSuccess;
 const swapFailure = (onFailure) => (res) => res.swapFailure(onFailure);
 exports.swapFailure = swapFailure;
-const fork = (handle) => (res) => res.fork(handle);
-exports.fork = fork;
 const forkMap = (onSuccess, onFailure) => (res) => res.forkMap(onSuccess, onFailure);
 exports.forkMap = forkMap;
 const forkSuccess = (onSuccess) => (res) => res.forkSuccess(onSuccess);
@@ -60,8 +58,6 @@ const swapSuccessAsync = (onSuccess) => (res) => res.swapSuccessAsync(onSuccess)
 exports.swapSuccessAsync = swapSuccessAsync;
 const swapFailureAsync = (onFailure) => (res) => res.swapFailureAsync(onFailure);
 exports.swapFailureAsync = swapFailureAsync;
-const forkAsync = (handle) => (res) => res.forkAsync(handle);
-exports.forkAsync = forkAsync;
 const forkMapAsync = (onSuccess, onFailure) => (res) => res.forkMapAsync(onSuccess, onFailure);
 exports.forkMapAsync = forkMapAsync;
 const forkSuccessAsync = (onSuccess) => (res) => res.forkSuccessAsync(onSuccess);

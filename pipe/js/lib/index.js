@@ -26,7 +26,7 @@ SOFTWARE.
 
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.resolve = exports.pipeAsync = exports.pipe = void 0;
+exports.forkAsync = exports.fork = exports.resolve = exports.pipeAsync = exports.pipe = void 0;
 const pipeEnd = (arg) => arg;
 const pipe = (init) => {
     if (init === pipeEnd)
@@ -46,3 +46,7 @@ const pipeAsync = (init) => {
 exports.pipeAsync = pipeAsync;
 const resolve = (builder) => builder(pipeEnd);
 exports.resolve = resolve;
+const fork = (handle) => (arg) => { handle(arg); return arg; };
+exports.fork = fork;
+const forkAsync = (handle) => (arg) => { handle(arg); return arg; };
+exports.forkAsync = forkAsync;

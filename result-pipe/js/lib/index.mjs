@@ -31,7 +31,6 @@ export const mapFailure = (onFailure) => (res) => res.mapFailure(onFailure);
 export const swap = (onSuccess, onFailure) => (res) => res.swap(onSuccess, onFailure);
 export const swapSuccess = (onSuccess) => (res) => res.swapSuccess(onSuccess);
 export const swapFailure = (onFailure) => (res) => res.swapFailure(onFailure);
-export const fork = (handle) => (res) => res.fork(handle);
 export const forkMap = (onSuccess, onFailure) => (res) => res.forkMap(onSuccess, onFailure);
 export const forkSuccess = (onSuccess) => (res) => res.forkSuccess(onSuccess);
 export const forkFailure = (onFailure) => (res) => res.forkFailure(onFailure);
@@ -41,7 +40,6 @@ export const mapFailureAsync = (onFailure) => (res) => res.mapFailureAsync(onFai
 export const swapAsync = (onSuccess, onFailure) => (res) => res.swapAsync(onSuccess, onFailure);
 export const swapSuccessAsync = (onSuccess) => (res) => res.swapSuccessAsync(onSuccess);
 export const swapFailureAsync = (onFailure) => (res) => res.swapFailureAsync(onFailure);
-export const forkAsync = (handle) => (res) => res.forkAsync(handle);
 export const forkMapAsync = (onSuccess, onFailure) => (res) => res.forkMapAsync(onSuccess, onFailure);
 export const forkSuccessAsync = (onSuccess) => (res) => res.forkSuccessAsync(onSuccess);
 export const forkFailureAsync = (onFailure) => (res) => res.forkFailureAsync(onFailure);

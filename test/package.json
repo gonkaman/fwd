@@ -9,6 +9,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "esbuild": "^0.19.3",
     "fwd-pipe": "file:../pipe/js",
     "fwd-vitrail": "file:../vitrail",
     "typescript": "^5.2.2"

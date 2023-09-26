@@ -2,11 +2,11 @@
   "name": "fwd-vitrail",
   "version": "1.0.0",
   "description": "Tiny front-end framework based on reactive and pipelines principles",
-  "main": "./builders/index",
+  "main": "./elements/index",
   "directories": {
     "lib": [
-      "adapters",
-      "builders"
+      "elements",
+      "adapters"
     ]
   },
   "scripts": {

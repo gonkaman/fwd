@@ -37,3 +37,12 @@ export type PipeResolve<T,U,V> = T extends AsyncPipeBuilder<U,V> ? AsyncPipeEntr
 export const resolve = <T extends PipeBuilder<U,V> | AsyncPipeBuilder<U,V>, U,V>(builder: T): PipeResolve<T,U,V> =>
     (builder(pipeEnd) as unknown) as PipeResolve<T,U,V>;
 
+
+export const fork = <T>(
+    handle: (_: T) => any
+): PipeEntry<T,T> => (arg: T) => { handle(arg); return arg; }
+
+
+export const forkAsync = <T>(
+    handle: (_: T) => any
+): AsyncPipeEntry<T,T> => (arg: T) => { handle(arg); return arg; }

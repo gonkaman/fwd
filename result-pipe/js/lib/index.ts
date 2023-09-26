@@ -53,10 +53,6 @@ export const swapFailure = <T,E,V>(
     onFailure: (error: E) => V
 ): PipeEntry<Result<T,E>,Result<T,V>> => (res: Result<T,E>) => res.swapFailure<V>(onFailure);
 
-export const fork = <T,E>(
-    handle: (res: Result<T,E>) => any
-): PipeEntry<Result<T,E>,Result<T,E>> => (res: Result<T,E>) => res.fork(handle);
-
 export const forkMap = <T,E>(
     onSuccess: (value: T) => any,
     onFailure: (error: E) => any
@@ -69,8 +65,6 @@ export const forkSuccess = <T,E>(
 export const forkFailure = <T,E>(
     onFailure: (error: E) => any
 ): PipeEntry<Result<T,E>,Result<T,E>> => (res: Result<T,E>) => res.forkFailure(onFailure);
-
-
 
 
 export const mapAsync = <T,E,U,V>(
@@ -98,10 +92,6 @@ export const swapSuccessAsync = <T,E,U>(
 export const swapFailureAsync = <T,E,V>(
     onFailure: (error: E) => PromiseLikeOfOr<V>
 ): AsyncPipeEntry<Result<T,E>,Result<T,V>> => (res: Result<T,E>) => res.swapFailureAsync<V>(onFailure);
-
-export const forkAsync = <T,E>(
-    handle: (res: Result<T,E>) => any
-): AsyncPipeEntry<Result<T,E>,Result<T,E>> => (res: Result<T,E>) => res.forkAsync(handle);
 
 export const forkMapAsync = <T,E>(
     onSuccess: (value: T) => any,
