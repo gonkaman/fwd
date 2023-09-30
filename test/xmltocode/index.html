@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html dir="ltr" lang="fr" darkmode="">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,shrink-to-fit=no">
+    <meta name="referrer" content="strict-origin">
+    <title>Nouvel onglet</title>
+    <link
+        rel="stylesheet"
+        data-name="vs/editor/editor.main"
+        href="../node_modules/monaco-editor/min/vs/editor/editor.main.css"
+    />
+    <script type="text/javascript" src="html2vitrail.js"></script>
+</head>
+
+<body>
+    <h2>Monaco Editor Sync Loading Sample</h2>
+    <div id="html-input" style="width: 650px; height: 700px; border: 1px solid grey; display: inline-block;"></div>
+    <div id="vitrail-output" style="width: 650px; height: 700px; border: 1px solid grey; display: inline-block; margin-left: 50px;"></div>
+    <button id="btn-generate">Generate code</button>
+    <script>
+        var require = { paths: { vs: '../node_modules/monaco-editor/min/vs' } };
+    </script>
+    <script src="../node_modules/monaco-editor/min/vs/loader.js"></script>
+    <script src="../node_modules/monaco-editor/min/vs/editor/editor.main.nls.js"></script>
+    <script src="../node_modules/monaco-editor/min/vs/editor/editor.main.js"></script>
+
+    <script>
+        var htmlEditor = monaco.editor.create(document.getElementById('html-input'), {
+            value: `<div class="info-box">
+	<div class="info info-author">
+	  <h4>Author</h4>
+	  <ul>
+		<li>Sowjanya</li>
+		<li><time>October 28, 2021</time></li>
+	  </ul>
+	</div>
+  <div class="info info-link">
+	<h4>Links</h4>
+	<ul>
+	  <li><a href="https://codepen.io/sowg/pen/dyzRPrO" target="_blank">demo and code</a></li>
+	  <li><a href="https://dribbble.com/shots/14210557-Finance-Mobile-Application-UX-UI-Design" target="_blank">dribbble</a></li>
+	  <li><a href="/assets/zip/css-login-forms/finance-mobile-application-ux-ui-design-screen-one.zip">download</a></li>
+	</ul>
+  </div>
+  <div class="info info-frontend">
+	<h4>Made with</h4>
+	<ul>
+	  <li>HTML (Pug) / CSS (SCSS)</li>
+	</ul>
+	</div>
+  </div>`,
+            language: 'html'
+        });
+
+        var jsEditor = monaco.editor.create(document.getElementById('vitrail-output'), {
+            value: ['function x() {', '\tconsole.log("Hello world!");', '}'].join('\n'),
+            language: 'javascript'
+        });
+
+        function updateJs(){
+            jsEditor.setValue(generateCode(htmlEditor.getValue()))
+        }
+        document.getElementById('btn-generate').addEventListener('click', updateJs);
+    </script>
+</body>
+
+</html>

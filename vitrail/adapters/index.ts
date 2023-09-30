@@ -100,9 +100,9 @@ export const invoke = <T>(
     (target: T) => [[key || query, target[query](...args)]];
 
 
-export const render = <T extends Element>(target: T | string, update: PipeEntry<T,T>) => typeof target === 'string' ?
-    () => update(document.querySelector(target) as T) :
-    () => update(target as T);
+export const render = <T extends Element>(target: T | string, ...updates: PipeEntry<T,T>[]) => typeof target === 'string' ?
+    () => updates.forEach(update => update(document.querySelector(target) as T)) :
+    () => updates.forEach(update => update(target as T));
 
 export const attach = <T extends Element>(
     target: T | string

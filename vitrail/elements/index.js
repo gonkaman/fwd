@@ -26,8 +26,8 @@ SOFTWARE.
 
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ins = exports.del = exports.meter = exports.menu = exports.map = exports.link = exports.legend = exports.label = exports.li = exports.input = exports.img = exports.iframe = exports.h6 = exports.h5 = exports.h4 = exports.h3 = exports.h2 = exports.h1 = exports.head = exports.hr = exports.form = exports.fieldset = exports.embed = exports.dl = exports.div = exports.dialog = exports.datalist = exports.data = exports.canvas = exports.button = exports.base = exports.br = exports.audio = exports.area = exports.a = exports.section = exports.s = exports.nav = exports.i = exports.hgroup = exports.header = exports.footer = exports.em = exports.b = exports.aside = exports.article = exports.address = exports.createBuilder = exports.text = exports.nodeValue = void 0;
-exports.video = exports.ul = exports.track = exports.title = exports.time = exports.textarea = exports.template = exports.tbody = exports.tfoot = exports.thead = exports.tr = exports.table = exports.colgroup = exports.col = exports.td = exports.th = exports.caption = exports.span = exports.source = exports.slot = exports.select = exports.cite = exports.blockquote = exports.q = exports.progress = exports.pre = exports.picture = exports.p = exports.output = exports.option = exports.optgroup = exports.object = exports.ol = void 0;
+exports.del = exports.meter = exports.menu = exports.map = exports.link = exports.legend = exports.label = exports.li = exports.input = exports.img = exports.iframe = exports.h6 = exports.h5 = exports.h4 = exports.h3 = exports.h2 = exports.h1 = exports.head = exports.hr = exports.form = exports.fieldset = exports.embed = exports.dl = exports.div = exports.dialog = exports.datalist = exports.data = exports.canvas = exports.button = exports.base = exports.br = exports.audio = exports.area = exports.a = exports.section = exports.s = exports.nav = exports.i = exports.hgroup = exports.header = exports.footer = exports.em = exports.b = exports.aside = exports.article = exports.address = exports.customElement = exports.createBuilder = exports.text = exports.nodeValue = void 0;
+exports.video = exports.ul = exports.track = exports.title = exports.time = exports.textarea = exports.template = exports.tbody = exports.tfoot = exports.thead = exports.tr = exports.table = exports.colgroup = exports.col = exports.td = exports.th = exports.caption = exports.span = exports.source = exports.slot = exports.select = exports.cite = exports.blockquote = exports.q = exports.progress = exports.pre = exports.picture = exports.p = exports.output = exports.option = exports.optgroup = exports.object = exports.ol = exports.ins = void 0;
 const fwd_pipe_1 = require("fwd-pipe");
 const nodeValue = (value) => typeof value === 'function' ?
     (0, fwd_pipe_1.fork)(node => { node.nodeValue = value(node.nodeValue); }) :
@@ -43,6 +43,8 @@ const createBuilder = (tagName) => {
     };
 };
 exports.createBuilder = createBuilder;
+const customElement = (name, ...entries) => (0, exports.createBuilder)(name)(...entries);
+exports.customElement = customElement;
 exports.address = (0, exports.createBuilder)('address');
 exports.article = (0, exports.createBuilder)('article');
 exports.aside = (0, exports.createBuilder)('aside');

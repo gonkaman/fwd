@@ -12,7 +12,9 @@
     "esbuild": "^0.19.3",
     "fwd-pipe": "file:../pipe/js",
     "fwd-vitrail": "file:../vitrail",
-    "typescript": "^5.2.2"
+    "monaco-editor": "^0.43.0",
+    "typescript": "^5.2.2",
+    "xml-js": "^1.6.11"
   },
   "description": ""
 }

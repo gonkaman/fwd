@@ -40,5 +40,8 @@ export const pipeAsync = (init) => {
         pipeAsync((arg) => Promise.resolve(init(arg)).then(value => entry(value), onRejected));
 };
 export const resolve = (builder) => builder(pipeEnd);
+export const flow = (init, ...entries) => resolve(entries.reduce((p, entry) => p(entry), pipe(init)));
+// export const flowAsync = <T,R>(init: AsyncPipeEntry<T,R>, ...entries: AsyncPipeEntry<R,R>[]): AsyncPipeEntry<T,R> => 
+//     resolve(entries.reduce((p, entry) => p(entry), pipeAsync(init)));
 export const fork = (handle) => (arg) => { handle(arg); return arg; };
 export const forkAsync = (handle) => (arg) => { handle(arg); return arg; };

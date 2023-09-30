@@ -64,6 +64,12 @@ export const resolve = <T extends PipeBuilder<U,V> | AsyncPipeBuilder<U,V>, U,V>
     (builder(pipeEnd) as unknown) as PipeResolve<T,U,V>;
 
 
+export const flow = <T,R>(init: PipeEntry<T,R>, ...entries: PipeEntry<R,R>[]): PipeEntry<T,R> => 
+    resolve(entries.reduce((p, entry) => p(entry), pipe(init)));
+
+// export const flowAsync = <T,R>(init: AsyncPipeEntry<T,R>, ...entries: AsyncPipeEntry<R,R>[]): AsyncPipeEntry<T,R> => 
+//     resolve(entries.reduce((p, entry) => p(entry), pipeAsync(init)));
+
 export const fork = <T>(
     handle: (_: T) => any
 ): PipeEntry<T,T> => (arg: T) => { handle(arg); return arg; }

@@ -57,9 +57,9 @@ export const createQuery = () => {
 export const query = (handle, ...components) => fork(target => handle(() => components.reduce((entries, query) => entries.concat(query(target)), [])));
 export const exec = (command, ...args) => fork(target => target[command](...args));
 export const invoke = (query, key, ...args) => (target) => [[key || query, target[query](...args)]];
-export const render = (target, update) => typeof target === 'string' ?
-    () => update(document.querySelector(target)) :
-    () => update(target);
+export const render = (target, ...updates) => typeof target === 'string' ?
+    () => updates.forEach(update => update(document.querySelector(target))) :
+    () => updates.forEach(update => update(target));
 export const attach = (target) => typeof target === 'string' ?
     fork(elt => document.querySelector(target)?.append(elt)) :
     fork(elt => target.append(elt));

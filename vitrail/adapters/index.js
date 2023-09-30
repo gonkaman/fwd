@@ -81,9 +81,9 @@ const exec = (command, ...args) => (0, fwd_pipe_1.fork)(target => target[command
 exports.exec = exec;
 const invoke = (query, key, ...args) => (target) => [[key || query, target[query](...args)]];
 exports.invoke = invoke;
-const render = (target, update) => typeof target === 'string' ?
-    () => update(document.querySelector(target)) :
-    () => update(target);
+const render = (target, ...updates) => typeof target === 'string' ?
+    () => updates.forEach(update => update(document.querySelector(target))) :
+    () => updates.forEach(update => update(target));
 exports.render = render;
 const attach = (target) => typeof target === 'string' ?
     (0, fwd_pipe_1.fork)(elt => document.querySelector(target)?.append(elt)) :

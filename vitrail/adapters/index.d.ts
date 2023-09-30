@@ -50,7 +50,7 @@ export declare const createQuery: () => [QueryHandler, Query];
 export declare const query: <T>(handle: (resultingQuery: Query) => any, ...components: ((target: T) => [string, unknown][])[]) => PipeEntry<T, T>;
 export declare const exec: <T>(command: string, ...args: any) => PipeEntry<T, T>;
 export declare const invoke: <T>(query: string, key?: string, ...args: any) => (target: T) => any[][];
-export declare const render: <T extends Element>(target: string | T, update: PipeEntry<T, T>) => () => T;
+export declare const render: <T extends Element>(target: string | T, ...updates: PipeEntry<T, T>[]) => () => void;
 export declare const attach: <T extends Element>(target: string | T) => PipeEntry<T, T>;
 export declare const dettach: <T extends Element, E>() => PipeEntry<T, T>;
 export type AttributeAdapterValue = string | ((previousValue: string | null) => string) | undefined;

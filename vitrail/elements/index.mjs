@@ -36,6 +36,7 @@ export const createBuilder = (tagName) => {
         return fork((parent) => resolve(entries.reduce((p, entry) => p(typeof entry === 'string' ? text(entry) : entry), pipe(() => document.createElement(tagName)))(fork(elt => parent.append(elt))))(undefined));
     };
 };
+export const customElement = (name, ...entries) => createBuilder(name)(...entries);
 export const address = createBuilder('address');
 export const article = createBuilder('article');
 export const aside = createBuilder('aside');

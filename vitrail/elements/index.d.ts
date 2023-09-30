@@ -29,6 +29,7 @@ export type Builder<T extends Element> = <TParent extends Element>(...args: (Pip
 export declare const nodeValue: <T extends Node>(value: string | ((currentValue: string | null) => string)) => PipeEntry<T, T>;
 export declare const text: <TParent extends Element>(...entries: (string | PipeEntry<Text, Text>)[]) => PipeEntry<TParent, TParent>;
 export declare const createBuilder: <T extends HTMLElement>(tagName: string) => Builder<T>;
+export declare const customElement: (name: string, ...entries: (PipeEntry<HTMLElement, HTMLElement> | string)[]) => PipeEntry<Element, Element>;
 export declare const address: Builder<HTMLElement>;
 export declare const article: Builder<HTMLElement>;
 export declare const aside: Builder<HTMLElement>;

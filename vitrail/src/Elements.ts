@@ -28,6 +28,9 @@ export const createBuilder = <T extends HTMLElement>(tagName: string): Builder<T
     }
 }
 
+export const customElement = (name: string, ...entries: (PipeEntry<HTMLElement,HTMLElement> | string)[]) => 
+    createBuilder<HTMLElement>(name)(...entries);
+
 export const address = createBuilder<HTMLElement>('address');
 export const article = createBuilder<HTMLElement>('article');
 export const aside = createBuilder<HTMLElement>('aside');
