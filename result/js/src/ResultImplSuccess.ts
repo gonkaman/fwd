@@ -1,5 +1,8 @@
 import { Result, ResultState, PromiseLikeOfOr } from "./Result";
 
+/**
+ * Implementation of the Result interface for success cases
+ */
 class SuccessResult<TSuccess> implements Result<TSuccess, unknown>{
 
     _value: TSuccess;
@@ -176,5 +179,10 @@ class SuccessResult<TSuccess> implements Result<TSuccess, unknown>{
  */
 export const success = <T,E>(value: T): Result<T,E> => new SuccessResult<T>(value) as Result<T,E>;
 
+/**
+ * Checks wether a given value represents a success result
+ * @param value Value to check
+ * @returns Boolean - True if the given value is a success result, False if not
+ */
 export const isSuccessResult = (value: unknown): boolean => value instanceof SuccessResult;
 

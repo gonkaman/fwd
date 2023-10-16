@@ -1,5 +1,8 @@
 import { Result, ResultState, PromiseLikeOfOr } from "./Result";
 
+/**
+ * Implementation of the Result interface for failure cases
+ */
 class FailureResult<TFailure> implements Result<unknown, TFailure>{
 
     reason: TFailure;
@@ -177,4 +180,9 @@ class FailureResult<TFailure> implements Result<unknown, TFailure>{
  */
 export const failure  = <T,E>(error: E): Result<T,E> => new FailureResult<E>(error) as Result<T,E>;
 
+/**
+ * Checks wether a given value represents a failure result
+ * @param value Value to check
+ * @returns Boolean - True if the given value is a failure result, False if not
+ */
 export const isFailureResult = (value: unknown): boolean =>  value instanceof FailureResult;

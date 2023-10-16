@@ -1,0 +1,11 @@
+{
+  "name": "gonkaman",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "dependencies": {},
+  "devDependencies": {
+    "lerna": "^7.3.1"
+  }
+}
