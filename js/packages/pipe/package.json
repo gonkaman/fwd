@@ -1,23 +1,23 @@
 {
-  "name": "@gonkaman/result",
+  "name": "@gonkaman/pipe",
   "version": "1.0.0",
-  "description": "",
+  "description": "Custom typescript function pipe implementation",
   "types": "dist/index.d.ts",
   "files": [
     "dist/**/*.{js,cjs,mjs,ts,mts,cts}"
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/gonkaman/"
+    "url": "https://github.com/gonkaman/fwd/js/packages/pipe"
   },
   "exports": {
     ".": {
       "import": {
-        "types": "./dist/index.d.mts",
+        "types": "./dist/index.d.ts",
         "default": "./dist/index.mjs"
       },
       "require": {
-        "types": "./dist/index.d.cts",
+        "types": "./dist/index.d.ts",
         "default": "./dist/index.cjs"
       },
       "default": {
@@ -28,12 +28,9 @@
   },
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "sh build/scripts/build.sh"
   },
   "keywords": [],
   "author": "Joël GONKAMAN <gonkaman225@gmail.com> (https://github.com/gonkaman)",
-  "license": "MIT",
-  "devDependencies": {
-    "tsc": "^2.0.4"
-  }
+  "license": "MIT"
 }

@@ -1,0 +1,12 @@
+export type PipeEntry<U, V> = (arg: U) => V;
+export type PipeBuilder<U, V> = <T>(entry: PipeEntry<V, T>) => PipeBuilder<U, T>;
+export declare const pipe: <U, V>(init: PipeEntry<U, V>) => PipeBuilder<U, V>;
+export type AsyncPipeEntry<U, V> = (arg: U) => V | PromiseLike<V>;
+export type AsyncErrorHandler<T> = (error: any) => T | PromiseLike<T>;
+export type AsyncPipeBuilder<U, V> = <T>(entry: AsyncPipeEntry<V, T>, onRejected?: AsyncErrorHandler<T>) => AsyncPipeBuilder<U, T>;
+export declare const pipeAsync: <U, V>(init: AsyncPipeEntry<U, V>) => AsyncPipeBuilder<U, V>;
+export type PipeResolve<T, U, V> = T extends AsyncPipeBuilder<U, V> ? AsyncPipeEntry<U, V> : PipeEntry<U, V>;
+export declare const resolve: <T extends PipeBuilder<U, V> | AsyncPipeBuilder<U, V>, U, V>(builder: T) => PipeResolve<T, U, V>;
+export declare const flow: <T, R>(init: PipeEntry<T, R>, ...entries: PipeEntry<R, R>[]) => PipeEntry<T, R>;
+export declare const fork: <T>(handle: (_: T) => any) => PipeEntry<T, T>;
+export declare const forkAsync: <T>(handle: (_: T) => any) => AsyncPipeEntry<T, T>;

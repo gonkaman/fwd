@@ -2,7 +2,6 @@
 
 test -d packages/$1 && exit 1
 
-root_dir=$PWD
 mkdir -p packages/$1 && cd packages/$1
 
 npm set init-author-email "gonkaman225@gmail.com"
@@ -11,18 +10,57 @@ npm set init-author-url "https://github.com/gonkaman"
 npm set init-license "MIT"
 npm init --scope=@gonkaman --yes
 
+sed '/"main": "index.js"/Q' package.json > temp.txt
+
+cat << 'CONFIG' >> temp.txt
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist/**/*.{js,cjs,mjs,ts,mts,cts}"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/gonkaman/"
+  },
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.mts",
+        "default": "./dist/index.mjs"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      },
+      "default": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      }
+    }
+  },
+CONFIG
+
+grep -A 9999 '"main": "index.js"' package.json >> temp.txt
+mv temp.txt package.json
+
 mkdir -p build/src
 mkdir -p build/scripts
 mkdir -p build/tests
 mkdir dist
 mkdir docs
 
-cat > README.md << EOL
+cat > README.md << README_FILE
 # $1
-EOL
+
+*Description: Todo*
+
+## Usage
+
+*Todo*
+README_FILE
 
 year=$(date +%Y)
-cat > LICENSE << EOL
+
+cat > LICENSE << LICENSE_FILE
 MIT License
 
 Copyright (c) ${year} Joël GONKAMAN
@@ -44,6 +82,5 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-EOL
-
-
+LICENSE_FILE
+  

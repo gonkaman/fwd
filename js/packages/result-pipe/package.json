@@ -1,5 +1,5 @@
 {
-  "name": "@gonkaman/result",
+  "name": "@gonkaman/result-pipe",
   "version": "1.0.0",
   "description": "",
   "types": "dist/index.d.ts",
@@ -35,5 +35,9 @@
   "license": "MIT",
   "devDependencies": {
     "tsc": "^2.0.4"
+  },
+  "dependencies": {
+    "@gonkaman/pipe": "^1.0.0",
+    "@gonkaman/result": "^1.0.0"
   }
 }
