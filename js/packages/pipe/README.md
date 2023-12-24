@@ -17,8 +17,10 @@ const pipe = <T>(...fns: Array<(arg: T) => T>) => (value: T) =>
 This implementation takes any number of functions as arguments and returns a new function that applies them in sequence from left-to-right.
 
 
-- you need all the functions to chain to build the pipe
+- you need to provides all the functions in order to build/execute the pipe
 - All functions need to have the same input and output type T
+- incremental pipe build
+- pipe api conpatibility with async opérations
 
 https://dev.to/nexxeln/implementing-the-pipe-operator-in-typescript-30ip
 
