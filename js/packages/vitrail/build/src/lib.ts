@@ -1,42 +1,38 @@
-type AnyFunc = (...arg: any) => any;
+//core concepts
 
-type LastFnReturnType<F extends Array<AnyFunc>, Else = never> = F extends [
-  ...any[],
-  (...arg: any) => infer R
-]
-  ? R
-  : Else;
-
-type PipeArgs<F extends AnyFunc[], Acc extends AnyFunc[] = []> = F extends [
-  (...args: infer A) => infer B
-]
-  ? [...Acc, (...args: A) => B]
-  : F extends [(...args: infer A) => any, ...infer Tail]
-  ? Tail extends [(arg: infer B) => any, ...any[]]
-    ? PipeArgs<Tail, [...Acc, (...args: A) => B]>
-    : Acc
-  : Acc;
-
-const pipe = <FirstFn extends AnyFunc, F extends AnyFunc[]>(
-  firstFn: FirstFn,
-  ...fns: PipeArgs<F> extends F ? F : PipeArgs<F>
-): (...arg: Parameters<FirstFn>) => LastFnReturnType<F, ReturnType<FirstFn>> =>
-  (...params: Parameters<FirstFn>): LastFnReturnType<F, ReturnType<FirstFn>> => 
-  (fns as AnyFunc[]).reduce((acc, fn) => fn(acc), firstFn(params));
-
-type Filter<T> = (elt: T) => T
-type Composer<T,K,P> = <TRef extends P>(...adapters: (Filter<T> | K)[]) => Filter<TRef>
-type Converter<K,U,V> = <T extends U,TRef extends V>(ref: TRef, adapters: (Filter<T> | K)[]) => Filter<T>[]
-type Factory<T> = () => T
-
-
-const fork = <T>(fn: (_: T) => any): Filter<T> => 
-    (arg: T) => { fn(arg); return arg; }
-
-const createComposer = <U,V,T extends U,K>(factory: Factory<T>, convert: Converter<K,U,V>): Composer<T,K,V> => {
-    return <TRef extends V>(...entries: (Filter<T> | K)[]): Filter<TRef> => 
-        fork((ref: TRef) => pipe(factory, ...convert<T,TRef>(ref, entries)))
+export type Factory<T> = () => T
+export type Filter<T> = (elt: T) => T
+export type Linker<U,V> = <T extends U,TRef extends V>(factory: Factory<T>) => LinkedComposer<T,TRef>
+export type LinkedComposer<T,TRef> = (filter: Filter<T>) => Filter<TRef>
+export type Converter<K,U,V> = <T extends U>(adapters: (Filter<T> | K)[]) => [Filter<T>[], Linker<U,V>, Filter<T>[]]
+export type Composer<K,T,V> = <TRef extends V>(...adapters: (Filter<T> | K)[]) => Filter<TRef>
+ 
+const createComposer = <K,U,V,T extends U>(factory: Factory<T>, convert: Converter<K,U,V>): Composer<K,T,V> => {
+    return <TRef extends V>(...entries: (Filter<T> | K)[]): Filter<TRef> => {
+      const [preLinkFilters, link, postLinkFilters] = convert<T>(entries);
+      const preLink = () => preLinkFilters.reduce((t, filter) => filter(t), factory());
+      const postLink = (target: T) => postLinkFilters.reduce((t, filter) => filter(t), target);
+      return link<T,TRef>(preLink)(postLink);
+    }
 }
+
+export type Retriever<U,S> = <T extends U>(searchQuery: S) => T | null | undefined 
+export type Renderer<U,S> = <T extends U>(...filters: Filter<T>[]) => (searchQuery: S, onFailure: (() => any)) => T | undefined
+
+const createRenderer = <U,S>(find: Retriever<U,S>): Renderer<U,S> => 
+  <T extends U>(...filters: Filter<T>[]) => (searchQuery: S, onFailure: (() => any)): T | undefined => {
+    const target = find<T>(searchQuery);
+    if(target != null) return filters.reduce((t, filter) => filter(t), target as T);
+    onFailure();
+    return undefined;
+  }
+
+
+/**
+ * HTML + SVG Implementation 
+ */
+
+// type XFilter<T> = [string, Filter<T>]
 
 /**
  * Element factories
@@ -63,14 +59,32 @@ const getElementFactory  = <T extends Element>(tagName: string, svg: boolean): F
  * Element converters
  */
 
-const elementConverter : Converter<string, Node, Element> = <T extends Node, TRef extends Element>(
-    ref: TRef, 
-    adapters: (Filter<T> | string)[]
-): Filter<T>[] => {
-    const filters : Filter<T>[] = adapters.map(entry => typeof entry === 'string' ? nodeValue(entry) : entry);
-    filters.push(fork(elt => ref.append(elt)));
-    return filters;
+const nodeAppend : Linker<Node, Element> = <T extends Node, TRef extends Element>(
+  factory: Factory<T>
+): LinkedComposer<T,TRef> => (filter: Filter<T>) => (ref: TRef) => {
+  const elt = factory();
+  ref.append(elt);
+  filter(elt);
+  return ref;
 }
+
+const elementConverter : Converter<string, Node, Element> = <T extends Node>(
+    adapters: (Filter<T> | string)[]
+): [Filter<T>[], Linker<Node, Element>, Filter<T>[]] => {
+    const filters : Filter<T>[] = adapters.map(entry => typeof entry === 'string' ? nodeValue(entry) : entry);
+    return [filters, nodeAppend, []];
+}
+
+/**
+ * Element renderer
+ */
+
+const nodeRetriever: Retriever<Element, Element | string> = <T extends Element>(target: Element | string) => 
+      typeof target === 'string' ? 
+        document.querySelector(target) as (T | null | undefined):
+        target as T;
+
+export const render = createRenderer<Element, Element | string>(nodeRetriever);
 
 /**
  * Element composers
@@ -79,21 +93,22 @@ const elementConverter : Converter<string, Node, Element> = <T extends Node, TRe
 export const nodeValue = <T extends Node>(
     value: string | ((currentValue: string | null) => string) | null
 ): Filter<T> => typeof value === 'function' ?
-    fork(node => { node.nodeValue = value(node.nodeValue); }) :
-    fork(node => { node.nodeValue = value; });
+  (node: T) => { node.nodeValue = value(node.nodeValue); return node; } :
+  (node: T) => { node.nodeValue = value; return node;}
 
-export const text = createComposer<Node, HTMLElement, Text, string>(
+
+export const text = createComposer<string, Node, HTMLElement, Text>(
     textFactory, elementConverter
 );
 
 //will be generated
 
-// export const a = createComposer<Node, void, HTMLAnchorElement, string>(
-//     getElementFactory('a', false), elementConverter
-// );
+export const a = createComposer<string, HTMLElement, HTMLElement, HTMLAnchorElement>(
+    getElementFactory('a', false), elementConverter
+);
 
-// export const abbr = createComposer<Node, HTMLElement, HTMLElement, string>(
-//     getElementFactory('abbr', false), elementConverter
+// export const div = createComposer<string, HTMLElement, void, HTMLDivElement>(
+//     getElementFactory('div', false), elementConverter
 // )
 
 // export const svga = createComposer<Node, SVGElement, SVGAElement, string>(
@@ -105,3 +120,33 @@ export const text = createComposer<Node, HTMLElement, Text, string>(
  * Element filters
  */
 
+//attach filters
+
+export const append = <T extends Element>(target: Element | string): Filter<T> => 
+  (elt : T) => {
+    nodeRetriever(target)?.append(elt);
+    return elt;
+  }
+
+export const prepend = <T extends Element>(target: Element | string): Filter<T> => 
+  (elt : T) => {
+    nodeRetriever(target)?.prepend(elt);
+    return elt;
+  }
+
+export const before = <T extends Element>(target: Element | string): Filter<T> => 
+  (elt : T) => {
+    nodeRetriever(target)?.before(elt);
+    return elt;
+  }
+
+export const after = <T extends Element>(target: Element | string): Filter<T> => 
+  (elt : T) => {
+    nodeRetriever(target)?.after(elt);
+    return elt;
+  }
+
+
+//action filters
+export const remove = <T extends Element>(): Filter<T> =>
+  (elt: T) => { elt.remove(); return elt; }

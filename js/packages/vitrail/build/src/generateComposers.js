@@ -182,7 +182,7 @@ const htmlComposers = [
 ];
   
 console.log(htmlComposers.map(entry => `
-export const ${entry[1]} = createComposer<Node, ${entry[2]}, ${entry[3]}, string>(
+export const ${entry[1]} = createComposer<string, Node, ${entry[2]}, ${entry[3]}>(
     getElementFactory('${entry[0]}', ${entry[3].toLowerCase().startsWith('svg')}), elementConverter
 );`).join('\n'));
 
