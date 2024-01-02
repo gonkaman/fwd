@@ -31,5 +31,5 @@ const pipe = <FirstFn extends AnyFunc, F extends AnyFunc[]>(
   (fns as AnyFunc[]).reduce((acc, fn) => fn(acc), firstFn(params));
 
 
-  const fork = <T>(fn: (_: T) => any): Filter<T> => 
+  const fork = <T>(fn: (_: T) => any): ((_: T) => T) => 
   (arg: T) => { fn(arg); return arg; }
