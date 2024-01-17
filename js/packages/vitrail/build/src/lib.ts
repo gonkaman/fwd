@@ -16,12 +16,12 @@ const createComposer = <K,U,V,T extends U>(factory: Factory<T>, convert: Convert
     }
 }
 
-export type Retriever<U,S> = <T extends U>(searchQuery: S) => T | null | undefined 
+export type Picker<U,S> = <T extends U>(searchQuery: S) => T | null | undefined 
 export type Renderer<U,S> = <T extends U>(...filters: Filter<T>[]) => (searchQuery: S, onFailure: (() => any)) => T | undefined
 
-const createRenderer = <U,S>(find: Retriever<U,S>): Renderer<U,S> => 
+const createRenderer = <U,S>(pick: Picker<U,S>): Renderer<U,S> => 
   <T extends U>(...filters: Filter<T>[]) => (searchQuery: S, onFailure: (() => any)): T | undefined => {
-    const target = find<T>(searchQuery);
+    const target = pick<T>(searchQuery);
     if(target != null) return filters.reduce((t, filter) => filter(t), target as T);
     onFailure();
     return undefined;
@@ -68,10 +68,14 @@ const nodeAppend : Linker<Node, Element> = <T extends Node, TRef extends Element
   return ref;
 }
 
-const elementConverter : Converter<string, Node, Element> = <T extends Node>(
+const elementConvert : Converter<string, Node, Element> = <T extends Node>(
     adapters: (Filter<T> | string)[]
 ): [Filter<T>[], Linker<Node, Element>, Filter<T>[]] => {
-    const filters : Filter<T>[] = adapters.map(entry => typeof entry === 'string' ? nodeValue(entry) : entry);
+    const filters : Filter<T>[] = adapters.map(
+      entry => typeof entry === 'string' ? 
+        (elt: T) => { elt.appendChild(document.createTextNode(entry)); return elt; } : 
+        entry
+    );
     return [filters, nodeAppend, []];
 }
 
@@ -79,12 +83,12 @@ const elementConverter : Converter<string, Node, Element> = <T extends Node>(
  * Element renderer
  */
 
-const nodeRetriever: Retriever<Element, Element | string> = <T extends Element>(target: Element | string) => 
+const nodePick: Picker<Element, Element | string> = <T extends Element>(target: Element | string) => 
       typeof target === 'string' ? 
         document.querySelector(target) as (T | null | undefined):
         target as T;
 
-export const render = createRenderer<Element, Element | string>(nodeRetriever);
+export const render = createRenderer<Element, Element | string>(nodePick);
 
 /**
  * Element composers
@@ -98,13 +102,13 @@ export const nodeValue = <T extends Node>(
 
 
 export const text = createComposer<string, Node, HTMLElement, Text>(
-    textFactory, elementConverter
+    textFactory, elementConvert
 );
 
 //will be generated
 
 export const a = createComposer<string, HTMLElement, HTMLElement, HTMLAnchorElement>(
-    getElementFactory('a', false), elementConverter
+    getElementFactory('a', false), elementConvert
 );
 
 // export const div = createComposer<string, HTMLElement, void, HTMLDivElement>(
@@ -124,29 +128,39 @@ export const a = createComposer<string, HTMLElement, HTMLElement, HTMLAnchorElem
 
 export const append = <T extends Element>(target: Element | string): Filter<T> => 
   (elt : T) => {
-    nodeRetriever(target)?.append(elt);
+    nodePick(target)?.append(elt);
     return elt;
   }
 
 export const prepend = <T extends Element>(target: Element | string): Filter<T> => 
   (elt : T) => {
-    nodeRetriever(target)?.prepend(elt);
+    nodePick(target)?.prepend(elt);
     return elt;
   }
 
 export const before = <T extends Element>(target: Element | string): Filter<T> => 
   (elt : T) => {
-    nodeRetriever(target)?.before(elt);
+    nodePick(target)?.before(elt);
     return elt;
   }
 
 export const after = <T extends Element>(target: Element | string): Filter<T> => 
   (elt : T) => {
-    nodeRetriever(target)?.after(elt);
+    nodePick(target)?.after(elt);
     return elt;
   }
 
 
 //action filters
-export const remove = <T extends Element>(): Filter<T> =>
-  (elt: T) => { elt.remove(); return elt; }
+export const remove = <T extends (Element | Text)>(): Filter<T> =>
+  (elt: T) => { 
+    switch(elt.nodeType){
+      case 3: 
+        elt.remove();
+        break;
+      default:
+        elt.parentNode?.removeChild(elt);
+        break;
+    }
+    return elt; 
+  }

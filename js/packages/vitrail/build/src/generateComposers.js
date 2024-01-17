@@ -1,4 +1,4 @@
-const htmlComposers = [
+const composers = [
     //html elements
     ['a','a','HTMLElement','HTMLAnchorElement'],
     ['abbr','abbr','HTMLElement','HTMLElement'],
@@ -181,8 +181,39 @@ const htmlComposers = [
     ['view','view','SVGElement','SVGViewElement']
 ];
   
-console.log(htmlComposers.map(entry => `
+console.log(composers.map(entry => `
 export const ${entry[1]} = createComposer<string, Node, ${entry[2]}, ${entry[3]}>(
     getElementFactory('${entry[0]}', ${entry[3].toLowerCase().startsWith('svg')}), elementConverter
 );`).join('\n'));
 
+
+
+const filters = [
+    ["addEventListener","subscribe","EventTarget","action",[
+        ["eventType","string"], ["listener","EventListenerOrEventListenerObject"], ["options","boolean | AddEventListenerOptions", true]
+    ]],
+    ["removeEventListener","unsubscribe","EventTarget","action",[
+        ["eventType","string"], ["listener","EventListenerOrEventListenerObject"], ["options","boolean | AddEventListenerOptions", true]
+    ]],
+    ["dispatchEvent","dispatch","EventTarget","action",[
+        ["event","Event"]
+    ]],
+    ["nodeValue","nodeValue","Node","property"],
+    ["textContent","textContent","Node","property"]
+];
+
+
+
+/**
+ * name : string
+ * type : string (enum)
+ * key : string
+ * constraints: array
+ * metadata: array
+ * 
+ * 
+ * ['nav','HTMLElement','nav',["HTMLElement"],[]],
+ * ["subscribe","action","addEventListener",["EventTarget"],[
+        ["eventType","string"], ["listener","EventListenerOrEventListenerObject"], ["options","boolean | AddEventListenerOptions", true]
+    ]]
+ */
