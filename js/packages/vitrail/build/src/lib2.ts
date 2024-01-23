@@ -153,14 +153,26 @@ export const prependTo = <T extends Node, V extends Element, U extends Document>
     }
 ]
 
+export type PropertyValueType = string | ((previousValue: string | null) => string) | undefined;
+export type PropertyAdapter = <T extends Element, U extends Document>(value: PropertyValueType) => NodeTask<T,U>;
 
-//__GENERATED_ADAPTERS__//
+export type DataPropertyValueType = string | ((previousValue?: string) => string) | undefined;
+export type CssValueType = string | ((previousValue: string) => string);
+
+export const setProp = <T extends Element, U extends Document>(key: string, value: PropertyValueType): NodeTask<T, U> => [
+    value === undefined ?
+        (entry: [T,U]) => { entry[0][key] = null; return entry; } :
+        typeof value === 'function' ?
+            (entry: [T,U]) => { entry[0][key] = value(entry[0][key]); return entry; } :
+            (entry: [T,U]) => { entry[0][key] = value; return entry; }
+];
+export const removeProp = <T extends Element, U extends Document>(adapter: PropertyAdapter): NodeTask<T,U> => adapter(undefined);
+
+export const getProp = <T extends Element, U extends Document>(name: string, key?: string): Filter<[T,U],[string, unknown][]> =>
+    (entry: [T,U]) => ([[key || name, entry[0][name]]] as [string, unknown][]);
 
 
-
-export type AttributeValueType = string | ((previousValue: string | null) => string) | undefined;
-export type AttributeAdapter = <T extends Element, U extends Document>(value: AttributeValueType) => NodeTask<T,U>;
-export const attr = <T extends Element, U extends Document>(key: string, value: AttributeValueType): NodeTask<T, U> => [
+export const setAttr = <T extends Element, U extends Document>(key: string, value: PropertyValueType): NodeTask<T, U> => [
     value === undefined ?
         (entry: [T,U]) => { entry[0].removeAttribute(key); return entry; } :
         typeof value === 'function' ?
@@ -168,11 +180,74 @@ export const attr = <T extends Element, U extends Document>(key: string, value: 
             (entry: [T,U]) => { entry[0].setAttribute(key, value); return entry; }
 ];
 
-export const removeAttr = <T extends Element, U extends Document>(key: string | AttributeAdapter): NodeTask<T,U> => typeof key === 'string' ? 
-    [(entry: [T,U]) => { entry[0].removeAttribute(key); return entry; }] : key(undefined);
+//general attributes (includes micordata attributes)
+export const removeAttr = <T extends Element, U extends Document>(key: string): NodeTask<T,U> =>
+    [(entry: [T,U]) => { entry[0].removeAttribute(key); return entry; }];
 
 export const getAttr = <T extends Element, U extends Document>(name: string, key?: string): Filter<[T,U],[string, unknown][]> =>
     (entry: [T,U]) => ([[key || name, entry[0].getAttribute(name)]] as [string, unknown][]);
+
+//aria attributes
+export const setAria = <T extends Element, U extends Document>(key: string, value: PropertyValueType): NodeTask<T, U> => attr('aria-'+key, value);
+export const removeAria = <T extends Element, U extends Document>(key: string): NodeTask<T,U> => removeAttr('aria-'+key);
+export const getAria = <T extends Element, U extends Document>(name: string, key?: string): Filter<[T,U],[string, unknown][]> => getAttr('aria-'+name, key);
+
+
+//data attributes
+export const setData = <T extends HTMLElement, U extends Document>(key: string, value: DataPropertyValueType): NodeTask<T, U> => [
+    value === undefined ?
+        (entry: [T,U]) => { delete entry[0].dataset[key]; return entry; } :
+        typeof value === 'function' ?
+            (entry: [T,U]) => { entry[0].dataset[key] = value(entry[0].dataset[key]); return entry; } :
+            (entry: [T,U]) => { entry[0].dataset[key] = value; return entry; }
+];
+
+export const removeData = <T extends HTMLElement, U extends Document>(key: string): NodeTask<T,U> => setData(key, undefined);
+
+export const getData = <T extends HTMLElement, U extends Document>(name: string, key?: string): Filter<[T,U],[string, unknown][]> =>
+    (entry: [T,U]) => ([[key || name, entry[0].dataset[name]]] as [string, unknown][]);
+
+//style attributes
+export const setStyle = <T extends HTMLElement, U extends Document>(key: string, value: DataPropertyValueType): NodeTask<T, U> => [
+    value === undefined ?
+        (entry: [T,U]) => { entry[0].style[key] = null; return entry; } :
+        typeof value === 'function' ?
+            (entry: [T,U]) => { entry[0].style[key] = value(entry[0].style[key]); return entry; } :
+            (entry: [T,U]) => { entry[0].style[key] = value; return entry; }
+];
+
+export const setCss = <T extends HTMLElement, U extends Document>(value: CssValueType): NodeTask<T, U> => [
+    typeof value === 'function' ?
+            (entry: [T,U]) => { entry[0].style.cssText = value(entry[0].style.cssText); return entry; } :
+            (entry: [T,U]) => { entry[0].style.cssText = value; return entry; }
+];
+
+export const removeStyle = <T extends HTMLElement, U extends Document>(key: string): NodeTask<T,U> => setStyle(key, undefined);
+
+export const getStyle = <T extends HTMLElement, U extends Document>(name: string, key?: string): Filter<[T,U],[string, unknown][]> =>
+    (entry: [T,U]) => ([[key || name, entry[0].style[name]]] as [string, unknown][]);
+
+
+//events
+export const subscribe = <T extends EventTarget, U extends Document>(
+    eventType: string, 
+    listener: EventListenerOrEventListenerObject, 
+    options?: boolean | AddEventListenerOptions
+): NodeTask<T,U> => [
+    (entry: [T,U]) => { entry[0].addEventListener(eventType, listener, options); return entry; }
+]
+
+export const unsubscribe = <T extends EventTarget, U extends Document>(
+    eventType: string, 
+    listener: EventListenerOrEventListenerObject, 
+    options?: boolean | AddEventListenerOptions
+): NodeTask<T,U> => [
+    (entry: [T,U]) => { entry[0].removeEventListener(eventType, listener, options); return entry; }
+]
+
+
+//__GENERATED_ADAPTERS__//
+
 
 //__GENERATED_TASKS__//
 
