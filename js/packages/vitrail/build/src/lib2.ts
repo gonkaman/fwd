@@ -5,8 +5,9 @@
 
 export type Filter<U,V> = (arg: U) => V;
 export type Task<T> = [Filter<T,T>, ...string[]];
-export type Branch<U,V> = Filter<U,V>; //() => [Filter<U,V>, ...Task<V>[]]
-export type Adapter<T, U, TConvert> = <K extends TConvert>(...args: (Task<T> | K)[]) => Branch<U,T>;
+export type Connector<TParent,TArg,TChild> = <T extends TParent, U extends TArg, V extends TChild>(filter: Filter<U,V>) => Task<T>
+export type Branch<TParent,U,V> = <T extends TParent>(connect: ((filter: Filter<U,V>) => Task<T>)) => Task<T>; //Filter<U,V>; //() => [Filter<U,V>, ...Task<V>[]]
+export type Adapter<TParent, U, T, TConvert> = <K extends TConvert>(...args: (Task<T> | K)[]) => Branch<TParent,U,T>;
 
 export type Lookup<T> = Filter<void,T|null|undefined>;
 export type Curator<T> = (lookup: Lookup<T>) => void; 
@@ -18,64 +19,77 @@ export type Query = Store<[string, unknown][]>;
  * DOM Manipulation
  */
 
-export type NodeFactory<TNode, TDoc> = <T extends TNode, U extends TDoc>(doc: U, tag: string) => [T,U];
-export type NodeBranch<T,U> = Branch<U, [T,U]>;
 export type NodeTask<T,U> = Task<[T,U]>;
-export type NodeConnector<TNode,TChild,U> = <T extends TNode, V extends TChild>(branch: NodeBranch<V,U>) => NodeTask<T,U>;
-export type NodeAdapterArg<T,TChild,TConvert,U> = (NodeTask<T,U> | TConvert | NodeBranch<TChild,U>)[];
-export type NodeAdapterArgsFormater<TNode,TChild,TConvert,U> = <T extends TNode, V extends TChild>(connector: NodeConnector<T,V,U>) => (args: NodeAdapterArg<T,V,TConvert,U>) => NodeTask<T,U>[];
-export type NodeAdapter<T,TChild,TConvert,U> = Adapter<[T,U], U, TConvert | NodeBranch<TChild,U>>; 
+export type NodeFactory<PDoc,TNode,TDoc> = <TArg extends PDoc, T extends TNode, U extends TDoc>(doc: TArg, tag: string) => [T,U];
+export type NodeConnector<T,TDoc,V,VDoc> = Connector<[T,TDoc],TDoc,[V,VDoc]>; //<T extends TNode, U extends TDoc, V extends TChild>(filter: Filter<U,[V,U]>) => NodeTask<T,U>
+export type NodeBranch<TNode,TDoc,TChild,VDoc> = Branch<[TNode,TDoc],TDoc,[TChild,VDoc]>; //<T extends TNode>(connect: ((filter: Filter<U,[V,U]>) => NodeTask<T,U>)) => NodeTask<T,U>;
+export type NodeAdapterArg<T,TDoc,V,VDoc,TConvert> = (NodeTask<T,TDoc> | TConvert | NodeBranch<T,TDoc,V,VDoc>)[];
+export type NodeAdapterArgsFormater<TNode,TDoc,TChild, VDoc, TConvert> = 
+    <T extends TNode, V extends TChild>(connector: NodeConnector<T,TDoc,V,VDoc>) => (args: NodeAdapterArg<T,TDoc,V,VDoc,TConvert>) => NodeTask<T,TDoc>[];
+export type NodeAdapter<P,PDoc,T,TDoc,V,VDoc,TConvert> = Adapter<[P,PDoc],PDoc,[T,TDoc],TConvert | NodeBranch<T,TDoc,V,VDoc>>; 
 
 export type NodePicker<T,U> = Lookup<[T,U]>; // () => [T,U] | null;
 export type NodeRenderer<TNode,TDoc> = <T extends TNode, U extends TDoc>(lookup: NodePicker<T,U>, ...tasks: NodeTask<T,U>[]) => NodePicker<T,U>;
 
-const createDOMAdapter = <TDoc extends Document, TNode extends Node, TChild extends Node | undefined, TConvert>(
+const createDOMAdapter = <P,PDoc,T,TDoc,V,VDoc,TConvert>(
     tagName: string,
-    factory: NodeFactory<TNode,TDoc>, 
-    connector: NodeConnector<TNode,TChild,TDoc>,
-    format: NodeAdapterArgsFormater<TNode,TChild,TConvert,TDoc>
-): NodeAdapter<TNode,TChild,TConvert,TDoc> => 
-    (...args: NodeAdapterArg<TNode,TChild,TConvert,TDoc>): NodeBranch<TNode,TDoc> => {
+    factory: NodeFactory<PDoc,T,TDoc>, 
+    connector: NodeConnector<T,TDoc,V,VDoc>,
+    format: NodeAdapterArgsFormater<T,TDoc,V,VDoc,TConvert>
+): NodeAdapter<P,PDoc,T,TDoc,V,VDoc,TConvert> => 
+    (...args: NodeAdapterArg<T,TDoc,V,VDoc,TConvert>): NodeBranch<P,PDoc,T,TDoc> => {
         const tasks = format(connector)(args).map(entry => entry[0]);
-        return (doc: TDoc) => tasks.reduce((node, task) => task(node), factory(doc, tagName));
+        const build: Filter<PDoc,[T,TDoc]> = (doc: PDoc) => tasks.reduce((node, task) => task(node), factory(doc, tagName));
+        return <TParent extends [P,PDoc]>(connect: ((filter: Filter<PDoc,[T,TDoc]>) => Task<TParent>)):Task<TParent> => connect(build);
     }
     
 
-const textFactory: NodeFactory<Text, Document> = <T extends Text, U extends Document>(doc: Document, _: string) => 
+const textFactory: NodeFactory<Document | XMLDocument, Text, Document> = <T extends Text, U extends Document>(doc: Document, _: string) => 
     [doc.createTextNode('') as T, doc as U];
 
-const htmlElementFactory: NodeFactory<HTMLElement, Document> = <T extends HTMLElement, U extends Document>(doc: Document, tagName: string) => 
+const htmlElementFactory: NodeFactory<Document, HTMLElement, Document> = <T extends HTMLElement, U extends Document>(doc: Document, tagName: string) => 
     [doc.createElement(tagName) as T, doc as U];
 
-const svgElementFactory: NodeFactory<SVGElement, XMLDocument> = <T extends SVGElement, U extends XMLDocument>(doc: XMLDocument, tagName: string) => 
+const svgElementFactory: NodeFactory<Document, SVGElement, XMLDocument> = <T extends SVGElement, U extends XMLDocument>(doc: XMLDocument, tagName: string) => 
     [doc.createElementNS("http://www.w3.org/2000/svg", tagName) as T, doc as U];
 
-const mathElementFactory: NodeFactory<MathMLElement, XMLDocument> = <T extends MathMLElement, U extends XMLDocument>(doc: XMLDocument, tagName: string) => 
+const mathElementFactory: NodeFactory<Document, MathMLElement, XMLDocument> = <T extends MathMLElement, U extends XMLDocument>(doc: XMLDocument, tagName: string) => 
     [doc.createElementNS("http://www.w3.org/1998/Math/MathML", tagName) as T, doc as U];
 
-const appendConnector: NodeConnector<Node, Node, Document> = <U extends Node, V extends Node>(branch: NodeBranch<V, Document>): NodeTask<U, Document> => [
-        (entry: [U,Document]) => {
-            entry[0].appendChild(branch(entry[1])[0]);
+const appendConnector: NodeConnector<Node, Document, Node, Document> = 
+    <T extends [Node, Document], TArg extends Document, V extends [Node,Document]>(filter: Filter<TArg,V>): Task<T> => [
+        (entry: T) => {
+            entry[0].appendChild(filter(entry[1] as TArg)[0]);
             return entry;
         }
     ];
 
-const noConnector: NodeConnector<Node, Node | undefined, Document> = <U extends Node, V extends Node | undefined>(_: NodeBranch<V, Document>): NodeTask<U, Document> => [
-        (entry: [U,Document]) => entry
+const prependConnector: NodeConnector<Element, Document, Node, Document> = 
+    <T extends [Element, Document], TArg extends Document, V extends [Node,Document]>(filter: Filter<TArg,V>): Task<T> => [
+        (entry: T) => {
+            entry[0].prepend(filter(entry[1] as TArg)[0]);
+            return entry;
+        }
     ];
 
-const formatAdapterArgs: NodeAdapterArgsFormater<Node, Node | undefined, string, Document> = <T extends Node, V extends Node | undefined>(connector: NodeConnector<T,V,Document>) => 
-(args: NodeAdapterArg<T,V,string,Document>): NodeTask<T,Document>[] => 
-    args.map(arg => {
-        if(typeof arg === 'function') return connector(arg);
-        if(typeof arg === 'string') return [
-            (entry: [T,Document]) => {
-                entry[0].appendChild(entry[1].createTextNode(arg));
-                return entry;
-            }
-        ];
-        return arg;
-    });
+const noConnector: NodeConnector<Node, Document, Node | undefined, Document> = 
+    <T extends [Node, Document], U extends Document, V extends [Node | undefined, Document]>(_: Filter<U,V>): Task<T> => [
+        (entry: T) => entry
+    ];
+
+const formatAdapterArgs: NodeAdapterArgsFormater<Node, Document, Node | undefined, Document, string> = 
+    <T extends Node, V extends Node | undefined>(connector: NodeConnector<T,Document,V,Document>) => 
+    (args: NodeAdapterArg<T,Document,V,Document,string>): NodeTask<T,Document>[] => 
+        args.map(arg => {
+            if(typeof arg === 'function') return arg(connector);
+            if(typeof arg === 'string') return [
+                (entry: [T,Document]) => {
+                    entry[0].appendChild(entry[1].createTextNode(arg));
+                    return entry;
+                }
+            ];
+            return arg;
+        });
 
 export const getElement = <T extends Element, U extends Document>(query: string, container: Document | Element): NodePicker<T,U> => () => {
     const node = container.querySelector(query);
@@ -119,18 +133,35 @@ export const query = <T extends Node,U extends Document>(curator: Curator<[strin
     }
 ]
 
-export const text = createDOMAdapter<Document, Text, undefined, string>('', textFactory, noConnector, formatAdapterArgs);
+export const text = createDOMAdapter<
+    Element, Document, 
+    Text, Document, 
+    undefined, Document, 
+    string
+>('', textFactory, noConnector, formatAdapterArgs);
 
-// export const div = createDOMAdapter<Document, HTMLDivElement, HTMLElement | Text, string>('div', htmlElementFactory, appendNode, formatAdapterArgs);
-// export const svg = createDOMAdapter<XMLDocument, SVGElement, SVGElement | Text, string>('svg', svgElementFactory, appendNode, formatAdapterArgs);
-// export const math = createDOMAdapter<XMLDocument, MathMLElement, MathMLElement | Text, string>('math', svgElementFactory, appendNode, formatAdapterArgs);
+// export const div = createDOMAdapter<
+//     HTMLElement, Document, 
+//     HTMLDivElement, Document, 
+//     HTMLElement | Text, Document, 
+//     string
+// >('div', htmlElementFactory, appendConnector, formatAdapterArgs);
 
-export const append = <T extends Node, V extends Node, U extends Document>(branch: NodeBranch<V,U>): NodeTask<T,U> => [
-    (entry: [T,U]) => {
-        entry[0].appendChild(branch(entry[1])[0]);
-        return entry;
-    }
-]
+// export const svg = createDOMAdapter<
+//     HTMLElement | SVGElement, Document, 
+//     SVGSVGElement, XMLDocument, 
+//     SVGElement | Text, XMLDocument, 
+//     string
+// >('svg', svgElementFactory, appendConnector, formatAdapterArgs);
+
+// export const math = createDOMAdapter<
+//     HTMLElement, Document, 
+//     MathMLElement, XMLDocument, 
+//     MathMLElement | Text, XMLDocument, 
+//     string
+// >('math', mathElementFactory, appendConnector, formatAdapterArgs);
+
+export const append = <T extends Node, U extends Document>(branch: NodeBranch<T,U,Node,Document>): NodeTask<T,U> => branch(appendConnector);
 
 export const appendTo = <T extends Node, V extends Node, U extends Document>(lookup: NodePicker<V,U>): NodeTask<T,U> => [
     (entry: [T,U]) => {
@@ -139,12 +170,7 @@ export const appendTo = <T extends Node, V extends Node, U extends Document>(loo
     }
 ]
 
-export const prepend = <T extends Element, V extends Node, U extends Document>(branch: NodeBranch<V,U>): NodeTask<T,U> => [
-    (entry: [T,U]) => {
-        entry[0].prepend(branch(entry[1])[0]);
-        return entry;
-    }
-]
+export const prepend = <T extends Element, U extends Document>(branch: NodeBranch<T,U,Node,Document>): NodeTask<T,U> => branch(prependConnector);
 
 export const prependTo = <T extends Node, V extends Element, U extends Document>(lookup: NodePicker<V,U>): NodeTask<T,U> => [
     (entry: [T,U]) => {
