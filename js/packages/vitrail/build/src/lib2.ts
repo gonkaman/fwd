@@ -50,11 +50,11 @@ const textFactory: NodeFactory<Document | XMLDocument, Text, Document> = <T exte
 const htmlElementFactory: NodeFactory<Document, HTMLElement, Document> = <T extends HTMLElement, U extends Document>(doc: Document, tagName: string) => 
     [doc.createElement(tagName) as T, doc as U];
 
-const svgElementFactory: NodeFactory<Document, SVGElement, XMLDocument> = <T extends SVGElement, U extends XMLDocument>(doc: XMLDocument, tagName: string) => 
-    [doc.createElementNS("http://www.w3.org/2000/svg", tagName) as T, doc as U];
+// const svgElementFactory: NodeFactory<Document, SVGElement, XMLDocument> = <T extends SVGElement, U extends XMLDocument>(doc: XMLDocument, tagName: string) => 
+//     [doc.createElementNS("http://www.w3.org/2000/svg", tagName) as T, doc as U];
 
-const mathElementFactory: NodeFactory<Document, MathMLElement, XMLDocument> = <T extends MathMLElement, U extends XMLDocument>(doc: XMLDocument, tagName: string) => 
-    [doc.createElementNS("http://www.w3.org/1998/Math/MathML", tagName) as T, doc as U];
+// const mathElementFactory: NodeFactory<Document, MathMLElement, XMLDocument> = <T extends MathMLElement, U extends XMLDocument>(doc: XMLDocument, tagName: string) => 
+//     [doc.createElementNS("http://www.w3.org/1998/Math/MathML", tagName) as T, doc as U];
 
 const appendConnector: NodeConnector<Node, Document, Node, Document> = 
     <T extends [Node, Document], TArg extends Document, V extends [Node,Document]>(filter: Filter<TArg,V>): Task<T> => [
@@ -77,14 +77,14 @@ const noConnector: NodeConnector<Node, Document, Node | undefined, Document> =
         (entry: T) => entry
     ];
 
-const formatAdapterArgs: NodeAdapterArgsFormater<Node, Document, Node | undefined, Document, string> = 
-    <T extends Node, V extends Node | undefined>(connector: NodeConnector<T,Document,V,Document>) => 
-    (args: NodeAdapterArg<T,Document,V,Document,string>): NodeTask<T,Document>[] => 
-        args.map(arg => {
+const formatAdapterArgs: NodeAdapterArgsFormater<Node | undefined, Document, Node | undefined, Document, string | undefined> = 
+    <T extends Node | undefined, V extends Node | undefined>(connector: NodeConnector<T,Document,V,Document>) => 
+    (args: NodeAdapterArg<T,Document,V,Document,string | undefined>): NodeTask<T,Document>[] => 
+        (args.filter(arg => arg != null) as NodeAdapterArg<T,Document,V,Document,string>).map(arg => {
             if(typeof arg === 'function') return arg(connector);
             if(typeof arg === 'string') return [
                 (entry: [T,Document]) => {
-                    entry[0].appendChild(entry[1].createTextNode(arg));
+                    entry[0]?.appendChild(entry[1].createTextNode(arg));
                     return entry;
                 }
             ];
@@ -179,22 +179,26 @@ export const prependTo = <T extends Node, V extends Element, U extends Document>
     }
 ]
 
+export const apply = <T extends Node, U extends Document>(action: ((tnode: T, udoc: U) => [T,U])): NodeTask<T,U> => [
+    (entry: [T,U]) => action(...entry)
+]
+
 export type PropertyValueType = string | ((previousValue: string | null) => string) | undefined;
-export type PropertyAdapter = <T extends Element, U extends Document>(value: PropertyValueType) => NodeTask<T,U>;
+export type PropertyAdapter = <T extends Node, U extends Document>(value: PropertyValueType) => NodeTask<T,U>;
 
 export type DataPropertyValueType = string | ((previousValue?: string) => string) | undefined;
 export type CssValueType = string | ((previousValue: string) => string);
 
-export const setProp = <T extends Element, U extends Document>(key: string, value: PropertyValueType): NodeTask<T, U> => [
+export const setProp = <T extends Node, U extends Document>(key: string, value: PropertyValueType): NodeTask<T, U> => [
     value === undefined ?
         (entry: [T,U]) => { entry[0][key] = null; return entry; } :
         typeof value === 'function' ?
             (entry: [T,U]) => { entry[0][key] = value(entry[0][key]); return entry; } :
             (entry: [T,U]) => { entry[0][key] = value; return entry; }
 ];
-export const removeProp = <T extends Element, U extends Document>(adapter: PropertyAdapter): NodeTask<T,U> => adapter(undefined);
+export const removeProp = <T extends Node, U extends Document>(adapter: PropertyAdapter): NodeTask<T,U> => adapter(undefined);
 
-export const getProp = <T extends Element, U extends Document>(name: string, key?: string): Filter<[T,U],[string, unknown][]> =>
+export const getProp = <T extends Node, U extends Document>(name: string, key?: string): Filter<[T,U],[string, unknown][]> =>
     (entry: [T,U]) => ([[key || name, entry[0][name]]] as [string, unknown][]);
 
 
@@ -214,7 +218,7 @@ export const getAttr = <T extends Element, U extends Document>(name: string, key
     (entry: [T,U]) => ([[key || name, entry[0].getAttribute(name)]] as [string, unknown][]);
 
 //aria attributes
-export const setAria = <T extends Element, U extends Document>(key: string, value: PropertyValueType): NodeTask<T, U> => attr('aria-'+key, value);
+export const setAria = <T extends Element, U extends Document>(key: string, value: PropertyValueType): NodeTask<T, U> => setAttr('aria-'+key, value);
 export const removeAria = <T extends Element, U extends Document>(key: string): NodeTask<T,U> => removeAttr('aria-'+key);
 export const getAria = <T extends Element, U extends Document>(name: string, key?: string): Filter<[T,U],[string, unknown][]> => getAttr('aria-'+name, key);
 
@@ -272,8 +276,6 @@ export const unsubscribe = <T extends EventTarget, U extends Document>(
 ]
 
 
-//__GENERATED_ADAPTERS__//
+//__GENERATED_TASKS_AND_ADAPTERS__//
 
-
-//__GENERATED_TASKS__//
 
