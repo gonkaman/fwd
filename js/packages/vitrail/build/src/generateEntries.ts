@@ -1,40 +1,39 @@
 
+const getEntry = (data: [string, string, string, string, any, any]): [string, any][] | undefined => {
+    if(data[0] === "adapter") return [[data[1], {
+        "template":"adapter",
+        "key": data[2],
+        "type": (data[4][0]+'').toUpperCase(),
+        "target": data[3],
+        "parent": data[4][1],
+        "childs": data[4][2]
+    }]];
+    if(data[0] === "prop"){
+        const res: [string, any][] = [
+            [data[1], {
+                "template":"property",
+                "key": data[2],
+                "type": (data[4][0]+'').toUpperCase(),
+                "target": data[3],
+                "parent": data[4][1],
+                "childs": data[4][2]
+            }],
+            [data[1], {
+                "template":"property",
+                "key": 'get'+data[2][0].toUpperCase()+data[2].slice(1),
+                "type": (data[4][0]+'').toUpperCase(),
+                "target": data[3],
+                "parent": data[4][1],
+                "childs": data[4][2]
+            }]
+        ];
+        return res;
+    }
+    return undefined;
+}
 
-//template, name, key, targetType, constraints, parameters
-type AdapterData = [string, string, string, string, any, any];
 
-const getActionParams = (args: any): string => {
-    if(args == null) return '';
-    return (args as [string, string][]).map(entry => entry[0]+': '+entry[1]).join(', ');
-};
-const getActionInputs = (args: any): string => {
-    if(args == null) return '';
-    return (args as [string, string][]).map(entry => entry[0]).join(', ');
-};
-
-const templates: Record<string, (data: AdapterData) => string> = {
-    adapter: (data: AdapterData) => `export const ${data[1]} = createDOMAdapter<
-    ${data[4][1]+''}, Document, 
-    ${data[3]}, Document, 
-    ${data[4][2]+''}, Document, 
-    ${data[4][2] === undefined ? 'undefined' : 'string'}
->('${data[2]}', ${data[4][0]}ElementFactory, ${data[4][2] === undefined ? 'noConnector' : 'appendConnector'}, formatAdapterArgs);`,
-
-
-    prop: (data: AdapterData) => 
-    (data[4] != null ? `export const ${data[1]} = <T extends ${data[3]}, U extends Document>(value: PropertyValueType): NodeTask<T,U> => set${data[4] === false ? 'Attr' : 'Prop'}('${data[2]}', value);`+'\n' : '') + 
-    `export const get${data[1][0].toUpperCase() + data[1].slice(1)} = <T extends ${data[3]}, U extends Document>(key?: string): Filter<[T,U],[string, unknown][]> => get${data[4] === false ? 'Attr' : 'Prop'}('${data[2]}',key);`,
-
-
-    action: (data: AdapterData) => `export const ${data[1]} = <T extends ${data[3]}, U extends Document>(${getActionParams(data[4])}): NodeTask<T,U> => [
-        (entry: [T,U]) => {
-            entry[0].${data[2]}(${getActionInputs(data[4])});
-            return entry;
-        }
-    ];`
-};
-
-const adapters : AdapterData[] = [
+const entryData : AdapterData[] = [
     //adapters (element/tag)
     //[template, name, key, target,[type, parentConstraint, childConstraint], meta]
 
@@ -238,6 +237,6 @@ const adapters : AdapterData[] = [
 ];
 
 
-console.log(adapters.map(data => templates[data[0]](data)).join("\n\n"));
+// console.log(adapters.map(data => templates[data[0]](data)).join("\n\n"));
 
 

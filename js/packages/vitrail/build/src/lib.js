@@ -1,1 +1,260 @@
-const f0=(t,...o)=>(...e)=>o.reduce(((t,o)=>o(t)),t(e)),f1=t=>o=>(t(o),o),f2=(t,o)=>(...e)=>f1((f=>f0(t,...o(f,e)))),c1=c1,c2=c2,f3=()=>document.createTextNode(""),x1={},f4=(t,o)=>(x1[t]||(x1[t]=o?function(){return document.createElementNS("http://www.w3.org/2000/svg",t)}:function(){return document.createElement(t)}),x1[t]),x2=(t,o)=>{const e=o.map((t=>"string"==typeof t?nodeValue(t):t));return e.push(f1((o=>t.append(o)))),e};export const nodeValue=t=>f1("function"==typeof t?o=>{o.nodeValue=t(o.nodeValue)}:o=>{o.nodeValue=t});export const text=f2(f3,x2);export const a=f2(f4("a",c2),x2);export const abbr=f2(f4("abbr",c2),x2);export const address=f2(f4("address",c2),x2);export const area=f2(f4("area",c2),x2);export const article=f2(f4("article",c2),x2);export const aside=f2(f4("aside",c2),x2);export const audio=f2(f4("audio",c2),x2);export const b=f2(f4("b",c2),x2);export const base=f2(f4("base",c2),x2);export const bdi=f2(f4("bdi",c2),x2);export const bdo=f2(f4("bdo",c2),x2);export const blockquote=f2(f4("blockquote",c2),x2);export const body=f2(f4("body",c2),x2);export const br=f2(f4("br",c2),x2);export const button=f2(f4("button",c2),x2);export const canvas=f2(f4("canvas",c2),x2);export const caption=f2(f4("caption",c2),x2);export const cite=f2(f4("cite",c2),x2);export const code=f2(f4("code",c2),x2);export const col=f2(f4("col",c2),x2);export const colgroup=f2(f4("colgroup",c2),x2);export const data=f2(f4("data",c2),x2);export const datalist=f2(f4("datalist",c2),x2);export const dd=f2(f4("dd",c2),x2);export const del=f2(f4("del",c2),x2);export const details=f2(f4("details",c2),x2);export const dp5=f2(f4("dp5",c2),x2);export const dialog=f2(f4("dialog",c2),x2);export const div=f2(f4("div",c2),x2);export const dl=f2(f4("dl",c2),x2);export const dt=f2(f4("dt",c2),x2);export const em=f2(f4("em",c2),x2);export const embed=f2(f4("embed",c2),x2);export const fieldset=f2(f4("fieldset",c2),x2);export const figcaption=f2(f4("figcaption",c2),x2);export const figure=f2(f4("figure",c2),x2);export const footer=f2(f4("footer",c2),x2);export const form=f2(f4("form",c2),x2);export const h1=f2(f4("h1",c2),x2);export const h2=f2(f4("h2",c2),x2);export const h3=f2(f4("h3",c2),x2);export const h4=f2(f4("h4",c2),x2);export const h5=f2(f4("h5",c2),x2);export const h6=f2(f4("h6",c2),x2);export const head=f2(f4("head",c2),x2);export const header=f2(f4("header",c2),x2);export const hgroup=f2(f4("hgroup",c2),x2);export const hr=f2(f4("hr",c2),x2);export const html=f2(f4("html",c2),x2);export const i=f2(f4("i",c2),x2);export const iframe=f2(f4("iframe",c2),x2);export const img=f2(f4("img",c2),x2);export const input=f2(f4("input",c2),x2);export const ins=f2(f4("ins",c2),x2);export const kbd=f2(f4("kbd",c2),x2);export const label=f2(f4("label",c2),x2);export const legend=f2(f4("legend",c2),x2);export const li=f2(f4("li",c2),x2);export const link=f2(f4("link",c2),x2);export const main=f2(f4("main",c2),x2);export const map=f2(f4("map",c2),x2);export const mark=f2(f4("mark",c2),x2);export const menu=f2(f4("menu",c2),x2);export const meta=f2(f4("meta",c2),x2);export const meter=f2(f4("meter",c2),x2);export const nav=f2(f4("nav",c2),x2);export const noscript=f2(f4("noscript",c2),x2);export const object=f2(f4("object",c2),x2);export const ol=f2(f4("ol",c2),x2);export const optgroup=f2(f4("optgroup",c2),x2);export const option=f2(f4("option",c2),x2);export const output=f2(f4("output",c2),x2);export const p=f2(f4("p",c2),x2);export const param=f2(f4("param",c2),x2);export const picture=f2(f4("picture",c2),x2);export const pre=f2(f4("pre",c2),x2);export const progress=f2(f4("progress",c2),x2);export const q=f2(f4("q",c2),x2);export const rp=f2(f4("rp",c2),x2);export const rt=f2(f4("rt",c2),x2);export const ruby=f2(f4("ruby",c2),x2);export const s=f2(f4("s",c2),x2);export const samp=f2(f4("samp",c2),x2);export const script=f2(f4("script",c2),x2);export const search=f2(f4("search",c2),x2);export const section=f2(f4("section",c2),x2);export const select=f2(f4("select",c2),x2);export const slot=f2(f4("slot",c2),x2);export const small=f2(f4("small",c2),x2);export const source=f2(f4("source",c2),x2);export const span=f2(f4("span",c2),x2);export const strong=f2(f4("strong",c2),x2);export const style=f2(f4("style",c2),x2);export const sub=f2(f4("sub",c2),x2);export const summary=f2(f4("summary",c2),x2);export const sup=f2(f4("sup",c2),x2);export const table=f2(f4("table",c2),x2);export const tbody=f2(f4("tbody",c2),x2);export const td=f2(f4("td",c2),x2);export const template=f2(f4("template",c2),x2);export const textarea=f2(f4("textarea",c2),x2);export const tfoot=f2(f4("tfoot",c2),x2);export const th=f2(f4("th",c2),x2);export const thead=f2(f4("thead",c2),x2);export const time=f2(f4("time",c2),x2);export const title=f2(f4("title",c2),x2);export const tr=f2(f4("tr",c2),x2);export const track=f2(f4("track",c2),x2);export const u=f2(f4("u",c2),x2);export const ul=f2(f4("ul",c2),x2);export const htmlvar=f2(f4("var",c2),x2);export const video=f2(f4("video",c2),x2);export const wbr=f2(f4("wbr",c2),x2);export const svga=f2(f4("a",c1),x2);export const animate=f2(f4("animate",c1),x2);export const animateMotion=f2(f4("animateMotion",c1),x2);export const animateTransform=f2(f4("animateTransform",c1),x2);export const circle=f2(f4("circle",c1),x2);export const clipPath=f2(f4("clipPath",c1),x2);export const defs=f2(f4("defs",c1),x2);export const desc=f2(f4("desc",c1),x2);export const ellipse=f2(f4("ellipse",c1),x2);export const feBlend=f2(f4("feBlend",c1),x2);export const feColorMatrix=f2(f4("feColorMatrix",c1),x2);export const feComponentTransfer=f2(f4("feComponentTransfer",c1),x2);export const feComposite=f2(f4("feComposite",c1),x2);export const feConvolveMatrix=f2(f4("feConvolveMatrix",c1),x2);export const feDiffuseLighting=f2(f4("feDiffuseLighting",c1),x2);export const feDisplacementMap=f2(f4("feDisplacementMap",c1),x2);export const feDistantLight=f2(f4("feDistantLight",c1),x2);export const feDropShadow=f2(f4("feDropShadow",c1),x2);export const feFlood=f2(f4("feFlood",c1),x2);export const feFuncA=f2(f4("feFuncA",c1),x2);export const feFuncB=f2(f4("feFuncB",c1),x2);export const feFuncG=f2(f4("feFuncG",c1),x2);export const feFuncR=f2(f4("feFuncR",c1),x2);export const feGaussianBlur=f2(f4("feGaussianBlur",c1),x2);export const feImage=f2(f4("feImage",c1),x2);export const feMerge=f2(f4("feMerge",c1),x2);export const feMergeNode=f2(f4("feMergeNode",c1),x2);export const feMorphology=f2(f4("feMorphology",c1),x2);export const feOffset=f2(f4("feOffset",c1),x2);export const fePointLight=f2(f4("fePointLight",c1),x2);export const feSpecularLighting=f2(f4("feSpecularLighting",c1),x2);export const feSpotLight=f2(f4("feSpotLight",c1),x2);export const feTile=f2(f4("feTile",c1),x2);export const feTurbulence=f2(f4("feTurbulence",c1),x2);export const filter=f2(f4("filter",c1),x2);export const foreignObject=f2(f4("foreignObject",c1),x2);export const g=f2(f4("g",c1),x2);export const image=f2(f4("image",c1),x2);export const line=f2(f4("line",c1),x2);export const linep6radient=f2(f4("linep6radient",c1),x2);export const marker=f2(f4("marker",c1),x2);export const mask=f2(f4("mask",c1),x2);export const metadata=f2(f4("metadata",c1),x2);export const mpath=f2(f4("mpath",c1),x2);export const path=f2(f4("path",c1),x2);export const pattern=f2(f4("pattern",c1),x2);export const polygon=f2(f4("polygon",c1),x2);export const polyline=f2(f4("polyline",c1),x2);export const radialGradient=f2(f4("radialGradient",c1),x2);export const rect=f2(f4("rect",c1),x2);export const svgscript=f2(f4("script",c1),x2);export const set=f2(f4("set",c1),x2);export const stop=f2(f4("stop",c1),x2);export const svgstyle=f2(f4("style",c1),x2);export const svg=f2(f4("svg",c1),x2);export const svgswitch=f2(f4("switch",c1),x2);export const svgsymbol=f2(f4("symbol",c1),x2);export const svgtext=f2(f4("text",c1),x2);export const textPath=f2(f4("textPath",c1),x2);export const svgtitle=f2(f4("title",c1),x2);export const tspan=f2(f4("tspan",c1),x2);export const use=f2(f4("use",c1),x2);export const view=f2(f4("view",c1),x2);
+/**
+ * Core concepts
+ */
+const createDOMAdapter = (tagName, factory, connector, format) => (...args) => {
+    const tasks = format(connector)(args).map(entry => entry[0]);
+    const build = (doc) => tasks.reduce((node, task) => task(node), factory(doc, tagName));
+    return (connect) => connect(build);
+};
+const textFactory = (doc, _) => [doc.createTextNode(''), doc];
+const htmlElementFactory = (doc, tagName) => [doc.createElement(tagName), doc];
+const svgElementFactory = (doc, tagName) => [doc.createElementNS("http://www.w3.org/2000/svg", tagName), doc];
+const mathElementFactory = (doc, tagName) => [doc.createElementNS("http://www.w3.org/1998/Math/MathML", tagName), doc];
+const appendConnector = (filter) => [
+    (entry) => {
+        entry[0].appendChild(filter(entry[1])[0]);
+        return entry;
+    }
+];
+const prependConnector = (filter) => [
+    (entry) => {
+        entry[0].prepend(filter(entry[1])[0]);
+        return entry;
+    }
+];
+const noConnector = (_) => [
+    (entry) => entry
+];
+const formatAdapterArgs = (connector) => (args) => args.filter(arg => arg != null).map(arg => {
+    if (typeof arg === 'function')
+        return arg(connector);
+    if (typeof arg === 'string')
+        return [
+            (entry) => {
+                var _a;
+                (_a = entry[0]) === null || _a === void 0 ? void 0 : _a.appendChild(entry[1].createTextNode(arg));
+                return entry;
+            }
+        ];
+    return arg;
+});
+export const getElement = (query, container) => () => {
+    const node = container.querySelector(query);
+    return node == null ? node : [node, node.ownerDocument];
+};
+export const fromElement = (node) => () => [node, node.ownerDocument];
+export const render = (lookup, ...tasks) => () => {
+    const target = lookup();
+    return target == null ? target : tasks.map(task => task[0]).reduce((node, task) => task(node), target);
+};
+export const createRef = () => {
+    let innerLookup = () => null;
+    return [
+        (lookup) => { innerLookup = lookup; },
+        () => innerLookup()
+    ];
+};
+export const createQuery = () => {
+    const registeredLookups = [];
+    return [
+        (lookup) => { registeredLookups.push(lookup); },
+        () => registeredLookups.reduce((entries, lookup) => { var _a; return entries.concat((_a = lookup()) !== null && _a !== void 0 ? _a : []); }, [])
+    ];
+};
+export const store = (curator) => [
+    (entry) => {
+        curator(() => entry);
+        return entry;
+    }
+];
+export const query = (curator, ...queries) => [
+    (entry) => {
+        curator(() => queries.reduce((entries, query) => entries.concat(query(entry)), []));
+        return entry;
+    }
+];
+export const text = createDOMAdapter('', textFactory, noConnector, formatAdapterArgs);
+export const append = (branch) => branch(appendConnector);
+export const appendTo = (lookup) => [
+    (entry) => {
+        var _a;
+        (_a = lookup()) === null || _a === void 0 ? void 0 : _a[0].appendChild(entry[0]);
+        return entry;
+    }
+];
+export const prepend = (branch) => branch(prependConnector);
+export const prependTo = (lookup) => [
+    (entry) => {
+        var _a;
+        (_a = lookup()) === null || _a === void 0 ? void 0 : _a[0].prepend(entry[0]);
+        return entry;
+    }
+];
+export const setProp = (key, value) => [
+    value === undefined ?
+        (entry) => { entry[0][key] = null; return entry; } :
+        typeof value === 'function' ?
+            (entry) => { entry[0][key] = value(entry[0][key]); return entry; } :
+            (entry) => { entry[0][key] = value; return entry; }
+];
+export const removeProp = (adapter) => adapter(undefined);
+export const getProp = (name, key) => (entry) => [[key || name, entry[0][name]]];
+export const setAttr = (key, value) => [
+    value === undefined ?
+        (entry) => { entry[0].removeAttribute(key); return entry; } :
+        typeof value === 'function' ?
+            (entry) => { entry[0].setAttribute(key, value(entry[0].getAttribute(key))); return entry; } :
+            (entry) => { entry[0].setAttribute(key, value); return entry; }
+];
+//general attributes (includes micordata attributes)
+export const removeAttr = (key) => [(entry) => { entry[0].removeAttribute(key); return entry; }];
+export const getAttr = (name, key) => (entry) => [[key || name, entry[0].getAttribute(name)]];
+//aria attributes
+export const setAria = (key, value) => setAttr('aria-' + key, value);
+export const removeAria = (key) => removeAttr('aria-' + key);
+export const getAria = (name, key) => getAttr('aria-' + name, key);
+//data attributes
+export const setData = (key, value) => [
+    value === undefined ?
+        (entry) => { delete entry[0].dataset[key]; return entry; } :
+        typeof value === 'function' ?
+            (entry) => { entry[0].dataset[key] = value(entry[0].dataset[key]); return entry; } :
+            (entry) => { entry[0].dataset[key] = value; return entry; }
+];
+export const removeData = (key) => setData(key, undefined);
+export const getData = (name, key) => (entry) => [[key || name, entry[0].dataset[name]]];
+//style attributes
+export const setStyle = (key, value) => [
+    value === undefined ?
+        (entry) => { entry[0].style[key] = null; return entry; } :
+        typeof value === 'function' ?
+            (entry) => { entry[0].style[key] = value(entry[0].style[key]); return entry; } :
+            (entry) => { entry[0].style[key] = value; return entry; }
+];
+export const setCss = (value) => [
+    typeof value === 'function' ?
+        (entry) => { entry[0].style.cssText = value(entry[0].style.cssText); return entry; } :
+        (entry) => { entry[0].style.cssText = value; return entry; }
+];
+export const removeStyle = (key) => setStyle(key, undefined);
+export const getStyle = (name, key) => (entry) => [[key || name, entry[0].style[name]]];
+//events
+export const subscribe = (eventType, listener, options) => [
+    (entry) => { entry[0].addEventListener(eventType, listener, options); return entry; }
+];
+export const unsubscribe = (eventType, listener, options) => [
+    (entry) => { entry[0].removeEventListener(eventType, listener, options); return entry; }
+];
+//__GENERATED_TASKS_AND_ADAPTERS__//
+export const a = createDOMAdapter('a', htmlElementFactory, appendConnector, formatAdapterArgs);
+export const abbr = createDOMAdapter('abbr', htmlElementFactory, appendConnector, formatAdapterArgs);
+export const address = createDOMAdapter('address', htmlElementFactory, appendConnector, formatAdapterArgs);
+export const area = createDOMAdapter('area', htmlElementFactory, noConnector, formatAdapterArgs);
+export const article = createDOMAdapter('article', htmlElementFactory, appendConnector, formatAdapterArgs);
+export const aside = createDOMAdapter('aside', htmlElementFactory, appendConnector, formatAdapterArgs);
+export const audio = createDOMAdapter('audio', htmlElementFactory, appendConnector, formatAdapterArgs);
+export const b = createDOMAdapter('b', htmlElementFactory, appendConnector, formatAdapterArgs);
+export const base = createDOMAdapter('base', htmlElementFactory, noConnector, formatAdapterArgs);
+export const bdi = createDOMAdapter('bdi', htmlElementFactory, appendConnector, formatAdapterArgs);
+export const bdo = createDOMAdapter('bdo', htmlElementFactory, appendConnector, formatAdapterArgs);
+export const blockquote = createDOMAdapter('blockquote', htmlElementFactory, appendConnector, formatAdapterArgs);
+export const body = createDOMAdapter('body', htmlElementFactory, appendConnector, formatAdapterArgs);
+export const br = createDOMAdapter('br', htmlElementFactory, noConnector, formatAdapterArgs);
+export const button = createDOMAdapter('button', htmlElementFactory, appendConnector, formatAdapterArgs);
+export const canvas = createDOMAdapter('canvas', htmlElementFactory, appendConnector, formatAdapterArgs);
+export const caption = createDOMAdapter('caption', htmlElementFactory, appendConnector, formatAdapterArgs);
+export const cite = createDOMAdapter('cite', htmlElementFactory, appendConnector, formatAdapterArgs);
+export const code = createDOMAdapter('code', htmlElementFactory, appendConnector, formatAdapterArgs);
+export const col = createDOMAdapter('col', htmlElementFactory, noConnector, formatAdapterArgs);
+export const colgroup = createDOMAdapter('colgroup', htmlElementFactory, appendConnector, formatAdapterArgs);
+export const data = createDOMAdapter('data', htmlElementFactory, appendConnector, formatAdapterArgs);
+export const datalist = createDOMAdapter('datalist', htmlElementFactory, appendConnector, formatAdapterArgs);
+export const dd = createDOMAdapter('dd', htmlElementFactory, appendConnector, formatAdapterArgs);
+export const del = createDOMAdapter('del', htmlElementFactory, appendConnector, formatAdapterArgs);
+export const details = createDOMAdapter('details', htmlElementFactory, appendConnector, formatAdapterArgs);
+export const dfn = createDOMAdapter('dfn', htmlElementFactory, appendConnector, formatAdapterArgs);
+export const dialog = createDOMAdapter('dialog', htmlElementFactory, appendConnector, formatAdapterArgs);
+export const div = createDOMAdapter('div', htmlElementFactory, appendConnector, formatAdapterArgs);
+export const dl = createDOMAdapter('dl', htmlElementFactory, appendConnector, formatAdapterArgs);
+export const dt = createDOMAdapter('dt', htmlElementFactory, appendConnector, formatAdapterArgs);
+export const em = createDOMAdapter('em', htmlElementFactory, appendConnector, formatAdapterArgs);
+export const embed = createDOMAdapter('embed', htmlElementFactory, appendConnector, formatAdapterArgs);
+export const fieldset = createDOMAdapter('fieldset', htmlElementFactory, appendConnector, formatAdapterArgs);
+export const figcaption = createDOMAdapter('figcaption', htmlElementFactory, appendConnector, formatAdapterArgs);
+export const figure = createDOMAdapter('figure', htmlElementFactory, appendConnector, formatAdapterArgs);
+export const footer = createDOMAdapter('footer', htmlElementFactory, appendConnector, formatAdapterArgs);
+export const form = createDOMAdapter('form', htmlElementFactory, appendConnector, formatAdapterArgs);
+export const h1 = createDOMAdapter('h1', htmlElementFactory, appendConnector, formatAdapterArgs);
+export const h2 = createDOMAdapter('h2', htmlElementFactory, appendConnector, formatAdapterArgs);
+export const h3 = createDOMAdapter('h3', htmlElementFactory, appendConnector, formatAdapterArgs);
+export const h4 = createDOMAdapter('h4', htmlElementFactory, appendConnector, formatAdapterArgs);
+export const h5 = createDOMAdapter('h5', htmlElementFactory, appendConnector, formatAdapterArgs);
+export const h6 = createDOMAdapter('h6', htmlElementFactory, appendConnector, formatAdapterArgs);
+export const head = createDOMAdapter('head', htmlElementFactory, appendConnector, formatAdapterArgs);
+export const header = createDOMAdapter('header', htmlElementFactory, appendConnector, formatAdapterArgs);
+export const hgroup = createDOMAdapter('hgroup', htmlElementFactory, appendConnector, formatAdapterArgs);
+export const hr = createDOMAdapter('hr', htmlElementFactory, appendConnector, formatAdapterArgs);
+export const html = createDOMAdapter('html', htmlElementFactory, appendConnector, formatAdapterArgs);
+export const i = createDOMAdapter('i', htmlElementFactory, appendConnector, formatAdapterArgs);
+export const iframe = createDOMAdapter('iframe', htmlElementFactory, appendConnector, formatAdapterArgs);
+export const img = createDOMAdapter('img', htmlElementFactory, noConnector, formatAdapterArgs);
+export const input = createDOMAdapter('input', htmlElementFactory, noConnector, formatAdapterArgs);
+export const ins = createDOMAdapter('ins', htmlElementFactory, appendConnector, formatAdapterArgs);
+export const kbd = createDOMAdapter('kbd', htmlElementFactory, appendConnector, formatAdapterArgs);
+export const label = createDOMAdapter('label', htmlElementFactory, appendConnector, formatAdapterArgs);
+export const legend = createDOMAdapter('legend', htmlElementFactory, appendConnector, formatAdapterArgs);
+export const li = createDOMAdapter('li', htmlElementFactory, appendConnector, formatAdapterArgs);
+export const link = createDOMAdapter('link', htmlElementFactory, appendConnector, formatAdapterArgs);
+export const main = createDOMAdapter('main', htmlElementFactory, appendConnector, formatAdapterArgs);
+export const mark = createDOMAdapter('mark', htmlElementFactory, appendConnector, formatAdapterArgs);
+export const menu = createDOMAdapter('menu', htmlElementFactory, appendConnector, formatAdapterArgs);
+export const meta = createDOMAdapter('meta', htmlElementFactory, appendConnector, formatAdapterArgs);
+export const meter = createDOMAdapter('meter', htmlElementFactory, appendConnector, formatAdapterArgs);
+export const nav = createDOMAdapter('nav', htmlElementFactory, appendConnector, formatAdapterArgs);
+export const noscript = createDOMAdapter('noscript', htmlElementFactory, appendConnector, formatAdapterArgs);
+export const object = createDOMAdapter('object', htmlElementFactory, appendConnector, formatAdapterArgs);
+export const ol = createDOMAdapter('ol', htmlElementFactory, appendConnector, formatAdapterArgs);
+export const optgroup = createDOMAdapter('optgroup', htmlElementFactory, appendConnector, formatAdapterArgs);
+export const option = createDOMAdapter('option', htmlElementFactory, appendConnector, formatAdapterArgs);
+export const output = createDOMAdapter('output', htmlElementFactory, appendConnector, formatAdapterArgs);
+export const p = createDOMAdapter('p', htmlElementFactory, appendConnector, formatAdapterArgs);
+export const param = createDOMAdapter('param', htmlElementFactory, appendConnector, formatAdapterArgs);
+export const picture = createDOMAdapter('picture', htmlElementFactory, appendConnector, formatAdapterArgs);
+export const pre = createDOMAdapter('pre', htmlElementFactory, appendConnector, formatAdapterArgs);
+export const progress = createDOMAdapter('progress', htmlElementFactory, appendConnector, formatAdapterArgs);
+export const q = createDOMAdapter('q', htmlElementFactory, appendConnector, formatAdapterArgs);
+export const rp = createDOMAdapter('rp', htmlElementFactory, appendConnector, formatAdapterArgs);
+export const rt = createDOMAdapter('rt', htmlElementFactory, appendConnector, formatAdapterArgs);
+export const ruby = createDOMAdapter('ruby', htmlElementFactory, appendConnector, formatAdapterArgs);
+export const s = createDOMAdapter('s', htmlElementFactory, appendConnector, formatAdapterArgs);
+export const samp = createDOMAdapter('samp', htmlElementFactory, appendConnector, formatAdapterArgs);
+export const script = createDOMAdapter('script', htmlElementFactory, appendConnector, formatAdapterArgs);
+export const search = createDOMAdapter('search', htmlElementFactory, appendConnector, formatAdapterArgs);
+export const section = createDOMAdapter('section', htmlElementFactory, appendConnector, formatAdapterArgs);
+export const select = createDOMAdapter('select', htmlElementFactory, appendConnector, formatAdapterArgs);
+export const slot = createDOMAdapter('slot', htmlElementFactory, appendConnector, formatAdapterArgs);
+export const small = createDOMAdapter('small', htmlElementFactory, appendConnector, formatAdapterArgs);
+export const source = createDOMAdapter('source', htmlElementFactory, appendConnector, formatAdapterArgs);
+export const span = createDOMAdapter('span', htmlElementFactory, appendConnector, formatAdapterArgs);
+export const strong = createDOMAdapter('strong', htmlElementFactory, appendConnector, formatAdapterArgs);
+export const style = createDOMAdapter('style', htmlElementFactory, appendConnector, formatAdapterArgs);
+export const sub = createDOMAdapter('sub', htmlElementFactory, appendConnector, formatAdapterArgs);
+export const summary = createDOMAdapter('summary', htmlElementFactory, appendConnector, formatAdapterArgs);
+export const sup = createDOMAdapter('sup', htmlElementFactory, appendConnector, formatAdapterArgs);
+export const table = createDOMAdapter('table', htmlElementFactory, appendConnector, formatAdapterArgs);
+export const tbody = createDOMAdapter('tbody', htmlElementFactory, appendConnector, formatAdapterArgs);
+export const td = createDOMAdapter('td', htmlElementFactory, appendConnector, formatAdapterArgs);
+export const template = createDOMAdapter('template', htmlElementFactory, appendConnector, formatAdapterArgs);
+export const textarea = createDOMAdapter('textarea', htmlElementFactory, appendConnector, formatAdapterArgs);
+export const tfoot = createDOMAdapter('tfoot', htmlElementFactory, appendConnector, formatAdapterArgs);
+export const th = createDOMAdapter('th', htmlElementFactory, appendConnector, formatAdapterArgs);
+export const thead = createDOMAdapter('thead', htmlElementFactory, appendConnector, formatAdapterArgs);
+export const time = createDOMAdapter('time', htmlElementFactory, appendConnector, formatAdapterArgs);
+export const title = createDOMAdapter('title', htmlElementFactory, appendConnector, formatAdapterArgs);
+export const tr = createDOMAdapter('tr', htmlElementFactory, appendConnector, formatAdapterArgs);
+export const track = createDOMAdapter('track', htmlElementFactory, appendConnector, formatAdapterArgs);
+export const u = createDOMAdapter('u', htmlElementFactory, appendConnector, formatAdapterArgs);
+export const ul = createDOMAdapter('ul', htmlElementFactory, appendConnector, formatAdapterArgs);
+export const htmlvar = createDOMAdapter('var', htmlElementFactory, appendConnector, formatAdapterArgs);
+export const video = createDOMAdapter('video', htmlElementFactory, appendConnector, formatAdapterArgs);
+export const wbr = createDOMAdapter('wbr', htmlElementFactory, appendConnector, formatAdapterArgs);

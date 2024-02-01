@@ -1,0 +1,10 @@
+{
+    "a": {
+        "template":"adapter",
+        "key":"a",
+        "type": "HTML",
+        "target": "HTMLAnchorElement",
+        "parent": "HTMLElement",
+        "childs": "HTMLElement | Text"
+    }
+}
