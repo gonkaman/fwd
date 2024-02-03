@@ -1,10 +1,1728 @@
 {
-    "a": {
-        "template":"adapter",
-        "key":"a",
-        "type": "HTML",
-        "target": "HTMLAnchorElement",
-        "parent": "HTMLElement",
-        "childs": "HTMLElement | Text"
-    }
+  "a": {
+    "template": "adapter",
+    "key": "a",
+    "type": "HTML",
+    "target": "HTMLAnchorElement",
+    "parent": "HTMLElement",
+    "childs": "HTMLElement | Text"
+  },
+  "abbr": {
+    "template": "adapter",
+    "key": "abbr",
+    "type": "HTML",
+    "target": "HTMLElement",
+    "parent": "HTMLElement",
+    "childs": "HTMLElement | Text"
+  },
+  "address": {
+    "template": "adapter",
+    "key": "address",
+    "type": "HTML",
+    "target": "HTMLElement",
+    "parent": "HTMLElement",
+    "childs": "HTMLElement | Text"
+  },
+  "area": {
+    "template": "adapter",
+    "key": "area",
+    "type": "HTML",
+    "target": "HTMLAreaElement",
+    "parent": "HTMLElement"
+  },
+  "article": {
+    "template": "adapter",
+    "key": "article",
+    "type": "HTML",
+    "target": "HTMLElement",
+    "parent": "HTMLElement",
+    "childs": "HTMLElement | Text"
+  },
+  "aside": {
+    "template": "adapter",
+    "key": "aside",
+    "type": "HTML",
+    "target": "HTMLElement",
+    "parent": "HTMLElement",
+    "childs": "HTMLElement | Text"
+  },
+  "audio": {
+    "template": "adapter",
+    "key": "audio",
+    "type": "HTML",
+    "target": "HTMLAudioElement",
+    "parent": "HTMLElement",
+    "childs": "HTMLElement | Text"
+  },
+  "b": {
+    "template": "adapter",
+    "key": "b",
+    "type": "HTML",
+    "target": "HTMLElement",
+    "parent": "HTMLElement",
+    "childs": "HTMLElement | Text"
+  },
+  "base": {
+    "template": "adapter",
+    "key": "base",
+    "type": "HTML",
+    "target": "HTMLBaseElement",
+    "parent": "HTMLElement"
+  },
+  "bdi": {
+    "template": "adapter",
+    "key": "bdi",
+    "type": "HTML",
+    "target": "HTMLElement",
+    "parent": "HTMLElement",
+    "childs": "HTMLElement | Text"
+  },
+  "bdo": {
+    "template": "adapter",
+    "key": "bdo",
+    "type": "HTML",
+    "target": "HTMLElement",
+    "parent": "HTMLElement",
+    "childs": "HTMLElement | Text"
+  },
+  "blockquote": {
+    "template": "adapter",
+    "key": "blockquote",
+    "type": "HTML",
+    "target": "HTMLQuoteElement",
+    "parent": "HTMLElement",
+    "childs": "HTMLElement | Text"
+  },
+  "body": {
+    "template": "adapter",
+    "key": "body",
+    "type": "HTML",
+    "target": "HTMLElement",
+    "parent": "HTMLElement",
+    "childs": "HTMLElement | Text"
+  },
+  "br": {
+    "template": "adapter",
+    "key": "br",
+    "type": "HTML",
+    "target": "HTMLBRElement",
+    "parent": "HTMLElement"
+  },
+  "button": {
+    "template": "adapter",
+    "key": "button",
+    "type": "HTML",
+    "target": "HTMLButtonElement",
+    "parent": "HTMLElement",
+    "childs": "HTMLElement | Text"
+  },
+  "canvas": {
+    "template": "adapter",
+    "key": "canvas",
+    "type": "HTML",
+    "target": "HTMLCanvasElement",
+    "parent": "HTMLElement",
+    "childs": "HTMLElement | Text"
+  },
+  "caption": {
+    "template": "adapter",
+    "key": "caption",
+    "type": "HTML",
+    "target": "HTMLTableCaptionElement",
+    "parent": "HTMLElement",
+    "childs": "HTMLElement | Text"
+  },
+  "cite": {
+    "template": "adapter",
+    "key": "cite",
+    "type": "HTML",
+    "target": "HTMLQuoteElement",
+    "parent": "HTMLElement",
+    "childs": "HTMLElement | Text"
+  },
+  "code": {
+    "template": "adapter",
+    "key": "code",
+    "type": "HTML",
+    "target": "HTMLElement",
+    "parent": "HTMLElement",
+    "childs": "HTMLElement | Text"
+  },
+  "col": {
+    "template": "adapter",
+    "key": "col",
+    "type": "HTML",
+    "target": "HTMLTableColElement",
+    "parent": "HTMLTableColElement"
+  },
+  "colgroup": {
+    "template": "adapter",
+    "key": "colgroup",
+    "type": "HTML",
+    "target": "HTMLTableColElement",
+    "parent": "HTMLTableElement",
+    "childs": "HTMLTableColElement"
+  },
+  "data": {
+    "template": "adapter",
+    "key": "data",
+    "type": "HTML",
+    "target": "HTMLDataElement",
+    "parent": "HTMLElement",
+    "childs": "HTMLElement | Text"
+  },
+  "datalist": {
+    "template": "adapter",
+    "key": "datalist",
+    "type": "HTML",
+    "target": "HTMLDataListElement",
+    "parent": "HTMLElement",
+    "childs": "HTMLElement | Text"
+  },
+  "dd": {
+    "template": "adapter",
+    "key": "dd",
+    "type": "HTML",
+    "target": "HTMLElement",
+    "parent": "HTMLElement",
+    "childs": "HTMLElement | Text"
+  },
+  "del": {
+    "template": "adapter",
+    "key": "del",
+    "type": "HTML",
+    "target": "HTMLModElement",
+    "parent": "HTMLElement",
+    "childs": "HTMLElement | Text"
+  },
+  "details": {
+    "template": "adapter",
+    "key": "details",
+    "type": "HTML",
+    "target": "HTMLElement",
+    "parent": "HTMLElement",
+    "childs": "HTMLElement | Text"
+  },
+  "dfn": {
+    "template": "adapter",
+    "key": "dfn",
+    "type": "HTML",
+    "target": "HTMLElement",
+    "parent": "HTMLElement",
+    "childs": "HTMLElement | Text"
+  },
+  "dialog": {
+    "template": "adapter",
+    "key": "dialog",
+    "type": "HTML",
+    "target": "HTMLDialogElement",
+    "parent": "HTMLElement",
+    "childs": "HTMLElement | Text"
+  },
+  "div": {
+    "template": "adapter",
+    "key": "div",
+    "type": "HTML",
+    "target": "HTMLDivElement",
+    "parent": "HTMLElement",
+    "childs": "HTMLElement | Text"
+  },
+  "dl": {
+    "template": "adapter",
+    "key": "dl",
+    "type": "HTML",
+    "target": "HTMLDListElement",
+    "parent": "HTMLElement",
+    "childs": "HTMLElement | Text"
+  },
+  "dt": {
+    "template": "adapter",
+    "key": "dt",
+    "type": "HTML",
+    "target": "HTMLElement",
+    "parent": "HTMLElement",
+    "childs": "HTMLElement | Text"
+  },
+  "em": {
+    "template": "adapter",
+    "key": "em",
+    "type": "HTML",
+    "target": "HTMLElement",
+    "parent": "HTMLElement",
+    "childs": "HTMLElement | Text"
+  },
+  "embed": {
+    "template": "adapter",
+    "key": "embed",
+    "type": "HTML",
+    "target": "HTMLEmbedElement",
+    "parent": "HTMLElement",
+    "childs": "HTMLElement | Text"
+  },
+  "fieldset": {
+    "template": "adapter",
+    "key": "fieldset",
+    "type": "HTML",
+    "target": "HTMLFieldSetElement",
+    "parent": "HTMLElement",
+    "childs": "HTMLElement | Text"
+  },
+  "figcaption": {
+    "template": "adapter",
+    "key": "figcaption",
+    "type": "HTML",
+    "target": "HTMLElement",
+    "parent": "HTMLElement",
+    "childs": "HTMLElement | Text"
+  },
+  "figure": {
+    "template": "adapter",
+    "key": "figure",
+    "type": "HTML",
+    "target": "HTMLElement",
+    "parent": "HTMLElement",
+    "childs": "HTMLElement | Text"
+  },
+  "footer": {
+    "template": "adapter",
+    "key": "footer",
+    "type": "HTML",
+    "target": "HTMLElement",
+    "parent": "HTMLElement",
+    "childs": "HTMLElement | Text"
+  },
+  "form": {
+    "template": "adapter",
+    "key": "form",
+    "type": "HTML",
+    "target": "HTMLFormElement",
+    "parent": "HTMLElement",
+    "childs": "HTMLElement | Text"
+  },
+  "h1": {
+    "template": "adapter",
+    "key": "h1",
+    "type": "HTML",
+    "target": "HTMLHeadingElement",
+    "parent": "HTMLElement",
+    "childs": "HTMLElement | Text"
+  },
+  "h2": {
+    "template": "adapter",
+    "key": "h2",
+    "type": "HTML",
+    "target": "HTMLHeadingElement",
+    "parent": "HTMLElement",
+    "childs": "HTMLElement | Text"
+  },
+  "h3": {
+    "template": "adapter",
+    "key": "h3",
+    "type": "HTML",
+    "target": "HTMLHeadingElement",
+    "parent": "HTMLElement",
+    "childs": "HTMLElement | Text"
+  },
+  "h4": {
+    "template": "adapter",
+    "key": "h4",
+    "type": "HTML",
+    "target": "HTMLHeadingElement",
+    "parent": "HTMLElement",
+    "childs": "HTMLElement | Text"
+  },
+  "h5": {
+    "template": "adapter",
+    "key": "h5",
+    "type": "HTML",
+    "target": "HTMLHeadingElement",
+    "parent": "HTMLElement",
+    "childs": "HTMLElement | Text"
+  },
+  "h6": {
+    "template": "adapter",
+    "key": "h6",
+    "type": "HTML",
+    "target": "HTMLHeadingElement",
+    "parent": "HTMLElement",
+    "childs": "HTMLElement | Text"
+  },
+  "head": {
+    "template": "adapter",
+    "key": "head",
+    "type": "HTML",
+    "target": "HTMLHeadElement",
+    "parent": "HTMLElement",
+    "childs": "HTMLElement | Text"
+  },
+  "header": {
+    "template": "adapter",
+    "key": "header",
+    "type": "HTML",
+    "target": "HTMLElement",
+    "parent": "HTMLElement",
+    "childs": "HTMLElement | Text"
+  },
+  "hgroup": {
+    "template": "adapter",
+    "key": "hgroup",
+    "type": "HTML",
+    "target": "HTMLElement",
+    "parent": "HTMLElement",
+    "childs": "HTMLElement | Text"
+  },
+  "hr": {
+    "template": "adapter",
+    "key": "hr",
+    "type": "HTML",
+    "target": "HTMLHRElement",
+    "parent": "HTMLElement",
+    "childs": "HTMLElement | Text"
+  },
+  "html": {
+    "template": "adapter",
+    "key": "html",
+    "type": "HTML",
+    "target": "HTMLElement",
+    "childs": "HTMLElement | Text"
+  },
+  "i": {
+    "template": "adapter",
+    "key": "i",
+    "type": "HTML",
+    "target": "HTMLElement",
+    "parent": "HTMLElement",
+    "childs": "HTMLElement | Text"
+  },
+  "iframe": {
+    "template": "adapter",
+    "key": "iframe",
+    "type": "HTML",
+    "target": "HTMLIFrameElement",
+    "parent": "HTMLElement",
+    "childs": "HTMLElement | Text"
+  },
+  "img": {
+    "template": "adapter",
+    "key": "img",
+    "type": "HTML",
+    "target": "HTMLImageElement",
+    "parent": "HTMLElement"
+  },
+  "input": {
+    "template": "adapter",
+    "key": "input",
+    "type": "HTML",
+    "target": "HTMLInputElement",
+    "parent": "HTMLElement"
+  },
+  "ins": {
+    "template": "adapter",
+    "key": "ins",
+    "type": "HTML",
+    "target": "HTMLModElement",
+    "parent": "HTMLElement",
+    "childs": "HTMLElement | Text"
+  },
+  "kbd": {
+    "template": "adapter",
+    "key": "kbd",
+    "type": "HTML",
+    "target": "HTMLElement",
+    "parent": "HTMLElement",
+    "childs": "HTMLElement | Text"
+  },
+  "label": {
+    "template": "adapter",
+    "key": "label",
+    "type": "HTML",
+    "target": "HTMLLabelElement",
+    "parent": "HTMLElement",
+    "childs": "HTMLElement | Text"
+  },
+  "legend": {
+    "template": "adapter",
+    "key": "legend",
+    "type": "HTML",
+    "target": "HTMLLegendElement",
+    "parent": "HTMLElement",
+    "childs": "HTMLElement | Text"
+  },
+  "li": {
+    "template": "adapter",
+    "key": "li",
+    "type": "HTML",
+    "target": "HTMLLIElement",
+    "parent": "HTMLElement",
+    "childs": "HTMLElement | Text"
+  },
+  "link": {
+    "template": "adapter",
+    "key": "link",
+    "type": "HTML",
+    "target": "HTMLLinkElement",
+    "parent": "HTMLElement",
+    "childs": "HTMLElement | Text"
+  },
+  "main": {
+    "template": "adapter",
+    "key": "main",
+    "type": "HTML",
+    "target": "HTMLElement",
+    "parent": "HTMLElement",
+    "childs": "HTMLElement | Text"
+  },
+  "mark": {
+    "template": "adapter",
+    "key": "mark",
+    "type": "HTML",
+    "target": "HTMLElement",
+    "parent": "HTMLElement",
+    "childs": "HTMLElement | Text"
+  },
+  "menu": {
+    "template": "adapter",
+    "key": "menu",
+    "type": "HTML",
+    "target": "HTMLMenuElement",
+    "parent": "HTMLElement",
+    "childs": "HTMLElement | Text"
+  },
+  "meta": {
+    "template": "adapter",
+    "key": "meta",
+    "type": "HTML",
+    "target": "HTMLElement",
+    "parent": "HTMLElement",
+    "childs": "HTMLElement | Text"
+  },
+  "meter": {
+    "template": "adapter",
+    "key": "meter",
+    "type": "HTML",
+    "target": "HTMLMeterElement",
+    "parent": "HTMLElement",
+    "childs": "HTMLElement | Text"
+  },
+  "nav": {
+    "template": "adapter",
+    "key": "nav",
+    "type": "HTML",
+    "target": "HTMLElement",
+    "parent": "HTMLElement",
+    "childs": "HTMLElement | Text"
+  },
+  "noscript": {
+    "template": "adapter",
+    "key": "noscript",
+    "type": "HTML",
+    "target": "HTMLElement",
+    "parent": "HTMLElement",
+    "childs": "HTMLElement | Text"
+  },
+  "object": {
+    "template": "adapter",
+    "key": "object",
+    "type": "HTML",
+    "target": "HTMLObjectElement",
+    "parent": "HTMLElement",
+    "childs": "HTMLElement | Text"
+  },
+  "ol": {
+    "template": "adapter",
+    "key": "ol",
+    "type": "HTML",
+    "target": "HTMLOListElement",
+    "parent": "HTMLElement",
+    "childs": "HTMLElement | Text"
+  },
+  "optgroup": {
+    "template": "adapter",
+    "key": "optgroup",
+    "type": "HTML",
+    "target": "HTMLOptGroupElement",
+    "parent": "HTMLElement",
+    "childs": "HTMLElement | Text"
+  },
+  "option": {
+    "template": "adapter",
+    "key": "option",
+    "type": "HTML",
+    "target": "HTMLOptionElement",
+    "parent": "HTMLElement",
+    "childs": "HTMLElement | Text"
+  },
+  "output": {
+    "template": "adapter",
+    "key": "output",
+    "type": "HTML",
+    "target": "HTMLOutputElement",
+    "parent": "HTMLElement",
+    "childs": "HTMLElement | Text"
+  },
+  "p": {
+    "template": "adapter",
+    "key": "p",
+    "type": "HTML",
+    "target": "HTMLParagraphElement",
+    "parent": "HTMLElement",
+    "childs": "HTMLElement | Text"
+  },
+  "param": {
+    "template": "adapter",
+    "key": "param",
+    "type": "HTML",
+    "target": "HTMLParagraphElement",
+    "parent": "HTMLElement",
+    "childs": "HTMLElement | Text"
+  },
+  "picture": {
+    "template": "adapter",
+    "key": "picture",
+    "type": "HTML",
+    "target": "HTMLPictureElement",
+    "parent": "HTMLElement",
+    "childs": "HTMLElement | Text"
+  },
+  "pre": {
+    "template": "adapter",
+    "key": "pre",
+    "type": "HTML",
+    "target": "HTMLPreElement",
+    "parent": "HTMLElement",
+    "childs": "HTMLElement | Text"
+  },
+  "progress": {
+    "template": "adapter",
+    "key": "progress",
+    "type": "HTML",
+    "target": "HTMLProgressElement",
+    "parent": "HTMLElement",
+    "childs": "HTMLElement | Text"
+  },
+  "q": {
+    "template": "adapter",
+    "key": "q",
+    "type": "HTML",
+    "target": "HTMLQuoteElement",
+    "parent": "HTMLElement",
+    "childs": "HTMLElement | Text"
+  },
+  "rp": {
+    "template": "adapter",
+    "key": "rp",
+    "type": "HTML",
+    "target": "HTMLElement",
+    "parent": "HTMLElement",
+    "childs": "HTMLElement | Text"
+  },
+  "rt": {
+    "template": "adapter",
+    "key": "rt",
+    "type": "HTML",
+    "target": "HTMLElement",
+    "parent": "HTMLElement",
+    "childs": "HTMLElement | Text"
+  },
+  "ruby": {
+    "template": "adapter",
+    "key": "ruby",
+    "type": "HTML",
+    "target": "HTMLElement",
+    "parent": "HTMLElement",
+    "childs": "HTMLElement | Text"
+  },
+  "s": {
+    "template": "adapter",
+    "key": "s",
+    "type": "HTML",
+    "target": "HTMLElement",
+    "parent": "HTMLElement",
+    "childs": "HTMLElement | Text"
+  },
+  "samp": {
+    "template": "adapter",
+    "key": "samp",
+    "type": "HTML",
+    "target": "HTMLElement",
+    "parent": "HTMLElement",
+    "childs": "HTMLElement | Text"
+  },
+  "script": {
+    "template": "adapter",
+    "key": "script",
+    "type": "HTML",
+    "target": "HTMLElement",
+    "parent": "HTMLElement",
+    "childs": "HTMLElement | Text"
+  },
+  "search": {
+    "template": "adapter",
+    "key": "search",
+    "type": "HTML",
+    "target": "HTMLElement",
+    "parent": "HTMLElement",
+    "childs": "HTMLElement | Text"
+  },
+  "section": {
+    "template": "adapter",
+    "key": "section",
+    "type": "HTML",
+    "target": "HTMLElement",
+    "parent": "HTMLElement",
+    "childs": "HTMLElement | Text"
+  },
+  "select": {
+    "template": "adapter",
+    "key": "select",
+    "type": "HTML",
+    "target": "HTMLSelectElement",
+    "parent": "HTMLElement",
+    "childs": "HTMLElement | Text"
+  },
+  "htmlslot": {
+    "template": "adapter",
+    "key": "slot",
+    "type": "HTML",
+    "target": "HTMLSlotElement",
+    "parent": "HTMLElement",
+    "childs": "HTMLElement | Text"
+  },
+  "small": {
+    "template": "adapter",
+    "key": "small",
+    "type": "HTML",
+    "target": "HTMLElement",
+    "parent": "HTMLElement",
+    "childs": "HTMLElement | Text"
+  },
+  "source": {
+    "template": "adapter",
+    "key": "source",
+    "type": "HTML",
+    "target": "HTMLSourceElement",
+    "parent": "HTMLElement",
+    "childs": "HTMLElement | Text"
+  },
+  "span": {
+    "template": "adapter",
+    "key": "span",
+    "type": "HTML",
+    "target": "HTMLElement",
+    "parent": "HTMLElement",
+    "childs": "HTMLElement | Text"
+  },
+  "strong": {
+    "template": "adapter",
+    "key": "strong",
+    "type": "HTML",
+    "target": "HTMLElement",
+    "parent": "HTMLElement",
+    "childs": "HTMLElement | Text"
+  },
+  "style": {
+    "template": "adapter",
+    "key": "style",
+    "type": "HTML",
+    "target": "HTMLElement",
+    "parent": "HTMLElement",
+    "childs": "HTMLElement | Text"
+  },
+  "sub": {
+    "template": "adapter",
+    "key": "sub",
+    "type": "HTML",
+    "target": "HTMLElement",
+    "parent": "HTMLElement",
+    "childs": "HTMLElement | Text"
+  },
+  "summary": {
+    "template": "adapter",
+    "key": "summary",
+    "type": "HTML",
+    "target": "HTMLElement",
+    "parent": "HTMLElement",
+    "childs": "HTMLElement | Text"
+  },
+  "sup": {
+    "template": "adapter",
+    "key": "sup",
+    "type": "HTML",
+    "target": "HTMLElement",
+    "parent": "HTMLElement",
+    "childs": "HTMLElement | Text"
+  },
+  "table": {
+    "template": "adapter",
+    "key": "table",
+    "type": "HTML",
+    "target": "HTMLTableElement",
+    "parent": "HTMLElement",
+    "childs": "HTMLElement | Text"
+  },
+  "tbody": {
+    "template": "adapter",
+    "key": "tbody",
+    "type": "HTML",
+    "target": "HTMLTableSectionElement",
+    "parent": "HTMLElement",
+    "childs": "HTMLElement | Text"
+  },
+  "td": {
+    "template": "adapter",
+    "key": "td",
+    "type": "HTML",
+    "target": "HTMLTableCellElement",
+    "parent": "HTMLElement",
+    "childs": "HTMLElement | Text"
+  },
+  "template": {
+    "template": "adapter",
+    "key": "template",
+    "type": "HTML",
+    "target": "HTMLTemplateElement",
+    "parent": "HTMLElement",
+    "childs": "HTMLElement | Text"
+  },
+  "textarea": {
+    "template": "adapter",
+    "key": "textarea",
+    "type": "HTML",
+    "target": "HTMLTextAreaElement",
+    "parent": "HTMLElement",
+    "childs": "HTMLElement | Text"
+  },
+  "tfoot": {
+    "template": "adapter",
+    "key": "tfoot",
+    "type": "HTML",
+    "target": "HTMLTableSectionElement",
+    "parent": "HTMLElement",
+    "childs": "HTMLElement | Text"
+  },
+  "th": {
+    "template": "adapter",
+    "key": "th",
+    "type": "HTML",
+    "target": "HTMLTableCellElement",
+    "parent": "HTMLElement",
+    "childs": "HTMLElement | Text"
+  },
+  "thead": {
+    "template": "adapter",
+    "key": "thead",
+    "type": "HTML",
+    "target": "HTMLTableSectionElement",
+    "parent": "HTMLElement",
+    "childs": "HTMLElement | Text"
+  },
+  "time": {
+    "template": "adapter",
+    "key": "time",
+    "type": "HTML",
+    "target": "HTMLTimeElement",
+    "parent": "HTMLElement",
+    "childs": "HTMLElement | Text"
+  },
+  "htmltitle": {
+    "template": "adapter",
+    "key": "title",
+    "type": "HTML",
+    "target": "HTMLTitleElement",
+    "parent": "HTMLElement",
+    "childs": "HTMLElement | Text"
+  },
+  "tr": {
+    "template": "adapter",
+    "key": "tr",
+    "type": "HTML",
+    "target": "HTMLTableRowElement",
+    "parent": "HTMLElement",
+    "childs": "HTMLElement | Text"
+  },
+  "track": {
+    "template": "adapter",
+    "key": "track",
+    "type": "HTML",
+    "target": "HTMLTrackElement",
+    "parent": "HTMLElement",
+    "childs": "HTMLElement | Text"
+  },
+  "u": {
+    "template": "adapter",
+    "key": "u",
+    "type": "HTML",
+    "target": "HTMLTrackElement",
+    "parent": "HTMLElement",
+    "childs": "HTMLElement | Text"
+  },
+  "ul": {
+    "template": "adapter",
+    "key": "ul",
+    "type": "HTML",
+    "target": "HTMLUListElement",
+    "parent": "HTMLElement",
+    "childs": "HTMLElement | Text"
+  },
+  "htmlvar": {
+    "template": "adapter",
+    "key": "var",
+    "type": "HTML",
+    "target": "HTMLElement",
+    "parent": "HTMLElement",
+    "childs": "HTMLElement | Text"
+  },
+  "video": {
+    "template": "adapter",
+    "key": "video",
+    "type": "HTML",
+    "target": "HTMLVideoElement",
+    "parent": "HTMLElement",
+    "childs": "HTMLElement | Text"
+  },
+  "wbr": {
+    "template": "adapter",
+    "key": "wbr",
+    "type": "HTML",
+    "target": "HTMLElement",
+    "parent": "HTMLElement",
+    "childs": "HTMLElement | Text"
+  },
+  "id": {
+    "template": "property",
+    "key": "id",
+    "type": "Attr",
+    "target": "Element"
+  },
+  "getId": {
+    "template": "query",
+    "key": "id",
+    "type": "Attr",
+    "target": "Element"
+  },
+  "title": {
+    "template": "property",
+    "key": "title",
+    "type": "Attr",
+    "target": "HTMLElement"
+  },
+  "getTitle": {
+    "template": "query",
+    "key": "title",
+    "type": "Attr",
+    "target": "HTMLElement"
+  },
+  "tabIndex": {
+    "template": "property",
+    "key": "tabIndex",
+    "type": "Attr",
+    "target": "HTMLElement"
+  },
+  "getTabIndex": {
+    "template": "query",
+    "key": "tabIndex",
+    "type": "Attr",
+    "target": "HTMLElement"
+  },
+  "lang": {
+    "template": "property",
+    "key": "lang",
+    "type": "Attr",
+    "target": "HTMLElement"
+  },
+  "getLang": {
+    "template": "query",
+    "key": "lang",
+    "type": "Attr",
+    "target": "HTMLElement"
+  },
+  "dir": {
+    "template": "property",
+    "key": "dir",
+    "type": "Attr",
+    "target": "HTMLElement"
+  },
+  "getDir": {
+    "template": "query",
+    "key": "dir",
+    "type": "Attr",
+    "target": "HTMLElement"
+  },
+  "accesskey": {
+    "template": "property",
+    "key": "accesskey",
+    "type": "Attr",
+    "target": "Element"
+  },
+  "getAccesskey": {
+    "template": "query",
+    "key": "accesskey",
+    "type": "Attr",
+    "target": "Element"
+  },
+  "autocapitalize": {
+    "template": "property",
+    "key": "autocapitalize",
+    "type": "Attr",
+    "target": "Element"
+  },
+  "getAutocapitalize": {
+    "template": "query",
+    "key": "autocapitalize",
+    "type": "Attr",
+    "target": "Element"
+  },
+  "autofocus": {
+    "template": "property",
+    "key": "autofocus",
+    "type": "Attr",
+    "target": "Element"
+  },
+  "getAutofocus": {
+    "template": "query",
+    "key": "autofocus",
+    "type": "Attr",
+    "target": "Element"
+  },
+  "contenteditable": {
+    "template": "property",
+    "key": "contenteditable",
+    "type": "Attr",
+    "target": "Element"
+  },
+  "getContenteditable": {
+    "template": "query",
+    "key": "contenteditable",
+    "type": "Attr",
+    "target": "Element"
+  },
+  "draggable": {
+    "template": "property",
+    "key": "draggable",
+    "type": "Attr",
+    "target": "HTMLElement"
+  },
+  "getDraggable": {
+    "template": "query",
+    "key": "draggable",
+    "type": "Attr",
+    "target": "HTMLElement"
+  },
+  "enterkeyhint": {
+    "template": "property",
+    "key": "enterkeyhint",
+    "type": "Attr",
+    "target": "Element"
+  },
+  "getEnterkeyhint": {
+    "template": "query",
+    "key": "enterkeyhint",
+    "type": "Attr",
+    "target": "Element"
+  },
+  "exportparts": {
+    "template": "property",
+    "key": "exportparts",
+    "type": "Attr",
+    "target": "Element"
+  },
+  "getExportparts": {
+    "template": "query",
+    "key": "exportparts",
+    "type": "Attr",
+    "target": "Element"
+  },
+  "hidden": {
+    "template": "property",
+    "key": "hidden",
+    "type": "Attr",
+    "target": "Element"
+  },
+  "getHidden": {
+    "template": "query",
+    "key": "hidden",
+    "type": "Attr",
+    "target": "Element"
+  },
+  "inert": {
+    "template": "property",
+    "key": "inert",
+    "type": "Attr",
+    "target": "Element"
+  },
+  "getInert": {
+    "template": "query",
+    "key": "inert",
+    "type": "Attr",
+    "target": "Element"
+  },
+  "inputmode": {
+    "template": "property",
+    "key": "inputmode",
+    "type": "Attr",
+    "target": "Element"
+  },
+  "getInputmode": {
+    "template": "query",
+    "key": "inputmode",
+    "type": "Attr",
+    "target": "Element"
+  },
+  "is": {
+    "template": "property",
+    "key": "is",
+    "type": "Attr",
+    "target": "Element"
+  },
+  "getIs": {
+    "template": "query",
+    "key": "is",
+    "type": "Attr",
+    "target": "Element"
+  },
+  "itemid": {
+    "template": "property",
+    "key": "itemid",
+    "type": "Attr",
+    "target": "HTMLElement"
+  },
+  "getItemid": {
+    "template": "query",
+    "key": "itemid",
+    "type": "Attr",
+    "target": "HTMLElement"
+  },
+  "itemprop": {
+    "template": "property",
+    "key": "itemprop",
+    "type": "Attr",
+    "target": "HTMLElement"
+  },
+  "getItemprop": {
+    "template": "query",
+    "key": "itemprop",
+    "type": "Attr",
+    "target": "HTMLElement"
+  },
+  "itemref": {
+    "template": "property",
+    "key": "itemref",
+    "type": "Attr",
+    "target": "HTMLElement"
+  },
+  "getItemref": {
+    "template": "query",
+    "key": "itemref",
+    "type": "Attr",
+    "target": "HTMLElement"
+  },
+  "itemscope": {
+    "template": "property",
+    "key": "itemscope",
+    "type": "Attr",
+    "target": "HTMLElement"
+  },
+  "getItemscope": {
+    "template": "query",
+    "key": "itemscope",
+    "type": "Attr",
+    "target": "HTMLElement"
+  },
+  "itemtype": {
+    "template": "property",
+    "key": "itemtype",
+    "type": "Attr",
+    "target": "HTMLElement"
+  },
+  "getItemtype": {
+    "template": "query",
+    "key": "itemtype",
+    "type": "Attr",
+    "target": "HTMLElement"
+  },
+  "nonce": {
+    "template": "property",
+    "key": "nonce",
+    "type": "Attr",
+    "target": "Element"
+  },
+  "getNonce": {
+    "template": "query",
+    "key": "nonce",
+    "type": "Attr",
+    "target": "Element"
+  },
+  "part": {
+    "template": "property",
+    "key": "part",
+    "type": "Attr",
+    "target": "Element"
+  },
+  "getPart": {
+    "template": "query",
+    "key": "part",
+    "type": "Attr",
+    "target": "Element"
+  },
+  "popover": {
+    "template": "property",
+    "key": "popover",
+    "type": "Attr",
+    "target": "Element"
+  },
+  "getPopover": {
+    "template": "query",
+    "key": "popover",
+    "type": "Attr",
+    "target": "Element"
+  },
+  "slot": {
+    "template": "property",
+    "key": "slot",
+    "type": "Attr",
+    "target": "Element"
+  },
+  "getSlot": {
+    "template": "query",
+    "key": "slot",
+    "type": "Attr",
+    "target": "Element"
+  },
+  "spellcheck": {
+    "template": "property",
+    "key": "spellcheck",
+    "type": "Attr",
+    "target": "Element"
+  },
+  "getSpellcheck": {
+    "template": "query",
+    "key": "spellcheck",
+    "type": "Attr",
+    "target": "Element"
+  },
+  "translate": {
+    "template": "property",
+    "key": "translate",
+    "type": "Attr",
+    "target": "Element"
+  },
+  "getTranslate": {
+    "template": "query",
+    "key": "translate",
+    "type": "Attr",
+    "target": "Element"
+  },
+  "accept": {
+    "template": "property",
+    "key": "accept",
+    "type": "Attr",
+    "target": "HTMLInputElement"
+  },
+  "getAccept": {
+    "template": "query",
+    "key": "accept",
+    "type": "Attr",
+    "target": "HTMLInputElement"
+  },
+  "autocomplete": {
+    "template": "property",
+    "key": "autocomplete",
+    "type": "Attr",
+    "target": "HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement | HTMLFormElement"
+  },
+  "getAutocomplete": {
+    "template": "query",
+    "key": "autocomplete",
+    "type": "Attr",
+    "target": "HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement | HTMLFormElement"
+  },
+  "capture": {
+    "template": "property",
+    "key": "capture",
+    "type": "Attr",
+    "target": "HTMLInputElement"
+  },
+  "getCapture": {
+    "template": "query",
+    "key": "capture",
+    "type": "Attr",
+    "target": "HTMLInputElement"
+  },
+  "crossorigin": {
+    "template": "property",
+    "key": "crossorigin",
+    "type": "Attr",
+    "target": "HTMLElement"
+  },
+  "getCrossorigin": {
+    "template": "query",
+    "key": "crossorigin",
+    "type": "Attr",
+    "target": "HTMLElement"
+  },
+  "dirname": {
+    "template": "property",
+    "key": "dirname",
+    "type": "Attr",
+    "target": "HTMLInputElement | HTMLTextAreaElement"
+  },
+  "getDirname": {
+    "template": "query",
+    "key": "dirname",
+    "type": "Attr",
+    "target": "HTMLInputElement | HTMLTextAreaElement"
+  },
+  "disabled": {
+    "template": "property",
+    "key": "disabled",
+    "type": "Attr",
+    "target": "HTMLElement"
+  },
+  "getDisabled": {
+    "template": "query",
+    "key": "disabled",
+    "type": "Attr",
+    "target": "HTMLElement"
+  },
+  "elementtiming": {
+    "template": "property",
+    "key": "elementtiming",
+    "type": "Attr",
+    "target": "HTMLElement"
+  },
+  "getElementtiming": {
+    "template": "query",
+    "key": "elementtiming",
+    "type": "Attr",
+    "target": "HTMLElement"
+  },
+  "$for": {
+    "template": "property",
+    "key": "$for",
+    "type": "Attr",
+    "target": "HTMLLabelElement | HTMLOutputElement"
+  },
+  "get$for": {
+    "template": "query",
+    "key": "$for",
+    "type": "Attr",
+    "target": "HTMLLabelElement | HTMLOutputElement"
+  },
+  "max": {
+    "template": "property",
+    "key": "max",
+    "type": "Attr",
+    "target": "HTMLElement"
+  },
+  "getMax": {
+    "template": "query",
+    "key": "max",
+    "type": "Attr",
+    "target": "HTMLElement"
+  },
+  "min": {
+    "template": "property",
+    "key": "min",
+    "type": "Attr",
+    "target": "HTMLElement"
+  },
+  "getMin": {
+    "template": "query",
+    "key": "min",
+    "type": "Attr",
+    "target": "HTMLElement"
+  },
+  "maxlength": {
+    "template": "property",
+    "key": "maxlength",
+    "type": "Attr",
+    "target": "HTMLInputElement | HTMLTextAreaElement"
+  },
+  "getMaxlength": {
+    "template": "query",
+    "key": "maxlength",
+    "type": "Attr",
+    "target": "HTMLInputElement | HTMLTextAreaElement"
+  },
+  "minlength": {
+    "template": "property",
+    "key": "minlength",
+    "type": "Attr",
+    "target": "HTMLInputElement | HTMLTextAreaElement"
+  },
+  "getMinlength": {
+    "template": "query",
+    "key": "minlength",
+    "type": "Attr",
+    "target": "HTMLInputElement | HTMLTextAreaElement"
+  },
+  "multiple": {
+    "template": "property",
+    "key": "multiple",
+    "type": "Attr",
+    "target": "HTMLInputElement | HTMLSelectElement"
+  },
+  "getMultiple": {
+    "template": "query",
+    "key": "multiple",
+    "type": "Attr",
+    "target": "HTMLInputElement | HTMLSelectElement"
+  },
+  "pattern": {
+    "template": "property",
+    "key": "pattern",
+    "type": "Attr",
+    "target": "HTMLInputElement"
+  },
+  "getPattern": {
+    "template": "query",
+    "key": "pattern",
+    "type": "Attr",
+    "target": "HTMLInputElement"
+  },
+  "placeholder": {
+    "template": "property",
+    "key": "placeholder",
+    "type": "Attr",
+    "target": "HTMLInputElement"
+  },
+  "getPlaceholder": {
+    "template": "query",
+    "key": "placeholder",
+    "type": "Attr",
+    "target": "HTMLInputElement"
+  },
+  "readonly": {
+    "template": "property",
+    "key": "readonly",
+    "type": "Attr",
+    "target": "HTMLInputElement | HTMLTextAreaElement"
+  },
+  "getReadonly": {
+    "template": "query",
+    "key": "readonly",
+    "type": "Attr",
+    "target": "HTMLInputElement | HTMLTextAreaElement"
+  },
+  "rel": {
+    "template": "property",
+    "key": "rel",
+    "type": "Attr",
+    "target": "HTMLAnchorElement | HTMLAreaElement | HTMLLinkElement | HTMLFormElement"
+  },
+  "getRel": {
+    "template": "query",
+    "key": "rel",
+    "type": "Attr",
+    "target": "HTMLAnchorElement | HTMLAreaElement | HTMLLinkElement | HTMLFormElement"
+  },
+  "required": {
+    "template": "property",
+    "key": "required",
+    "type": "Attr",
+    "target": "HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement"
+  },
+  "getRequired": {
+    "template": "query",
+    "key": "required",
+    "type": "Attr",
+    "target": "HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement"
+  },
+  "size": {
+    "template": "property",
+    "key": "size",
+    "type": "Attr",
+    "target": "HTMLInputElement | HTMLSelectElement"
+  },
+  "getSize": {
+    "template": "query",
+    "key": "size",
+    "type": "Attr",
+    "target": "HTMLInputElement | HTMLSelectElement"
+  },
+  "step": {
+    "template": "property",
+    "key": "step",
+    "type": "Attr",
+    "target": "HTMLInputElement"
+  },
+  "getStep": {
+    "template": "query",
+    "key": "step",
+    "type": "Attr",
+    "target": "HTMLInputElement"
+  },
+  "type": {
+    "template": "property",
+    "key": "type",
+    "type": "Attr",
+    "target": "HTMLInputElement"
+  },
+  "getType": {
+    "template": "query",
+    "key": "type",
+    "type": "Attr",
+    "target": "HTMLInputElement"
+  },
+  "className": {
+    "template": "property",
+    "key": "class",
+    "type": "Attr",
+    "target": "Element"
+  },
+  "getClassName": {
+    "template": "query",
+    "key": "class",
+    "type": "Attr",
+    "target": "Element"
+  },
+  "nodeValue": {
+    "template": "property",
+    "key": "nodeValue",
+    "type": "Prop",
+    "target": "Node"
+  },
+  "getNodeValue": {
+    "template": "query",
+    "key": "nodeValue",
+    "type": "Prop",
+    "target": "Node"
+  },
+  "textContent": {
+    "template": "property",
+    "key": "textContent",
+    "type": "Prop",
+    "target": "Node"
+  },
+  "getTextContent": {
+    "template": "query",
+    "key": "textContent",
+    "type": "Prop",
+    "target": "Node"
+  },
+  "innerHTML": {
+    "template": "property",
+    "key": "innerHTML",
+    "type": "Prop",
+    "target": "Element"
+  },
+  "getInnerHTML": {
+    "template": "query",
+    "key": "innerHTML",
+    "type": "Prop",
+    "target": "Element"
+  },
+  "outerHTML": {
+    "template": "property",
+    "key": "outerHTML",
+    "type": "Prop",
+    "target": "Element"
+  },
+  "getOuterHTML": {
+    "template": "query",
+    "key": "outerHTML",
+    "type": "Prop",
+    "target": "Element"
+  },
+  "getNodeName": {
+    "template": "query",
+    "key": "nodeName",
+    "type": "Prop",
+    "target": "Node"
+  },
+  "getNodeType": {
+    "template": "query",
+    "key": "nodeType",
+    "type": "Prop",
+    "target": "Node"
+  },
+  "getClientHeight": {
+    "template": "query",
+    "key": "clientHeight",
+    "type": "Prop",
+    "target": "Element"
+  },
+  "getClientLeft": {
+    "template": "query",
+    "key": "clientLeft",
+    "type": "Prop",
+    "target": "Element"
+  },
+  "getClientTop": {
+    "template": "query",
+    "key": "clientTop",
+    "type": "Prop",
+    "target": "Element"
+  },
+  "getClientWidth": {
+    "template": "query",
+    "key": "clientWidth",
+    "type": "Prop",
+    "target": "Element"
+  },
+  "getTagName": {
+    "template": "query",
+    "key": "tagName",
+    "type": "Prop",
+    "target": "Element"
+  },
+  "addClass": {
+    "template": "action",
+    "target": "Element",
+    "callPath": "classList.add",
+    "arguments": [
+      [
+        "name",
+        "string"
+      ]
+    ]
+  },
+  "removeClass": {
+    "template": "action",
+    "target": "Element",
+    "callPath": "classList.remove",
+    "arguments": [
+      [
+        "name",
+        "string"
+      ]
+    ]
+  },
+  "toggleClass": {
+    "template": "action",
+    "target": "Element",
+    "callPath": "classList.toggle",
+    "arguments": [
+      [
+        "name",
+        "string"
+      ]
+    ]
+  },
+  "dispatch": {
+    "template": "action",
+    "target": "EventTarget",
+    "callPath": "dispatchEvent",
+    "arguments": [
+      [
+        "event",
+        "Event"
+      ]
+    ]
+  },
+  "onClick": {
+    "template": "event",
+    "key": "click",
+    "target": "EventTarget"
+  },
+  "onDbClick": {
+    "template": "event",
+    "key": "dbclick",
+    "target": "EventTarget"
+  },
+  "onBlur": {
+    "template": "event",
+    "key": "blur",
+    "target": "EventTarget"
+  },
+  "onFocus": {
+    "template": "event",
+    "key": "focus",
+    "target": "EventTarget"
+  },
+  "onChange": {
+    "template": "event",
+    "key": "change",
+    "target": "EventTarget"
+  },
+  "onMouseDown": {
+    "template": "event",
+    "key": "mousedown",
+    "target": "EventTarget"
+  },
+  "onMouseEnter": {
+    "template": "event",
+    "key": "mouseenter",
+    "target": "EventTarget"
+  },
+  "onMouseLeave": {
+    "template": "event",
+    "key": "mouseleave",
+    "target": "EventTarget"
+  },
+  "onMouseMove": {
+    "template": "event",
+    "key": "mousemove",
+    "target": "EventTarget"
+  },
+  "onMouseOut": {
+    "template": "event",
+    "key": "mouseout",
+    "target": "EventTarget"
+  },
+  "onMouseOver": {
+    "template": "event",
+    "key": "mouseover",
+    "target": "EventTarget"
+  },
+  "onMouseUp": {
+    "template": "event",
+    "key": "mouseup",
+    "target": "EventTarget"
+  },
+  "onWheel": {
+    "template": "event",
+    "key": "wheel",
+    "target": "EventTarget"
+  },
+  "onScroll": {
+    "template": "event",
+    "key": "scroll",
+    "target": "EventTarget"
+  },
+  "onKeyDown": {
+    "template": "event",
+    "key": "keydown",
+    "target": "EventTarget"
+  },
+  "onKeypress": {
+    "template": "event",
+    "key": "keyPress",
+    "target": "EventTarget"
+  },
+  "onKeyup": {
+    "template": "event",
+    "key": "keyUp",
+    "target": "EventTarget"
+  },
+  "onCopy": {
+    "template": "event",
+    "key": "copy",
+    "target": "EventTarget"
+  },
+  "onCut": {
+    "template": "event",
+    "key": "cut",
+    "target": "EventTarget"
+  },
+  "onPaste": {
+    "template": "event",
+    "key": "paste",
+    "target": "EventTarget"
+  },
+  "onSelect": {
+    "template": "event",
+    "key": "select",
+    "target": "EventTarget"
+  },
+  "onFocusIn": {
+    "template": "event",
+    "key": "focusin",
+    "target": "EventTarget"
+  },
+  "onFocusOut": {
+    "template": "event",
+    "key": "focusout",
+    "target": "EventTarget"
+  }
 }
