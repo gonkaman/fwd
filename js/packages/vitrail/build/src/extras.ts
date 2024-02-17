@@ -33,3 +33,35 @@ const pipe = <FirstFn extends AnyFunc, F extends AnyFunc[]>(
 
   const fork = <T>(fn: (_: T) => any): ((_: T) => T) => 
   (arg: T) => { fn(arg); return arg; }
+
+
+
+
+// export const div = createDOMAdapter<
+//     HTMLElement, Document, 
+//     HTMLDivElement, Document, 
+//     HTMLElement | Text, Document, 
+//     string
+// >('div', htmlNodeFactory, appendConnector, formatAdapterArgs);
+
+// export const svg = createDOMAdapter<
+//     HTMLElement | SVGElement, Document, 
+//     SVGSVGElement, XMLDocument, 
+//     SVGElement | Text, XMLDocument, 
+//     string
+// >('svg', svgNodeFactory, appendConnector, formatAdapterArgs);
+
+// export const math = createDOMAdapter<
+//     HTMLElement, Document, 
+//     MathMLElement, XMLDocument, 
+//     MathMLElement | Text, XMLDocument, 
+//     string
+// >('math', mathNodeFactory, appendConnector, formatAdapterArgs);
+
+
+// type SourceGenerator = 
+//     ((entry: [string, AdapterEntry]) => [string, string[]]) |
+//     ((entry: [string, PropertyEntry]) => [string, string[]]) |
+//     ((entry: [string, QueryEntry]) => [string, string[]]) |
+//     ((entry: [string, ActionEntry]) => [string, string[]]) |
+//     ((entry: [string, EventEntry]) => [string, string[]]);

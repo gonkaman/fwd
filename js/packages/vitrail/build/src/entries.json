@@ -1,1570 +1,2244 @@
 {
+  "Filter": {
+    "deps": [],
+    "body": "export type Filter<U,V> = (arg: U) => V;",
+    "rendered": false
+  },
+  "Task": {
+    "deps": [
+      "Filter"
+    ],
+    "body": "export type Task<T> = [Filter<T,T>, ...string[]];",
+    "rendered": false
+  },
+  "Connector": {
+    "deps": [
+      "Task"
+    ],
+    "body": "export type Connector<TParent,TArg,TChild> = <T extends TParent, U extends TArg, V extends TChild>(filter: Filter<U,V>) => Task<T>",
+    "rendered": false
+  },
+  "Branch": {
+    "deps": [
+      "Task"
+    ],
+    "body": "export type Branch<TParent,U,V> = <T extends TParent>(connect: ((filter: Filter<U,V>) => Task<T>)) => Task<T>;",
+    "rendered": false
+  },
+  "Adapter": {
+    "deps": [
+      "Task",
+      "Branch"
+    ],
+    "body": "export type Adapter<TParent, U, T, TConvert> = <K extends TConvert>(...args: (Task<T> | K)[]) => Branch<TParent,U,T>;",
+    "rendered": false
+  },
+  "NodeTask": {
+    "deps": [
+      "Task"
+    ],
+    "body": "export type NodeTask<T,U> = Task<[T,U]>;",
+    "rendered": false
+  },
+  "NodeFactory": {
+    "deps": [],
+    "body": "export type NodeFactory<PDoc,TNode,TDoc> = <TArg extends PDoc, T extends TNode, U extends TDoc>(doc: TArg, tag: string) => [T,U];",
+    "rendered": false
+  },
+  "NodeConnector": {
+    "deps": [
+      "Connector"
+    ],
+    "body": "export type NodeConnector<T,TDoc,V,VDoc> = Connector<[T,TDoc],TDoc,[V,VDoc]>;",
+    "rendered": false
+  },
+  "NodeBranch": {
+    "deps": [
+      "Branch"
+    ],
+    "body": "export type NodeBranch<TNode,TDoc,TChild,VDoc> = Branch<[TNode,TDoc],TDoc,[TChild,VDoc]>;",
+    "rendered": false
+  },
+  "NodeAdapterArg": {
+    "deps": [
+      "NodeTask",
+      "NodeBranch"
+    ],
+    "body": "export type NodeAdapterArg<T,TDoc,V,VDoc,TConvert> = (NodeTask<T,TDoc> | TConvert | NodeBranch<T,TDoc,V,VDoc>)[];",
+    "rendered": false
+  },
+  "NodeAdapterArgsFormater": {
+    "deps": [
+      "NodeConnector",
+      "NodeAdapterArg",
+      "NodeTask"
+    ],
+    "body": "export type NodeAdapterArgsFormater<TNode,TDoc,TChild, VDoc, TConvert> = \n    <T extends TNode, V extends TChild>(connector: NodeConnector<T,TDoc,V,VDoc>) => (args: NodeAdapterArg<T,TDoc,V,VDoc,TConvert>) => NodeTask<T,TDoc>[];",
+    "rendered": false
+  },
+  "NodeAdapter": {
+    "deps": [
+      "Adapter",
+      "NodeBranch"
+    ],
+    "body": "export type NodeAdapter<P,PDoc,T,TDoc,V,VDoc,TConvert> = Adapter<[P,PDoc],PDoc,[T,TDoc],TConvert | NodeBranch<T,TDoc,V,VDoc>>;",
+    "rendered": false
+  },
+  "createDOMAdapter": {
+    "deps": [
+      "NodeFactory",
+      "NodeConnector",
+      "NodeAdapterArgsFormater",
+      "NodeAdapter",
+      "NodeAdapterArg",
+      "NodeBranch"
+    ],
+    "body": "const createDOMAdapter = <P,PDoc,T,TDoc,V,VDoc,TConvert>(\n    tagName: string,\n    factory: NodeFactory<PDoc,T,TDoc>, \n    connector: NodeConnector<T,TDoc,V,VDoc>,\n    format: NodeAdapterArgsFormater<T,TDoc,V,VDoc,TConvert>\n): NodeAdapter<P,PDoc,T,TDoc,V,VDoc,TConvert> => \n    (...args: NodeAdapterArg<T,TDoc,V,VDoc,TConvert>): NodeBranch<P,PDoc,T,TDoc> => {\n        const tasks = format(connector)(args).map(entry => entry[0]);\n        const build: Filter<PDoc,[T,TDoc]> = (doc: PDoc) => tasks.reduce((node, task) => task(node), factory(doc, tagName));\n        return <TParent extends [P,PDoc]>(connect: ((filter: Filter<PDoc,[T,TDoc]>) => Task<TParent>)):Task<TParent> => connect(build);\n    }",
+    "rendered": false
+  },
+  "Lookup": {
+    "deps": [
+      "Filter"
+    ],
+    "body": "export type Lookup<T> = Filter<void,T|null|undefined>;",
+    "rendered": false
+  },
+  "Curator": {
+    "deps": [
+      "Lookup"
+    ],
+    "body": "export type Curator<T> = (lookup: Lookup<T>) => void;",
+    "rendered": false
+  },
+  "Store": {
+    "deps": [
+      "Curator",
+      "Lookup"
+    ],
+    "body": "export type Store<T> = [Curator<T>, Lookup<T>];",
+    "rendered": false
+  },
+  "Query": {
+    "deps": [
+      "Store"
+    ],
+    "body": "export type Query = Store<[string, unknown][]>;",
+    "rendered": false
+  },
+  "NodePicker": {
+    "deps": [
+      "Lookup"
+    ],
+    "body": "export type NodePicker<T,U> = Lookup<[T,U]>;",
+    "rendered": false
+  },
+  "NodeRenderer": {
+    "deps": [
+      "NodePicker",
+      "NodeTask"
+    ],
+    "body": "export type NodeRenderer<TNode,TDoc> = <T extends TNode, U extends TDoc>(lookup: NodePicker<T,U>, ...tasks: NodeTask<T,U>[]) => NodePicker<T,U>;",
+    "rendered": false
+  },
+  "textNodeFactory": {
+    "deps": [
+      "NodeFactory"
+    ],
+    "body": "const textNodeFactory: NodeFactory<Document | XMLDocument, Text, Document> = <T extends Text, U extends Document>(doc: Document, _: string) => \n    [doc.createTextNode('') as T, doc as U];",
+    "rendered": false
+  },
+  "htmlNodeFactory": {
+    "deps": [
+      "NodeFactory"
+    ],
+    "body": "const htmlNodeFactory: NodeFactory<Document, HTMLElement, Document> = <T extends HTMLElement, U extends Document>(doc: Document, tagName: string) => \n    [doc.createElement(tagName) as T, doc as U];",
+    "rendered": false
+  },
+  "svgNodeFactory": {
+    "deps": [
+      "NodeFactory"
+    ],
+    "body": "const svgNodeFactory: NodeFactory<Document, SVGElement, XMLDocument> = <T extends SVGElement, U extends XMLDocument>(doc: XMLDocument, tagName: string) => \n    [doc.createElementNS(\"http://www.w3.org/2000/svg\", tagName) as T, doc as U];",
+    "rendered": false
+  },
+  "mathmlNodeFactory": {
+    "deps": [
+      "NodeFactory"
+    ],
+    "body": "const mathmlNodeFactory: NodeFactory<Document, MathMLElement, XMLDocument> = <T extends MathMLElement, U extends XMLDocument>(doc: XMLDocument, tagName: string) => \n    [doc.createElementNS(\"http://www.w3.org/1998/Math/MathML\", tagName) as T, doc as U];",
+    "rendered": false
+  },
+  "appendNodeConnector": {
+    "deps": [
+      "NodeConnector"
+    ],
+    "body": "const appendNodeConnector: NodeConnector<Node, Document, Node, Document> = \n    <T extends [Node, Document], TArg extends Document, V extends [Node,Document]>(filter: Filter<TArg,V>): Task<T> => [\n        (entry: T) => {\n            entry[0].appendChild(filter(entry[1] as TArg)[0]);\n            return entry;\n        }\n    ];",
+    "rendered": false
+  },
+  "prependNodeConnector": {
+    "deps": [
+      "NodeConnector"
+    ],
+    "body": "const prependNodeConnector: NodeConnector<Element, Document, Node, Document> = \n    <T extends [Element, Document], TArg extends Document, V extends [Node,Document]>(filter: Filter<TArg,V>): Task<T> => [\n        (entry: T) => {\n            entry[0].prepend(filter(entry[1] as TArg)[0]);\n            return entry;\n        }\n    ];",
+    "rendered": false
+  },
+  "noNodeConnector": {
+    "deps": [
+      "NodeConnector"
+    ],
+    "body": "const noNodeConnector: NodeConnector<Node, Document, Node | undefined, Document> = \n    <T extends [Node, Document], U extends Document, V extends [Node | undefined, Document]>(_: Filter<U,V>): Task<T> => [\n        (entry: T) => entry\n    ];",
+    "rendered": false
+  },
+  "formatAdapterArgs": {
+    "deps": [
+      "NodeAdapterArgsFormater"
+    ],
+    "body": "const formatAdapterArgs: NodeAdapterArgsFormater<Node | undefined, Document, Node | undefined, Document, string | undefined> = \n    <T extends Node | undefined, V extends Node | undefined>(connector: NodeConnector<T,Document,V,Document>) => \n    (args: NodeAdapterArg<T,Document,V,Document,string | undefined>): NodeTask<T,Document>[] => \n        (args.filter(arg => arg != null) as NodeAdapterArg<T,Document,V,Document,string>).map(arg => {\n            if(typeof arg === 'function') return arg(connector);\n            if(typeof arg === 'string') return [\n                (entry: [T,Document]) => {\n                    entry[0]?.appendChild(entry[1].createTextNode(arg));\n                    return entry;\n                }\n            ];\n            return arg;\n        });",
+    "rendered": false
+  },
+  "getElement": {
+    "deps": [
+      "NodePicker"
+    ],
+    "body": "export const getElement = <T extends Element, U extends Document>(query: string, container: Document | Element): NodePicker<T,U> => () => {\n    const node = container.querySelector(query);\n    return node == null ? node : [node as T, node.ownerDocument as U];\n}",
+    "rendered": false
+  },
+  "fromElement": {
+    "deps": [
+      "NodePicker"
+    ],
+    "body": "export const fromElement = <T extends Element, U extends Document>(node: Element): NodePicker<T,U> => () => [node as T,node.ownerDocument as U];",
+    "rendered": false
+  },
+  "render": {
+    "deps": [
+      "NodeRenderer"
+    ],
+    "body": "export const render : NodeRenderer<Element,Document> = <T extends Element, U extends Document>( lookup: NodePicker<T,U>, ...tasks: NodeTask<T,U>[]): NodePicker<T,U> => () => {\n    const target = lookup();\n    return target == null ? target : tasks.map(task => task[0]).reduce((node, task) => task(node), target);\n}",
+    "rendered": false
+  },
+  "createRef": {
+    "deps": [
+      "Store"
+    ],
+    "body": "export const createRef = <T extends Node,U extends Document>(): Store<[T,U]> => {\n    let innerLookup: Lookup<[T,U]> = () => null;\n    return [\n        (lookup: Lookup<[T,U]>) => { innerLookup = lookup; },\n        () => innerLookup()\n    ];\n}",
+    "rendered": false
+  },
+  "createQuery": {
+    "deps": [
+      "Query"
+    ],
+    "body": "export const createQuery = (): Query => {\n    const registeredLookups: Lookup<[string, unknown][]>[] = [];\n    return [\n        (lookup: Lookup<[string, unknown][]>) => { registeredLookups.push(lookup); },\n        () => registeredLookups.reduce((entries: [string, unknown][], lookup) => entries.concat(lookup() ?? []), [])\n    ]\n}",
+    "rendered": false
+  },
+  "store": {
+    "deps": [
+      "Curator",
+      "NodeTask"
+    ],
+    "body": "export const store = <T extends Node,U extends Document>(curator: Curator<[T,U]>): NodeTask<T,U> => [\n    (entry: [T,U]) => {\n        curator(() => entry);\n        return entry;\n    }\n]",
+    "rendered": false
+  },
+  "query": {
+    "deps": [
+      "Curator",
+      "NodeTask"
+    ],
+    "body": "export const query = <T extends Node,U extends Document>(curator: Curator<[string, unknown][]>, ...queries: Filter<[T,U],[string, unknown][]>[]): NodeTask<T,U> => [\n    (entry: [T,U]) => {\n        curator(() => queries.reduce((entries: [string, unknown][], query) => entries.concat(query(entry)), []));\n        return entry;\n    }\n]",
+    "rendered": false
+  },
+  "apply": {
+    "deps": [
+      "NodeTask"
+    ],
+    "body": "export const apply = <T extends Node, U extends Document>(action: ((tnode: T, udoc: U) => [T,U])): NodeTask<T,U> => [\n    (entry: [T,U]) => action(...entry)\n]",
+    "rendered": false
+  },
+  "text": {
+    "deps": [
+      "createDOMAdapter"
+    ],
+    "body": "export const text = createDOMAdapter<\n    Element, Document, \n    Text, Document, \n    undefined, Document, \n    string\n>('', textNodeFactory, noNodeConnector, formatAdapterArgs);",
+    "rendered": false
+  },
+  "append": {
+    "deps": [
+      "NodeBranch",
+      "appendNodeConnector"
+    ],
+    "body": "export const append = <T extends Node, U extends Document>(branch: NodeBranch<T,U,Node,Document>): NodeTask<T,U> => branch(appendNodeConnector);",
+    "rendered": false
+  },
+  "prepend": {
+    "deps": [
+      "NodeBranch",
+      "prependNodeConnector"
+    ],
+    "body": "export const prepend = <T extends Element, U extends Document>(branch: NodeBranch<T,U,Node,Document>): NodeTask<T,U> => branch(prependNodeConnector);",
+    "rendered": false
+  },
+  "appendTo": {
+    "deps": [
+      "NodePicker",
+      "NodeTask"
+    ],
+    "body": "export const appendTo = <T extends Node, V extends Node, U extends Document>(lookup: NodePicker<V,U>): NodeTask<T,U> => [\n    (entry: [T,U]) => {\n        lookup()?.[0].appendChild(entry[0]);\n        return entry;\n    }\n]",
+    "rendered": false
+  },
+  "prependTo": {
+    "deps": [
+      "NodePicker",
+      "NodeTask"
+    ],
+    "body": "export const prependTo = <T extends Node, V extends Element, U extends Document>(lookup: NodePicker<V,U>): NodeTask<T,U> => [\n    (entry: [T,U]) => {\n        lookup()?.[0].prepend(entry[0]);\n        return entry;\n    }\n]",
+    "rendered": false
+  },
+  "PropertyValueType": {
+    "deps": [],
+    "body": "export type PropertyValueType = string | ((previousValue: string | null) => string) | undefined;",
+    "rendered": false
+  },
+  "PropertyAdapter": {
+    "deps": [
+      "PropertyValueType",
+      "NodeTask"
+    ],
+    "body": "export type PropertyAdapter = <T extends Node, U extends Document>(value: PropertyValueType) => NodeTask<T,U>;",
+    "rendered": false
+  },
+  "DataPropertyValueType": {
+    "deps": [],
+    "body": "export type DataPropertyValueType = string | ((previousValue?: string) => string) | undefined;",
+    "rendered": false
+  },
+  "CssValueType": {
+    "deps": [],
+    "body": "export type CssValueType = string | ((previousValue: string) => string);",
+    "rendered": false
+  },
+  "setProp": {
+    "deps": [
+      "PropertyValueType",
+      "NodeTask"
+    ],
+    "body": "export const setProp = <T extends Node, U extends Document>(key: string, value: PropertyValueType): NodeTask<T, U> => [\n    value === undefined ?\n        (entry: [T,U]) => { entry[0][key] = null; return entry; } :\n        typeof value === 'function' ?\n            (entry: [T,U]) => { entry[0][key] = value(entry[0][key]); return entry; } :\n            (entry: [T,U]) => { entry[0][key] = value; return entry; }\n];",
+    "rendered": false
+  },
+  "removeProp": {
+    "deps": [
+      "PropertyAdapter",
+      "NodeTask"
+    ],
+    "body": "export const removeProp = <T extends Node, U extends Document>(adapter: PropertyAdapter): NodeTask<T,U> => adapter(undefined);",
+    "rendered": false
+  },
+  "getProp": {
+    "deps": [
+      "Filter"
+    ],
+    "body": "export const getProp = <T extends Node, U extends Document>(name: string, key?: string): Filter<[T,U],[string, unknown][]> =>\n    (entry: [T,U]) => ([[key || name, entry[0][name]]] as [string, unknown][]);",
+    "rendered": false
+  },
+  "setAttr": {
+    "deps": [
+      "PropertyValueType",
+      "NodeTask"
+    ],
+    "body": "export const setAttr = <T extends Element, U extends Document>(key: string, value: PropertyValueType): NodeTask<T, U> => [\n    value === undefined ?\n        (entry: [T,U]) => { entry[0].removeAttribute(key); return entry; } :\n        typeof value === 'function' ?\n            (entry: [T,U]) => { entry[0].setAttribute(key, value(entry[0].getAttribute(key))); return entry; } :\n            (entry: [T,U]) => { entry[0].setAttribute(key, value); return entry; }\n];",
+    "rendered": false
+  },
+  "removeAttr": {
+    "deps": [
+      "setAttr"
+    ],
+    "body": "export const removeAttr = <T extends Element, U extends Document>(key: string): NodeTask<T,U> => setAttr(key, undefined);",
+    "rendered": false
+  },
+  "getAttr": {
+    "deps": [
+      "Filter"
+    ],
+    "body": "export const getAttr = <T extends Element, U extends Document>(name: string, key?: string): Filter<[T,U],[string, unknown][]> =>\n    (entry: [T,U]) => ([[key || name, entry[0].getAttribute(name)]] as [string, unknown][]);",
+    "rendered": false
+  },
+  "setAria": {
+    "deps": [
+      "setAttr"
+    ],
+    "body": "export const setAria = <T extends Element, U extends Document>(key: string, value: PropertyValueType): NodeTask<T, U> => setAttr('aria-'+key, value);",
+    "rendered": false
+  },
+  "removeAria": {
+    "deps": [
+      "removeAttr"
+    ],
+    "body": "export const removeAria = <T extends Element, U extends Document>(key: string): NodeTask<T,U> => removeAttr('aria-'+key);",
+    "rendered": false
+  },
+  "getAria": {
+    "deps": [
+      "getAttr"
+    ],
+    "body": "export const getAria = <T extends Element, U extends Document>(name: string, key?: string): Filter<[T,U],[string, unknown][]> => getAttr('aria-'+name, key);",
+    "rendered": false
+  },
+  "setData": {
+    "deps": [
+      "DataPropertyValueType",
+      "NodeTask"
+    ],
+    "body": "export const setData = <T extends HTMLElement, U extends Document>(key: string, value: DataPropertyValueType): NodeTask<T, U> => [\n    value === undefined ?\n        (entry: [T,U]) => { delete entry[0].dataset[key]; return entry; } :\n        typeof value === 'function' ?\n            (entry: [T,U]) => { entry[0].dataset[key] = value(entry[0].dataset[key]); return entry; } :\n            (entry: [T,U]) => { entry[0].dataset[key] = value; return entry; }\n];",
+    "rendered": false
+  },
+  "removeData": {
+    "deps": [
+      "setData"
+    ],
+    "body": "export const removeData = <T extends HTMLElement, U extends Document>(key: string): NodeTask<T,U> => setData(key, undefined);",
+    "rendered": false
+  },
+  "getData": {
+    "deps": [
+      "Filter"
+    ],
+    "body": "export const getData = <T extends HTMLElement, U extends Document>(name: string, key?: string): Filter<[T,U],[string, unknown][]> =>\n    (entry: [T,U]) => ([[key || name, entry[0].dataset[name]]] as [string, unknown][]);",
+    "rendered": false
+  },
+  "setStyle": {
+    "deps": [
+      "DataPropertyValueType",
+      "NodeTask"
+    ],
+    "body": "export const setStyle = <T extends HTMLElement, U extends Document>(key: string, value: DataPropertyValueType): NodeTask<T, U> => [\n    value === undefined ?\n        (entry: [T,U]) => { entry[0].style[key] = null; return entry; } :\n        typeof value === 'function' ?\n            (entry: [T,U]) => { entry[0].style[key] = value(entry[0].style[key]); return entry; } :\n            (entry: [T,U]) => { entry[0].style[key] = value; return entry; }\n];",
+    "rendered": false
+  },
+  "setCss": {
+    "deps": [
+      "CssValueType",
+      "NodeTask"
+    ],
+    "body": "export const setCss = <T extends HTMLElement, U extends Document>(value: CssValueType): NodeTask<T, U> => [\n    typeof value === 'function' ?\n            (entry: [T,U]) => { entry[0].style.cssText = value(entry[0].style.cssText); return entry; } :\n            (entry: [T,U]) => { entry[0].style.cssText = value; return entry; }\n];",
+    "rendered": false
+  },
+  "removeStyle": {
+    "deps": [
+      "setStyle"
+    ],
+    "body": "export const removeStyle = <T extends HTMLElement, U extends Document>(key: string): NodeTask<T,U> => setStyle(key, undefined);",
+    "rendered": false
+  },
+  "getStyle": {
+    "deps": [
+      "Filter"
+    ],
+    "body": "export const getStyle = <T extends HTMLElement, U extends Document>(name: string, key?: string): Filter<[T,U],[string, unknown][]> =>\n    (entry: [T,U]) => ([[key || name, entry[0].style[name]]] as [string, unknown][]);",
+    "rendered": false
+  },
+  "subscribe": {
+    "deps": [
+      "NodeTask"
+    ],
+    "body": "export const subscribe = <T extends EventTarget, U extends Document>(\n    eventType: string, \n    listener: EventListenerOrEventListenerObject, \n    options?: boolean | AddEventListenerOptions\n): NodeTask<T,U> => [\n    (entry: [T,U]) => { entry[0].addEventListener(eventType, listener, options); return entry; }\n]",
+    "rendered": false
+  },
+  "unsubscribe": {
+    "deps": [
+      "NodeTask"
+    ],
+    "body": "export const unsubscribe = <T extends EventTarget, U extends Document>(\n    eventType: string, \n    listener: EventListenerOrEventListenerObject, \n    options?: boolean | AddEventListenerOptions\n): NodeTask<T,U> => [\n    (entry: [T,U]) => { entry[0].removeEventListener(eventType, listener, options); return entry; }\n]",
+    "rendered": false
+  },
   "a": {
     "template": "adapter",
     "key": "a",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLAnchorElement",
     "parent": "HTMLElement",
-    "childs": "HTMLElement | Text"
+    "childs": "HTMLElement | Text",
+    "rendered": false
   },
   "abbr": {
     "template": "adapter",
     "key": "abbr",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLElement",
     "parent": "HTMLElement",
-    "childs": "HTMLElement | Text"
+    "childs": "HTMLElement | Text",
+    "rendered": false
   },
   "address": {
     "template": "adapter",
     "key": "address",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLElement",
     "parent": "HTMLElement",
-    "childs": "HTMLElement | Text"
+    "childs": "HTMLElement | Text",
+    "rendered": false
   },
   "area": {
     "template": "adapter",
     "key": "area",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLAreaElement",
-    "parent": "HTMLElement"
+    "parent": "HTMLElement",
+    "rendered": false
   },
   "article": {
     "template": "adapter",
     "key": "article",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLElement",
     "parent": "HTMLElement",
-    "childs": "HTMLElement | Text"
+    "childs": "HTMLElement | Text",
+    "rendered": false
   },
   "aside": {
     "template": "adapter",
     "key": "aside",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLElement",
     "parent": "HTMLElement",
-    "childs": "HTMLElement | Text"
+    "childs": "HTMLElement | Text",
+    "rendered": false
   },
   "audio": {
     "template": "adapter",
     "key": "audio",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLAudioElement",
     "parent": "HTMLElement",
-    "childs": "HTMLElement | Text"
+    "childs": "HTMLElement | Text",
+    "rendered": false
   },
   "b": {
     "template": "adapter",
     "key": "b",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLElement",
     "parent": "HTMLElement",
-    "childs": "HTMLElement | Text"
+    "childs": "HTMLElement | Text",
+    "rendered": false
   },
   "base": {
     "template": "adapter",
     "key": "base",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLBaseElement",
-    "parent": "HTMLElement"
+    "parent": "HTMLElement",
+    "rendered": false
   },
   "bdi": {
     "template": "adapter",
     "key": "bdi",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLElement",
     "parent": "HTMLElement",
-    "childs": "HTMLElement | Text"
+    "childs": "HTMLElement | Text",
+    "rendered": false
   },
   "bdo": {
     "template": "adapter",
     "key": "bdo",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLElement",
     "parent": "HTMLElement",
-    "childs": "HTMLElement | Text"
+    "childs": "HTMLElement | Text",
+    "rendered": false
   },
   "blockquote": {
     "template": "adapter",
     "key": "blockquote",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLQuoteElement",
     "parent": "HTMLElement",
-    "childs": "HTMLElement | Text"
+    "childs": "HTMLElement | Text",
+    "rendered": false
   },
   "body": {
     "template": "adapter",
     "key": "body",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLElement",
     "parent": "HTMLElement",
-    "childs": "HTMLElement | Text"
+    "childs": "HTMLElement | Text",
+    "rendered": false
   },
   "br": {
     "template": "adapter",
     "key": "br",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLBRElement",
-    "parent": "HTMLElement"
+    "parent": "HTMLElement",
+    "rendered": false
   },
   "button": {
     "template": "adapter",
     "key": "button",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLButtonElement",
     "parent": "HTMLElement",
-    "childs": "HTMLElement | Text"
+    "childs": "HTMLElement | Text",
+    "rendered": false
   },
   "canvas": {
     "template": "adapter",
     "key": "canvas",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLCanvasElement",
     "parent": "HTMLElement",
-    "childs": "HTMLElement | Text"
+    "childs": "HTMLElement | Text",
+    "rendered": false
   },
   "caption": {
     "template": "adapter",
     "key": "caption",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLTableCaptionElement",
     "parent": "HTMLElement",
-    "childs": "HTMLElement | Text"
+    "childs": "HTMLElement | Text",
+    "rendered": false
   },
   "cite": {
     "template": "adapter",
     "key": "cite",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLQuoteElement",
     "parent": "HTMLElement",
-    "childs": "HTMLElement | Text"
+    "childs": "HTMLElement | Text",
+    "rendered": false
   },
   "code": {
     "template": "adapter",
     "key": "code",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLElement",
     "parent": "HTMLElement",
-    "childs": "HTMLElement | Text"
+    "childs": "HTMLElement | Text",
+    "rendered": false
   },
   "col": {
     "template": "adapter",
     "key": "col",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLTableColElement",
-    "parent": "HTMLTableColElement"
+    "parent": "HTMLTableColElement",
+    "rendered": false
   },
   "colgroup": {
     "template": "adapter",
     "key": "colgroup",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLTableColElement",
     "parent": "HTMLTableElement",
-    "childs": "HTMLTableColElement"
+    "childs": "HTMLTableColElement",
+    "rendered": false
   },
   "data": {
     "template": "adapter",
     "key": "data",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLDataElement",
     "parent": "HTMLElement",
-    "childs": "HTMLElement | Text"
+    "childs": "HTMLElement | Text",
+    "rendered": false
   },
   "datalist": {
     "template": "adapter",
     "key": "datalist",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLDataListElement",
     "parent": "HTMLElement",
-    "childs": "HTMLElement | Text"
+    "childs": "HTMLElement | Text",
+    "rendered": false
   },
   "dd": {
     "template": "adapter",
     "key": "dd",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLElement",
     "parent": "HTMLElement",
-    "childs": "HTMLElement | Text"
+    "childs": "HTMLElement | Text",
+    "rendered": false
   },
   "del": {
     "template": "adapter",
     "key": "del",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLModElement",
     "parent": "HTMLElement",
-    "childs": "HTMLElement | Text"
+    "childs": "HTMLElement | Text",
+    "rendered": false
   },
   "details": {
     "template": "adapter",
     "key": "details",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLElement",
     "parent": "HTMLElement",
-    "childs": "HTMLElement | Text"
+    "childs": "HTMLElement | Text",
+    "rendered": false
   },
   "dfn": {
     "template": "adapter",
     "key": "dfn",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLElement",
     "parent": "HTMLElement",
-    "childs": "HTMLElement | Text"
+    "childs": "HTMLElement | Text",
+    "rendered": false
   },
   "dialog": {
     "template": "adapter",
     "key": "dialog",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLDialogElement",
     "parent": "HTMLElement",
-    "childs": "HTMLElement | Text"
+    "childs": "HTMLElement | Text",
+    "rendered": false
   },
   "div": {
     "template": "adapter",
     "key": "div",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLDivElement",
     "parent": "HTMLElement",
-    "childs": "HTMLElement | Text"
+    "childs": "HTMLElement | Text",
+    "rendered": false
   },
   "dl": {
     "template": "adapter",
     "key": "dl",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLDListElement",
     "parent": "HTMLElement",
-    "childs": "HTMLElement | Text"
+    "childs": "HTMLElement | Text",
+    "rendered": false
   },
   "dt": {
     "template": "adapter",
     "key": "dt",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLElement",
     "parent": "HTMLElement",
-    "childs": "HTMLElement | Text"
+    "childs": "HTMLElement | Text",
+    "rendered": false
   },
   "em": {
     "template": "adapter",
     "key": "em",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLElement",
     "parent": "HTMLElement",
-    "childs": "HTMLElement | Text"
+    "childs": "HTMLElement | Text",
+    "rendered": false
   },
   "embed": {
     "template": "adapter",
     "key": "embed",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLEmbedElement",
     "parent": "HTMLElement",
-    "childs": "HTMLElement | Text"
+    "childs": "HTMLElement | Text",
+    "rendered": false
   },
   "fieldset": {
     "template": "adapter",
     "key": "fieldset",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLFieldSetElement",
     "parent": "HTMLElement",
-    "childs": "HTMLElement | Text"
+    "childs": "HTMLElement | Text",
+    "rendered": false
   },
   "figcaption": {
     "template": "adapter",
     "key": "figcaption",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLElement",
     "parent": "HTMLElement",
-    "childs": "HTMLElement | Text"
+    "childs": "HTMLElement | Text",
+    "rendered": false
   },
   "figure": {
     "template": "adapter",
     "key": "figure",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLElement",
     "parent": "HTMLElement",
-    "childs": "HTMLElement | Text"
+    "childs": "HTMLElement | Text",
+    "rendered": false
   },
   "footer": {
     "template": "adapter",
     "key": "footer",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLElement",
     "parent": "HTMLElement",
-    "childs": "HTMLElement | Text"
+    "childs": "HTMLElement | Text",
+    "rendered": false
   },
   "form": {
     "template": "adapter",
     "key": "form",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLFormElement",
     "parent": "HTMLElement",
-    "childs": "HTMLElement | Text"
+    "childs": "HTMLElement | Text",
+    "rendered": false
   },
   "h1": {
     "template": "adapter",
     "key": "h1",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLHeadingElement",
     "parent": "HTMLElement",
-    "childs": "HTMLElement | Text"
+    "childs": "HTMLElement | Text",
+    "rendered": false
   },
   "h2": {
     "template": "adapter",
     "key": "h2",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLHeadingElement",
     "parent": "HTMLElement",
-    "childs": "HTMLElement | Text"
+    "childs": "HTMLElement | Text",
+    "rendered": false
   },
   "h3": {
     "template": "adapter",
     "key": "h3",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLHeadingElement",
     "parent": "HTMLElement",
-    "childs": "HTMLElement | Text"
+    "childs": "HTMLElement | Text",
+    "rendered": false
   },
   "h4": {
     "template": "adapter",
     "key": "h4",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLHeadingElement",
     "parent": "HTMLElement",
-    "childs": "HTMLElement | Text"
+    "childs": "HTMLElement | Text",
+    "rendered": false
   },
   "h5": {
     "template": "adapter",
     "key": "h5",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLHeadingElement",
     "parent": "HTMLElement",
-    "childs": "HTMLElement | Text"
+    "childs": "HTMLElement | Text",
+    "rendered": false
   },
   "h6": {
     "template": "adapter",
     "key": "h6",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLHeadingElement",
     "parent": "HTMLElement",
-    "childs": "HTMLElement | Text"
+    "childs": "HTMLElement | Text",
+    "rendered": false
   },
   "head": {
     "template": "adapter",
     "key": "head",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLHeadElement",
     "parent": "HTMLElement",
-    "childs": "HTMLElement | Text"
+    "childs": "HTMLElement | Text",
+    "rendered": false
   },
   "header": {
     "template": "adapter",
     "key": "header",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLElement",
     "parent": "HTMLElement",
-    "childs": "HTMLElement | Text"
+    "childs": "HTMLElement | Text",
+    "rendered": false
   },
   "hgroup": {
     "template": "adapter",
     "key": "hgroup",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLElement",
     "parent": "HTMLElement",
-    "childs": "HTMLElement | Text"
+    "childs": "HTMLElement | Text",
+    "rendered": false
   },
   "hr": {
     "template": "adapter",
     "key": "hr",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLHRElement",
     "parent": "HTMLElement",
-    "childs": "HTMLElement | Text"
+    "childs": "HTMLElement | Text",
+    "rendered": false
   },
   "html": {
     "template": "adapter",
     "key": "html",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLElement",
-    "childs": "HTMLElement | Text"
+    "childs": "HTMLElement | Text",
+    "rendered": false
   },
   "i": {
     "template": "adapter",
     "key": "i",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLElement",
     "parent": "HTMLElement",
-    "childs": "HTMLElement | Text"
+    "childs": "HTMLElement | Text",
+    "rendered": false
   },
   "iframe": {
     "template": "adapter",
     "key": "iframe",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLIFrameElement",
     "parent": "HTMLElement",
-    "childs": "HTMLElement | Text"
+    "childs": "HTMLElement | Text",
+    "rendered": false
   },
   "img": {
     "template": "adapter",
     "key": "img",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLImageElement",
-    "parent": "HTMLElement"
+    "parent": "HTMLElement",
+    "rendered": false
   },
   "input": {
     "template": "adapter",
     "key": "input",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLInputElement",
-    "parent": "HTMLElement"
+    "parent": "HTMLElement",
+    "rendered": false
   },
   "ins": {
     "template": "adapter",
     "key": "ins",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLModElement",
     "parent": "HTMLElement",
-    "childs": "HTMLElement | Text"
+    "childs": "HTMLElement | Text",
+    "rendered": false
   },
   "kbd": {
     "template": "adapter",
     "key": "kbd",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLElement",
     "parent": "HTMLElement",
-    "childs": "HTMLElement | Text"
+    "childs": "HTMLElement | Text",
+    "rendered": false
   },
   "label": {
     "template": "adapter",
     "key": "label",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLLabelElement",
     "parent": "HTMLElement",
-    "childs": "HTMLElement | Text"
+    "childs": "HTMLElement | Text",
+    "rendered": false
   },
   "legend": {
     "template": "adapter",
     "key": "legend",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLLegendElement",
     "parent": "HTMLElement",
-    "childs": "HTMLElement | Text"
+    "childs": "HTMLElement | Text",
+    "rendered": false
   },
   "li": {
     "template": "adapter",
     "key": "li",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLLIElement",
     "parent": "HTMLElement",
-    "childs": "HTMLElement | Text"
+    "childs": "HTMLElement | Text",
+    "rendered": false
   },
   "link": {
     "template": "adapter",
     "key": "link",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLLinkElement",
     "parent": "HTMLElement",
-    "childs": "HTMLElement | Text"
+    "childs": "HTMLElement | Text",
+    "rendered": false
   },
   "main": {
     "template": "adapter",
     "key": "main",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLElement",
     "parent": "HTMLElement",
-    "childs": "HTMLElement | Text"
+    "childs": "HTMLElement | Text",
+    "rendered": false
   },
   "mark": {
     "template": "adapter",
     "key": "mark",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLElement",
     "parent": "HTMLElement",
-    "childs": "HTMLElement | Text"
+    "childs": "HTMLElement | Text",
+    "rendered": false
   },
   "menu": {
     "template": "adapter",
     "key": "menu",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLMenuElement",
     "parent": "HTMLElement",
-    "childs": "HTMLElement | Text"
+    "childs": "HTMLElement | Text",
+    "rendered": false
   },
   "meta": {
     "template": "adapter",
     "key": "meta",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLElement",
     "parent": "HTMLElement",
-    "childs": "HTMLElement | Text"
+    "childs": "HTMLElement | Text",
+    "rendered": false
   },
   "meter": {
     "template": "adapter",
     "key": "meter",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLMeterElement",
     "parent": "HTMLElement",
-    "childs": "HTMLElement | Text"
+    "childs": "HTMLElement | Text",
+    "rendered": false
   },
   "nav": {
     "template": "adapter",
     "key": "nav",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLElement",
     "parent": "HTMLElement",
-    "childs": "HTMLElement | Text"
+    "childs": "HTMLElement | Text",
+    "rendered": false
   },
   "noscript": {
     "template": "adapter",
     "key": "noscript",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLElement",
     "parent": "HTMLElement",
-    "childs": "HTMLElement | Text"
+    "childs": "HTMLElement | Text",
+    "rendered": false
   },
   "object": {
     "template": "adapter",
     "key": "object",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLObjectElement",
     "parent": "HTMLElement",
-    "childs": "HTMLElement | Text"
+    "childs": "HTMLElement | Text",
+    "rendered": false
   },
   "ol": {
     "template": "adapter",
     "key": "ol",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLOListElement",
     "parent": "HTMLElement",
-    "childs": "HTMLElement | Text"
+    "childs": "HTMLElement | Text",
+    "rendered": false
   },
   "optgroup": {
     "template": "adapter",
     "key": "optgroup",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLOptGroupElement",
     "parent": "HTMLElement",
-    "childs": "HTMLElement | Text"
+    "childs": "HTMLElement | Text",
+    "rendered": false
   },
   "option": {
     "template": "adapter",
     "key": "option",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLOptionElement",
     "parent": "HTMLElement",
-    "childs": "HTMLElement | Text"
+    "childs": "HTMLElement | Text",
+    "rendered": false
   },
   "output": {
     "template": "adapter",
     "key": "output",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLOutputElement",
     "parent": "HTMLElement",
-    "childs": "HTMLElement | Text"
+    "childs": "HTMLElement | Text",
+    "rendered": false
   },
   "p": {
     "template": "adapter",
     "key": "p",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLParagraphElement",
     "parent": "HTMLElement",
-    "childs": "HTMLElement | Text"
+    "childs": "HTMLElement | Text",
+    "rendered": false
   },
   "param": {
     "template": "adapter",
     "key": "param",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLParagraphElement",
     "parent": "HTMLElement",
-    "childs": "HTMLElement | Text"
+    "childs": "HTMLElement | Text",
+    "rendered": false
   },
   "picture": {
     "template": "adapter",
     "key": "picture",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLPictureElement",
     "parent": "HTMLElement",
-    "childs": "HTMLElement | Text"
+    "childs": "HTMLElement | Text",
+    "rendered": false
   },
   "pre": {
     "template": "adapter",
     "key": "pre",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLPreElement",
     "parent": "HTMLElement",
-    "childs": "HTMLElement | Text"
+    "childs": "HTMLElement | Text",
+    "rendered": false
   },
   "progress": {
     "template": "adapter",
     "key": "progress",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLProgressElement",
     "parent": "HTMLElement",
-    "childs": "HTMLElement | Text"
+    "childs": "HTMLElement | Text",
+    "rendered": false
   },
   "q": {
     "template": "adapter",
     "key": "q",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLQuoteElement",
     "parent": "HTMLElement",
-    "childs": "HTMLElement | Text"
+    "childs": "HTMLElement | Text",
+    "rendered": false
   },
   "rp": {
     "template": "adapter",
     "key": "rp",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLElement",
     "parent": "HTMLElement",
-    "childs": "HTMLElement | Text"
+    "childs": "HTMLElement | Text",
+    "rendered": false
   },
   "rt": {
     "template": "adapter",
     "key": "rt",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLElement",
     "parent": "HTMLElement",
-    "childs": "HTMLElement | Text"
+    "childs": "HTMLElement | Text",
+    "rendered": false
   },
   "ruby": {
     "template": "adapter",
     "key": "ruby",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLElement",
     "parent": "HTMLElement",
-    "childs": "HTMLElement | Text"
+    "childs": "HTMLElement | Text",
+    "rendered": false
   },
   "s": {
     "template": "adapter",
     "key": "s",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLElement",
     "parent": "HTMLElement",
-    "childs": "HTMLElement | Text"
+    "childs": "HTMLElement | Text",
+    "rendered": false
   },
   "samp": {
     "template": "adapter",
     "key": "samp",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLElement",
     "parent": "HTMLElement",
-    "childs": "HTMLElement | Text"
+    "childs": "HTMLElement | Text",
+    "rendered": false
   },
   "script": {
     "template": "adapter",
     "key": "script",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLElement",
     "parent": "HTMLElement",
-    "childs": "HTMLElement | Text"
+    "childs": "HTMLElement | Text",
+    "rendered": false
   },
   "search": {
     "template": "adapter",
     "key": "search",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLElement",
     "parent": "HTMLElement",
-    "childs": "HTMLElement | Text"
+    "childs": "HTMLElement | Text",
+    "rendered": false
   },
   "section": {
     "template": "adapter",
     "key": "section",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLElement",
     "parent": "HTMLElement",
-    "childs": "HTMLElement | Text"
+    "childs": "HTMLElement | Text",
+    "rendered": false
   },
   "select": {
     "template": "adapter",
     "key": "select",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLSelectElement",
     "parent": "HTMLElement",
-    "childs": "HTMLElement | Text"
+    "childs": "HTMLElement | Text",
+    "rendered": false
   },
   "htmlslot": {
     "template": "adapter",
     "key": "slot",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLSlotElement",
     "parent": "HTMLElement",
-    "childs": "HTMLElement | Text"
+    "childs": "HTMLElement | Text",
+    "rendered": false
   },
   "small": {
     "template": "adapter",
     "key": "small",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLElement",
     "parent": "HTMLElement",
-    "childs": "HTMLElement | Text"
+    "childs": "HTMLElement | Text",
+    "rendered": false
   },
   "source": {
     "template": "adapter",
     "key": "source",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLSourceElement",
     "parent": "HTMLElement",
-    "childs": "HTMLElement | Text"
+    "childs": "HTMLElement | Text",
+    "rendered": false
   },
   "span": {
     "template": "adapter",
     "key": "span",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLElement",
     "parent": "HTMLElement",
-    "childs": "HTMLElement | Text"
+    "childs": "HTMLElement | Text",
+    "rendered": false
   },
   "strong": {
     "template": "adapter",
     "key": "strong",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLElement",
     "parent": "HTMLElement",
-    "childs": "HTMLElement | Text"
+    "childs": "HTMLElement | Text",
+    "rendered": false
   },
   "style": {
     "template": "adapter",
     "key": "style",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLElement",
     "parent": "HTMLElement",
-    "childs": "HTMLElement | Text"
+    "childs": "HTMLElement | Text",
+    "rendered": false
   },
   "sub": {
     "template": "adapter",
     "key": "sub",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLElement",
     "parent": "HTMLElement",
-    "childs": "HTMLElement | Text"
+    "childs": "HTMLElement | Text",
+    "rendered": false
   },
   "summary": {
     "template": "adapter",
     "key": "summary",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLElement",
     "parent": "HTMLElement",
-    "childs": "HTMLElement | Text"
+    "childs": "HTMLElement | Text",
+    "rendered": false
   },
   "sup": {
     "template": "adapter",
     "key": "sup",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLElement",
     "parent": "HTMLElement",
-    "childs": "HTMLElement | Text"
+    "childs": "HTMLElement | Text",
+    "rendered": false
   },
   "table": {
     "template": "adapter",
     "key": "table",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLTableElement",
     "parent": "HTMLElement",
-    "childs": "HTMLElement | Text"
+    "childs": "HTMLElement | Text",
+    "rendered": false
   },
   "tbody": {
     "template": "adapter",
     "key": "tbody",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLTableSectionElement",
     "parent": "HTMLElement",
-    "childs": "HTMLElement | Text"
+    "childs": "HTMLElement | Text",
+    "rendered": false
   },
   "td": {
     "template": "adapter",
     "key": "td",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLTableCellElement",
     "parent": "HTMLElement",
-    "childs": "HTMLElement | Text"
+    "childs": "HTMLElement | Text",
+    "rendered": false
   },
   "template": {
     "template": "adapter",
     "key": "template",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLTemplateElement",
     "parent": "HTMLElement",
-    "childs": "HTMLElement | Text"
+    "childs": "HTMLElement | Text",
+    "rendered": false
   },
   "textarea": {
     "template": "adapter",
     "key": "textarea",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLTextAreaElement",
     "parent": "HTMLElement",
-    "childs": "HTMLElement | Text"
+    "childs": "HTMLElement | Text",
+    "rendered": false
   },
   "tfoot": {
     "template": "adapter",
     "key": "tfoot",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLTableSectionElement",
     "parent": "HTMLElement",
-    "childs": "HTMLElement | Text"
+    "childs": "HTMLElement | Text",
+    "rendered": false
   },
   "th": {
     "template": "adapter",
     "key": "th",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLTableCellElement",
     "parent": "HTMLElement",
-    "childs": "HTMLElement | Text"
+    "childs": "HTMLElement | Text",
+    "rendered": false
   },
   "thead": {
     "template": "adapter",
     "key": "thead",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLTableSectionElement",
     "parent": "HTMLElement",
-    "childs": "HTMLElement | Text"
+    "childs": "HTMLElement | Text",
+    "rendered": false
   },
   "time": {
     "template": "adapter",
     "key": "time",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLTimeElement",
     "parent": "HTMLElement",
-    "childs": "HTMLElement | Text"
+    "childs": "HTMLElement | Text",
+    "rendered": false
   },
   "htmltitle": {
     "template": "adapter",
     "key": "title",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLTitleElement",
     "parent": "HTMLElement",
-    "childs": "HTMLElement | Text"
+    "childs": "HTMLElement | Text",
+    "rendered": false
   },
   "tr": {
     "template": "adapter",
     "key": "tr",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLTableRowElement",
     "parent": "HTMLElement",
-    "childs": "HTMLElement | Text"
+    "childs": "HTMLElement | Text",
+    "rendered": false
   },
   "track": {
     "template": "adapter",
     "key": "track",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLTrackElement",
     "parent": "HTMLElement",
-    "childs": "HTMLElement | Text"
+    "childs": "HTMLElement | Text",
+    "rendered": false
   },
   "u": {
     "template": "adapter",
     "key": "u",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLTrackElement",
     "parent": "HTMLElement",
-    "childs": "HTMLElement | Text"
+    "childs": "HTMLElement | Text",
+    "rendered": false
   },
   "ul": {
     "template": "adapter",
     "key": "ul",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLUListElement",
     "parent": "HTMLElement",
-    "childs": "HTMLElement | Text"
+    "childs": "HTMLElement | Text",
+    "rendered": false
   },
   "htmlvar": {
     "template": "adapter",
     "key": "var",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLElement",
     "parent": "HTMLElement",
-    "childs": "HTMLElement | Text"
+    "childs": "HTMLElement | Text",
+    "rendered": false
   },
   "video": {
     "template": "adapter",
     "key": "video",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLVideoElement",
     "parent": "HTMLElement",
-    "childs": "HTMLElement | Text"
+    "childs": "HTMLElement | Text",
+    "rendered": false
   },
   "wbr": {
     "template": "adapter",
     "key": "wbr",
-    "type": "HTML",
+    "type": "html",
     "target": "HTMLElement",
     "parent": "HTMLElement",
-    "childs": "HTMLElement | Text"
+    "childs": "HTMLElement | Text",
+    "rendered": false
   },
   "id": {
     "template": "property",
     "key": "id",
     "type": "Attr",
-    "target": "Element"
+    "target": "Element",
+    "rendered": false
   },
   "getId": {
     "template": "query",
     "key": "id",
     "type": "Attr",
-    "target": "Element"
+    "target": "Element",
+    "rendered": false
   },
   "title": {
     "template": "property",
     "key": "title",
     "type": "Attr",
-    "target": "HTMLElement"
+    "target": "HTMLElement",
+    "rendered": false
   },
   "getTitle": {
     "template": "query",
     "key": "title",
     "type": "Attr",
-    "target": "HTMLElement"
+    "target": "HTMLElement",
+    "rendered": false
   },
   "tabIndex": {
     "template": "property",
     "key": "tabIndex",
     "type": "Attr",
-    "target": "HTMLElement"
+    "target": "HTMLElement",
+    "rendered": false
   },
   "getTabIndex": {
     "template": "query",
     "key": "tabIndex",
     "type": "Attr",
-    "target": "HTMLElement"
+    "target": "HTMLElement",
+    "rendered": false
   },
   "lang": {
     "template": "property",
     "key": "lang",
     "type": "Attr",
-    "target": "HTMLElement"
+    "target": "HTMLElement",
+    "rendered": false
   },
   "getLang": {
     "template": "query",
     "key": "lang",
     "type": "Attr",
-    "target": "HTMLElement"
+    "target": "HTMLElement",
+    "rendered": false
   },
   "dir": {
     "template": "property",
     "key": "dir",
     "type": "Attr",
-    "target": "HTMLElement"
+    "target": "HTMLElement",
+    "rendered": false
   },
   "getDir": {
     "template": "query",
     "key": "dir",
     "type": "Attr",
-    "target": "HTMLElement"
+    "target": "HTMLElement",
+    "rendered": false
   },
   "accesskey": {
     "template": "property",
     "key": "accesskey",
     "type": "Attr",
-    "target": "Element"
+    "target": "Element",
+    "rendered": false
   },
   "getAccesskey": {
     "template": "query",
     "key": "accesskey",
     "type": "Attr",
-    "target": "Element"
+    "target": "Element",
+    "rendered": false
   },
   "autocapitalize": {
     "template": "property",
     "key": "autocapitalize",
     "type": "Attr",
-    "target": "Element"
+    "target": "Element",
+    "rendered": false
   },
   "getAutocapitalize": {
     "template": "query",
     "key": "autocapitalize",
     "type": "Attr",
-    "target": "Element"
+    "target": "Element",
+    "rendered": false
   },
   "autofocus": {
     "template": "property",
     "key": "autofocus",
     "type": "Attr",
-    "target": "Element"
+    "target": "Element",
+    "rendered": false
   },
   "getAutofocus": {
     "template": "query",
     "key": "autofocus",
     "type": "Attr",
-    "target": "Element"
+    "target": "Element",
+    "rendered": false
   },
   "contenteditable": {
     "template": "property",
     "key": "contenteditable",
     "type": "Attr",
-    "target": "Element"
+    "target": "Element",
+    "rendered": false
   },
   "getContenteditable": {
     "template": "query",
     "key": "contenteditable",
     "type": "Attr",
-    "target": "Element"
+    "target": "Element",
+    "rendered": false
   },
   "draggable": {
     "template": "property",
     "key": "draggable",
     "type": "Attr",
-    "target": "HTMLElement"
+    "target": "HTMLElement",
+    "rendered": false
   },
   "getDraggable": {
     "template": "query",
     "key": "draggable",
     "type": "Attr",
-    "target": "HTMLElement"
+    "target": "HTMLElement",
+    "rendered": false
   },
   "enterkeyhint": {
     "template": "property",
     "key": "enterkeyhint",
     "type": "Attr",
-    "target": "Element"
+    "target": "Element",
+    "rendered": false
   },
   "getEnterkeyhint": {
     "template": "query",
     "key": "enterkeyhint",
     "type": "Attr",
-    "target": "Element"
+    "target": "Element",
+    "rendered": false
   },
   "exportparts": {
     "template": "property",
     "key": "exportparts",
     "type": "Attr",
-    "target": "Element"
+    "target": "Element",
+    "rendered": false
   },
   "getExportparts": {
     "template": "query",
     "key": "exportparts",
     "type": "Attr",
-    "target": "Element"
+    "target": "Element",
+    "rendered": false
   },
   "hidden": {
     "template": "property",
     "key": "hidden",
     "type": "Attr",
-    "target": "Element"
+    "target": "Element",
+    "rendered": false
   },
   "getHidden": {
     "template": "query",
     "key": "hidden",
     "type": "Attr",
-    "target": "Element"
+    "target": "Element",
+    "rendered": false
   },
   "inert": {
     "template": "property",
     "key": "inert",
     "type": "Attr",
-    "target": "Element"
+    "target": "Element",
+    "rendered": false
   },
   "getInert": {
     "template": "query",
     "key": "inert",
     "type": "Attr",
-    "target": "Element"
+    "target": "Element",
+    "rendered": false
   },
   "inputmode": {
     "template": "property",
     "key": "inputmode",
     "type": "Attr",
-    "target": "Element"
+    "target": "Element",
+    "rendered": false
   },
   "getInputmode": {
     "template": "query",
     "key": "inputmode",
     "type": "Attr",
-    "target": "Element"
+    "target": "Element",
+    "rendered": false
   },
   "is": {
     "template": "property",
     "key": "is",
     "type": "Attr",
-    "target": "Element"
+    "target": "Element",
+    "rendered": false
   },
   "getIs": {
     "template": "query",
     "key": "is",
     "type": "Attr",
-    "target": "Element"
+    "target": "Element",
+    "rendered": false
   },
   "itemid": {
     "template": "property",
     "key": "itemid",
     "type": "Attr",
-    "target": "HTMLElement"
+    "target": "HTMLElement",
+    "rendered": false
   },
   "getItemid": {
     "template": "query",
     "key": "itemid",
     "type": "Attr",
-    "target": "HTMLElement"
+    "target": "HTMLElement",
+    "rendered": false
   },
   "itemprop": {
     "template": "property",
     "key": "itemprop",
     "type": "Attr",
-    "target": "HTMLElement"
+    "target": "HTMLElement",
+    "rendered": false
   },
   "getItemprop": {
     "template": "query",
     "key": "itemprop",
     "type": "Attr",
-    "target": "HTMLElement"
+    "target": "HTMLElement",
+    "rendered": false
   },
   "itemref": {
     "template": "property",
     "key": "itemref",
     "type": "Attr",
-    "target": "HTMLElement"
+    "target": "HTMLElement",
+    "rendered": false
   },
   "getItemref": {
     "template": "query",
     "key": "itemref",
     "type": "Attr",
-    "target": "HTMLElement"
+    "target": "HTMLElement",
+    "rendered": false
   },
   "itemscope": {
     "template": "property",
     "key": "itemscope",
     "type": "Attr",
-    "target": "HTMLElement"
+    "target": "HTMLElement",
+    "rendered": false
   },
   "getItemscope": {
     "template": "query",
     "key": "itemscope",
     "type": "Attr",
-    "target": "HTMLElement"
+    "target": "HTMLElement",
+    "rendered": false
   },
   "itemtype": {
     "template": "property",
     "key": "itemtype",
     "type": "Attr",
-    "target": "HTMLElement"
+    "target": "HTMLElement",
+    "rendered": false
   },
   "getItemtype": {
     "template": "query",
     "key": "itemtype",
     "type": "Attr",
-    "target": "HTMLElement"
+    "target": "HTMLElement",
+    "rendered": false
   },
   "nonce": {
     "template": "property",
     "key": "nonce",
     "type": "Attr",
-    "target": "Element"
+    "target": "Element",
+    "rendered": false
   },
   "getNonce": {
     "template": "query",
     "key": "nonce",
     "type": "Attr",
-    "target": "Element"
+    "target": "Element",
+    "rendered": false
   },
   "part": {
     "template": "property",
     "key": "part",
     "type": "Attr",
-    "target": "Element"
+    "target": "Element",
+    "rendered": false
   },
   "getPart": {
     "template": "query",
     "key": "part",
     "type": "Attr",
-    "target": "Element"
+    "target": "Element",
+    "rendered": false
   },
   "popover": {
     "template": "property",
     "key": "popover",
     "type": "Attr",
-    "target": "Element"
+    "target": "Element",
+    "rendered": false
   },
   "getPopover": {
     "template": "query",
     "key": "popover",
     "type": "Attr",
-    "target": "Element"
+    "target": "Element",
+    "rendered": false
   },
   "slot": {
     "template": "property",
     "key": "slot",
     "type": "Attr",
-    "target": "Element"
+    "target": "Element",
+    "rendered": false
   },
   "getSlot": {
     "template": "query",
     "key": "slot",
     "type": "Attr",
-    "target": "Element"
+    "target": "Element",
+    "rendered": false
   },
   "spellcheck": {
     "template": "property",
     "key": "spellcheck",
     "type": "Attr",
-    "target": "Element"
+    "target": "Element",
+    "rendered": false
   },
   "getSpellcheck": {
     "template": "query",
     "key": "spellcheck",
     "type": "Attr",
-    "target": "Element"
+    "target": "Element",
+    "rendered": false
   },
   "translate": {
     "template": "property",
     "key": "translate",
     "type": "Attr",
-    "target": "Element"
+    "target": "Element",
+    "rendered": false
   },
   "getTranslate": {
     "template": "query",
     "key": "translate",
     "type": "Attr",
-    "target": "Element"
+    "target": "Element",
+    "rendered": false
   },
   "accept": {
     "template": "property",
     "key": "accept",
     "type": "Attr",
-    "target": "HTMLInputElement"
+    "target": "HTMLInputElement",
+    "rendered": false
   },
   "getAccept": {
     "template": "query",
     "key": "accept",
     "type": "Attr",
-    "target": "HTMLInputElement"
+    "target": "HTMLInputElement",
+    "rendered": false
   },
   "autocomplete": {
     "template": "property",
     "key": "autocomplete",
     "type": "Attr",
-    "target": "HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement | HTMLFormElement"
+    "target": "HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement | HTMLFormElement",
+    "rendered": false
   },
   "getAutocomplete": {
     "template": "query",
     "key": "autocomplete",
     "type": "Attr",
-    "target": "HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement | HTMLFormElement"
+    "target": "HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement | HTMLFormElement",
+    "rendered": false
   },
   "capture": {
     "template": "property",
     "key": "capture",
     "type": "Attr",
-    "target": "HTMLInputElement"
+    "target": "HTMLInputElement",
+    "rendered": false
   },
   "getCapture": {
     "template": "query",
     "key": "capture",
     "type": "Attr",
-    "target": "HTMLInputElement"
+    "target": "HTMLInputElement",
+    "rendered": false
   },
   "crossorigin": {
     "template": "property",
     "key": "crossorigin",
     "type": "Attr",
-    "target": "HTMLElement"
+    "target": "HTMLElement",
+    "rendered": false
   },
   "getCrossorigin": {
     "template": "query",
     "key": "crossorigin",
     "type": "Attr",
-    "target": "HTMLElement"
+    "target": "HTMLElement",
+    "rendered": false
   },
   "dirname": {
     "template": "property",
     "key": "dirname",
     "type": "Attr",
-    "target": "HTMLInputElement | HTMLTextAreaElement"
+    "target": "HTMLInputElement | HTMLTextAreaElement",
+    "rendered": false
   },
   "getDirname": {
     "template": "query",
     "key": "dirname",
     "type": "Attr",
-    "target": "HTMLInputElement | HTMLTextAreaElement"
+    "target": "HTMLInputElement | HTMLTextAreaElement",
+    "rendered": false
   },
   "disabled": {
     "template": "property",
     "key": "disabled",
     "type": "Attr",
-    "target": "HTMLElement"
+    "target": "HTMLElement",
+    "rendered": false
   },
   "getDisabled": {
     "template": "query",
     "key": "disabled",
     "type": "Attr",
-    "target": "HTMLElement"
+    "target": "HTMLElement",
+    "rendered": false
   },
   "elementtiming": {
     "template": "property",
     "key": "elementtiming",
     "type": "Attr",
-    "target": "HTMLElement"
+    "target": "HTMLElement",
+    "rendered": false
   },
   "getElementtiming": {
     "template": "query",
     "key": "elementtiming",
     "type": "Attr",
-    "target": "HTMLElement"
+    "target": "HTMLElement",
+    "rendered": false
   },
   "$for": {
     "template": "property",
-    "key": "$for",
+    "key": "for",
     "type": "Attr",
-    "target": "HTMLLabelElement | HTMLOutputElement"
+    "target": "HTMLLabelElement | HTMLOutputElement",
+    "rendered": false
   },
-  "get$for": {
+  "getFor": {
     "template": "query",
-    "key": "$for",
+    "key": "for",
     "type": "Attr",
-    "target": "HTMLLabelElement | HTMLOutputElement"
+    "target": "HTMLLabelElement | HTMLOutputElement",
+    "rendered": false
   },
   "max": {
     "template": "property",
     "key": "max",
     "type": "Attr",
-    "target": "HTMLElement"
+    "target": "HTMLElement",
+    "rendered": false
   },
   "getMax": {
     "template": "query",
     "key": "max",
     "type": "Attr",
-    "target": "HTMLElement"
+    "target": "HTMLElement",
+    "rendered": false
   },
   "min": {
     "template": "property",
     "key": "min",
     "type": "Attr",
-    "target": "HTMLElement"
+    "target": "HTMLElement",
+    "rendered": false
   },
   "getMin": {
     "template": "query",
     "key": "min",
     "type": "Attr",
-    "target": "HTMLElement"
+    "target": "HTMLElement",
+    "rendered": false
   },
   "maxlength": {
     "template": "property",
     "key": "maxlength",
     "type": "Attr",
-    "target": "HTMLInputElement | HTMLTextAreaElement"
+    "target": "HTMLInputElement | HTMLTextAreaElement",
+    "rendered": false
   },
   "getMaxlength": {
     "template": "query",
     "key": "maxlength",
     "type": "Attr",
-    "target": "HTMLInputElement | HTMLTextAreaElement"
+    "target": "HTMLInputElement | HTMLTextAreaElement",
+    "rendered": false
   },
   "minlength": {
     "template": "property",
     "key": "minlength",
     "type": "Attr",
-    "target": "HTMLInputElement | HTMLTextAreaElement"
+    "target": "HTMLInputElement | HTMLTextAreaElement",
+    "rendered": false
   },
   "getMinlength": {
     "template": "query",
     "key": "minlength",
     "type": "Attr",
-    "target": "HTMLInputElement | HTMLTextAreaElement"
+    "target": "HTMLInputElement | HTMLTextAreaElement",
+    "rendered": false
   },
   "multiple": {
     "template": "property",
     "key": "multiple",
     "type": "Attr",
-    "target": "HTMLInputElement | HTMLSelectElement"
+    "target": "HTMLInputElement | HTMLSelectElement",
+    "rendered": false
   },
   "getMultiple": {
     "template": "query",
     "key": "multiple",
     "type": "Attr",
-    "target": "HTMLInputElement | HTMLSelectElement"
+    "target": "HTMLInputElement | HTMLSelectElement",
+    "rendered": false
   },
   "pattern": {
     "template": "property",
     "key": "pattern",
     "type": "Attr",
-    "target": "HTMLInputElement"
+    "target": "HTMLInputElement",
+    "rendered": false
   },
   "getPattern": {
     "template": "query",
     "key": "pattern",
     "type": "Attr",
-    "target": "HTMLInputElement"
+    "target": "HTMLInputElement",
+    "rendered": false
   },
   "placeholder": {
     "template": "property",
     "key": "placeholder",
     "type": "Attr",
-    "target": "HTMLInputElement"
+    "target": "HTMLInputElement",
+    "rendered": false
   },
   "getPlaceholder": {
     "template": "query",
     "key": "placeholder",
     "type": "Attr",
-    "target": "HTMLInputElement"
+    "target": "HTMLInputElement",
+    "rendered": false
   },
   "readonly": {
     "template": "property",
     "key": "readonly",
     "type": "Attr",
-    "target": "HTMLInputElement | HTMLTextAreaElement"
+    "target": "HTMLInputElement | HTMLTextAreaElement",
+    "rendered": false
   },
   "getReadonly": {
     "template": "query",
     "key": "readonly",
     "type": "Attr",
-    "target": "HTMLInputElement | HTMLTextAreaElement"
+    "target": "HTMLInputElement | HTMLTextAreaElement",
+    "rendered": false
   },
   "rel": {
     "template": "property",
     "key": "rel",
     "type": "Attr",
-    "target": "HTMLAnchorElement | HTMLAreaElement | HTMLLinkElement | HTMLFormElement"
+    "target": "HTMLAnchorElement | HTMLAreaElement | HTMLLinkElement | HTMLFormElement",
+    "rendered": false
   },
   "getRel": {
     "template": "query",
     "key": "rel",
     "type": "Attr",
-    "target": "HTMLAnchorElement | HTMLAreaElement | HTMLLinkElement | HTMLFormElement"
+    "target": "HTMLAnchorElement | HTMLAreaElement | HTMLLinkElement | HTMLFormElement",
+    "rendered": false
   },
   "required": {
     "template": "property",
     "key": "required",
     "type": "Attr",
-    "target": "HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement"
+    "target": "HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement",
+    "rendered": false
   },
   "getRequired": {
     "template": "query",
     "key": "required",
     "type": "Attr",
-    "target": "HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement"
+    "target": "HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement",
+    "rendered": false
   },
   "size": {
     "template": "property",
     "key": "size",
     "type": "Attr",
-    "target": "HTMLInputElement | HTMLSelectElement"
+    "target": "HTMLInputElement | HTMLSelectElement",
+    "rendered": false
   },
   "getSize": {
     "template": "query",
     "key": "size",
     "type": "Attr",
-    "target": "HTMLInputElement | HTMLSelectElement"
+    "target": "HTMLInputElement | HTMLSelectElement",
+    "rendered": false
   },
   "step": {
     "template": "property",
     "key": "step",
     "type": "Attr",
-    "target": "HTMLInputElement"
+    "target": "HTMLInputElement",
+    "rendered": false
   },
   "getStep": {
     "template": "query",
     "key": "step",
     "type": "Attr",
-    "target": "HTMLInputElement"
+    "target": "HTMLInputElement",
+    "rendered": false
   },
   "type": {
     "template": "property",
     "key": "type",
     "type": "Attr",
-    "target": "HTMLInputElement"
+    "target": "HTMLInputElement",
+    "rendered": false
   },
   "getType": {
     "template": "query",
     "key": "type",
     "type": "Attr",
-    "target": "HTMLInputElement"
+    "target": "HTMLInputElement",
+    "rendered": false
   },
   "className": {
     "template": "property",
     "key": "class",
     "type": "Attr",
-    "target": "Element"
+    "target": "Element",
+    "rendered": false
   },
   "getClassName": {
     "template": "query",
     "key": "class",
     "type": "Attr",
-    "target": "Element"
+    "target": "Element",
+    "rendered": false
   },
   "nodeValue": {
     "template": "property",
     "key": "nodeValue",
     "type": "Prop",
-    "target": "Node"
+    "target": "Node",
+    "rendered": false
   },
   "getNodeValue": {
     "template": "query",
     "key": "nodeValue",
     "type": "Prop",
-    "target": "Node"
+    "target": "Node",
+    "rendered": false
   },
   "textContent": {
     "template": "property",
     "key": "textContent",
     "type": "Prop",
-    "target": "Node"
+    "target": "Node",
+    "rendered": false
   },
   "getTextContent": {
     "template": "query",
     "key": "textContent",
     "type": "Prop",
-    "target": "Node"
+    "target": "Node",
+    "rendered": false
   },
   "innerHTML": {
     "template": "property",
     "key": "innerHTML",
     "type": "Prop",
-    "target": "Element"
+    "target": "Element",
+    "rendered": false
   },
   "getInnerHTML": {
     "template": "query",
     "key": "innerHTML",
     "type": "Prop",
-    "target": "Element"
+    "target": "Element",
+    "rendered": false
   },
   "outerHTML": {
     "template": "property",
     "key": "outerHTML",
     "type": "Prop",
-    "target": "Element"
+    "target": "Element",
+    "rendered": false
   },
   "getOuterHTML": {
     "template": "query",
     "key": "outerHTML",
     "type": "Prop",
-    "target": "Element"
+    "target": "Element",
+    "rendered": false
   },
   "getNodeName": {
     "template": "query",
     "key": "nodeName",
     "type": "Prop",
-    "target": "Node"
+    "target": "Node",
+    "rendered": false
   },
   "getNodeType": {
     "template": "query",
     "key": "nodeType",
     "type": "Prop",
-    "target": "Node"
+    "target": "Node",
+    "rendered": false
   },
   "getClientHeight": {
     "template": "query",
     "key": "clientHeight",
     "type": "Prop",
-    "target": "Element"
+    "target": "Element",
+    "rendered": false
   },
   "getClientLeft": {
     "template": "query",
     "key": "clientLeft",
     "type": "Prop",
-    "target": "Element"
+    "target": "Element",
+    "rendered": false
   },
   "getClientTop": {
     "template": "query",
     "key": "clientTop",
     "type": "Prop",
-    "target": "Element"
+    "target": "Element",
+    "rendered": false
   },
   "getClientWidth": {
     "template": "query",
     "key": "clientWidth",
     "type": "Prop",
-    "target": "Element"
+    "target": "Element",
+    "rendered": false
   },
   "getTagName": {
     "template": "query",
     "key": "tagName",
     "type": "Prop",
-    "target": "Element"
+    "target": "Element",
+    "rendered": false
   },
   "addClass": {
     "template": "action",
@@ -1575,7 +2249,8 @@
         "name",
         "string"
       ]
-    ]
+    ],
+    "rendered": false
   },
   "removeClass": {
     "template": "action",
@@ -1586,7 +2261,8 @@
         "name",
         "string"
       ]
-    ]
+    ],
+    "rendered": false
   },
   "toggleClass": {
     "template": "action",
@@ -1597,7 +2273,8 @@
         "name",
         "string"
       ]
-    ]
+    ],
+    "rendered": false
   },
   "dispatch": {
     "template": "action",
@@ -1608,121 +2285,145 @@
         "event",
         "Event"
       ]
-    ]
+    ],
+    "rendered": false
   },
   "onClick": {
     "template": "event",
     "key": "click",
-    "target": "EventTarget"
+    "target": "EventTarget",
+    "rendered": false
   },
   "onDbClick": {
     "template": "event",
     "key": "dbclick",
-    "target": "EventTarget"
+    "target": "EventTarget",
+    "rendered": false
   },
   "onBlur": {
     "template": "event",
     "key": "blur",
-    "target": "EventTarget"
+    "target": "EventTarget",
+    "rendered": false
   },
   "onFocus": {
     "template": "event",
     "key": "focus",
-    "target": "EventTarget"
+    "target": "EventTarget",
+    "rendered": false
   },
   "onChange": {
     "template": "event",
     "key": "change",
-    "target": "EventTarget"
+    "target": "EventTarget",
+    "rendered": false
   },
   "onMouseDown": {
     "template": "event",
     "key": "mousedown",
-    "target": "EventTarget"
+    "target": "EventTarget",
+    "rendered": false
   },
   "onMouseEnter": {
     "template": "event",
     "key": "mouseenter",
-    "target": "EventTarget"
+    "target": "EventTarget",
+    "rendered": false
   },
   "onMouseLeave": {
     "template": "event",
     "key": "mouseleave",
-    "target": "EventTarget"
+    "target": "EventTarget",
+    "rendered": false
   },
   "onMouseMove": {
     "template": "event",
     "key": "mousemove",
-    "target": "EventTarget"
+    "target": "EventTarget",
+    "rendered": false
   },
   "onMouseOut": {
     "template": "event",
     "key": "mouseout",
-    "target": "EventTarget"
+    "target": "EventTarget",
+    "rendered": false
   },
   "onMouseOver": {
     "template": "event",
     "key": "mouseover",
-    "target": "EventTarget"
+    "target": "EventTarget",
+    "rendered": false
   },
   "onMouseUp": {
     "template": "event",
     "key": "mouseup",
-    "target": "EventTarget"
+    "target": "EventTarget",
+    "rendered": false
   },
   "onWheel": {
     "template": "event",
     "key": "wheel",
-    "target": "EventTarget"
+    "target": "EventTarget",
+    "rendered": false
   },
   "onScroll": {
     "template": "event",
     "key": "scroll",
-    "target": "EventTarget"
+    "target": "EventTarget",
+    "rendered": false
   },
   "onKeyDown": {
     "template": "event",
     "key": "keydown",
-    "target": "EventTarget"
+    "target": "EventTarget",
+    "rendered": false
   },
   "onKeypress": {
     "template": "event",
     "key": "keyPress",
-    "target": "EventTarget"
+    "target": "EventTarget",
+    "rendered": false
   },
   "onKeyup": {
     "template": "event",
     "key": "keyUp",
-    "target": "EventTarget"
+    "target": "EventTarget",
+    "rendered": false
   },
   "onCopy": {
     "template": "event",
     "key": "copy",
-    "target": "EventTarget"
+    "target": "EventTarget",
+    "rendered": false
   },
   "onCut": {
     "template": "event",
     "key": "cut",
-    "target": "EventTarget"
+    "target": "EventTarget",
+    "rendered": false
   },
   "onPaste": {
     "template": "event",
     "key": "paste",
-    "target": "EventTarget"
+    "target": "EventTarget",
+    "rendered": false
   },
   "onSelect": {
     "template": "event",
     "key": "select",
-    "target": "EventTarget"
+    "target": "EventTarget",
+    "rendered": false
   },
   "onFocusIn": {
     "template": "event",
     "key": "focusin",
-    "target": "EventTarget"
+    "target": "EventTarget",
+    "rendered": false
   },
   "onFocusOut": {
     "template": "event",
     "key": "focusout",
-    "target": "EventTarget"
+    "target": "EventTarget",
+    "rendered": false
   }
 }
