@@ -65,3 +65,22 @@ const pipe = <FirstFn extends AnyFunc, F extends AnyFunc[]>(
 //     ((entry: [string, QueryEntry]) => [string, string[]]) |
 //     ((entry: [string, ActionEntry]) => [string, string[]]) |
 //     ((entry: [string, EventEntry]) => [string, string[]]);
+
+
+
+//@@ text > createDOMAdapter @@//
+// export const text = createDOMAdapter<
+//     Element, Document, 
+//     Text, Document, 
+//     undefined, Document, 
+//     string
+// >('', textNodeFactory, noNodeConnector, formatAdapterArgs);
+
+
+//@@ text > createDOMAdapter @@//
+// export const text = createDOMAdapter<
+//     Element, Document, 
+//     Text, Document, 
+//     undefined, Document, 
+//     string
+// >('', textNodeFactory, noNodeConnector, formatAdapterArgs);

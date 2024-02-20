@@ -80,7 +80,7 @@ const svgNodeFactory: NodeFactory<Document, SVGElement, XMLDocument> = <T extend
     [doc.createElementNS("http://www.w3.org/2000/svg", tagName) as T, doc as U];
 
 //@@ mathNodeFactory > NodeFactory @@//
-const mathNodeFactory: NodeFactory<Document, MathMLElement, XMLDocument> = <T extends MathMLElement, U extends XMLDocument>(doc: XMLDocument, tagName: string) => 
+const mathmlNodeFactory: NodeFactory<Document, MathMLElement, XMLDocument> = <T extends MathMLElement, U extends XMLDocument>(doc: XMLDocument, tagName: string) => 
     [doc.createElementNS("http://www.w3.org/1998/Math/MathML", tagName) as T, doc as U];
 
 
@@ -177,13 +177,26 @@ export const apply = <T extends Node, U extends Document>(action: ((tnode: T, ud
     (entry: [T,U]) => action(...entry)
 ]
 
-//@@ text > createDOMAdapter @@//
-export const text = createDOMAdapter<
-    Element, Document, 
-    Text, Document, 
-    undefined, Document, 
-    string
->('', textNodeFactory, noNodeConnector, formatAdapterArgs);
+
+//@@ elementFactory > htmlNodeFactory, svgNodeFactory, mathmlNodeFactory @@//
+const elementFactory = <T extends Element, U extends Document>(doc: Document, tagName: string | [string,string]) => {
+    if(typeof tagName === 'string') return htmlNodeFactory(doc, tagName) as unknown as [T,U];
+    switch(tagName[1]){
+        case 'svg': return svgNodeFactory(doc, tagName[0]) as unknown as [T,U];
+        case 'mathml': return mathmlNodeFactory(doc, tagName[0]) as unknown as [T,U];
+        default: return htmlNodeFactory(doc, tagName[0]) as unknown as [T,U];
+    }
+} 
+
+//@@ element > NodeAdapterArg, elementFactory, formatAdapterArgs, appendNodeConnector @@//
+export const element = <T extends Element>(
+    tagName: string | [string,string], 
+    ...args: NodeAdapterArg<T,Document,Node,Document,string | undefined>
+): NodeBranch<Element,Document,Element,Document> => {
+    const tasks = formatAdapterArgs<T,Node>(appendNodeConnector)(args).map(entry => entry[0]);
+    const build: Filter<Document,[T,Document]> = (doc: Document) => tasks.reduce((node, task) => task(node), elementFactory<T,Document>(doc, tagName));
+    return <TParent extends [Element,Document]>(connect: ((filter: Filter<Document,[T,Document]>) => Task<TParent>)):Task<TParent> => connect(build);
+}
 
 //@@ append > NodeBranch, appendNodeConnector @@//
 export const append = <T extends Node, U extends Document>(branch: NodeBranch<T,U,Node,Document>): NodeTask<T,U> => branch(appendNodeConnector);
