@@ -2,7 +2,6 @@ import { section, div, h2, span, h3, form, input, label, a, button } from "fwd-v
 import { attr, className, createQuery, render,onClick, getProp, createSync, query, style, sync, textContent } from "fwd-vitrail/adapters"
 import { resolve, pipe } from "fwd-pipe";
 
-
 const [loginData, getLoginData] = createQuery();
 const [loginResultSync, loginResult] = createSync();
 
