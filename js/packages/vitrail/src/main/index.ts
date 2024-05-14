@@ -1,6 +1,6 @@
 import { parse } from "https://deno.land/std@0.217.0/flags/mod.ts";
 import { resolve } from "https://deno.land/std@0.217.0/path/resolve.ts";
-import { EntryMap, generateLibSource } from "./engine.ts";
+import { EntryMap, generateLibSource } from "./generator.ts";
 
 //ugo output_file_path
 //ugo --quiet/--verbose --directory scope_dir --name key_name  ouput_file_path 

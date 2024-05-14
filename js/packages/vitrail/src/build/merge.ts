@@ -1,26 +1,45 @@
-import { ActionEntry, AdapterEntry, AttributeEntry, CoreEntry, EntryMap, EventEntry, PropertyEntry, QueryEntry } from "../main/engine.ts";
+import { ActionArgEntry } from "../main/generator.ts";
+import { ActionEntry, AdapterEntry, AttributeEntry, CoreEntry, EntryMap, EventEntry, PropertyEntry, QueryEntry } from "./tmp/generator.ts";
 
 type AdapterDefaultData = {
     target: string,
     type: string,
     parent: string | string[],
-    childs: string | string[]
+    childs: string | string[],
+    preffix?: string
 }
 
-const checkKeyCollision = (key: string, processedKeys: Set<string>, keywords: string[]) => {
-    if(processedKeys.has(key)) throw new Error(`! Duplicate keys found while loading entries data: [${key}]`);
-    if(keywords.indexOf(key) >= 0) throw new Error(`! Collision with keywords found while loading entries data: [${key}]`);
+type EntryNameProvider = (entryKey: string, entryData: any, preffix?: string) => string;
+
+const getEntryNameProvider = (processedKeys: Set<string>, keywords: string[]): EntryNameProvider => {
+    return (key: string, data: any, preffix?: string): string => {
+        let entryName = key;
+        if(keywords.indexOf(entryName) >= 0){
+            entryName = (preffix == null ? "$" : preffix)+key;
+            console.warn(`* Collision with a registered keyword detected, changed entry name from [${key}] to [${entryName}]`)
+            if(keywords.indexOf(entryName) >= 0){
+                throw new Error(`
+! Collision with keywords found while loading entries data: [${key}]
+* Couldn't avoid collision even when using collision avoidance policies [${key} , ${entryName}]`);
+            }
+        }
+        if(processedKeys.has(entryName)){
+            throw new Error(`
+! Duplicate keys found while loading entries data: [${key} , ${entryName}]`);
+        }
+        processedKeys.add(entryName);
+        return entryName;
+    };
 }
 
-const formatAdapters = (data: Record<string,any> | null | undefined, defaultData: AdapterDefaultData, processedKeys: Set<string>, keywords: string[]): Record<string, AdapterEntry> => {
+const formatAdapters = (data: Record<string,any> | null | undefined, defaultData: AdapterDefaultData, getName: EntryNameProvider): Record<string, AdapterEntry> => {
     if(data == null) return {};
     return Object.fromEntries(Object.entries(data).map(entry => {
-        checkKeyCollision(entry[0], processedKeys, keywords);
-        
+        const name = getName(...entry, defaultData.preffix);
         if(typeof entry[1] === 'string') return [
             entry[0], 
             {
-                name: entry[0], 
+                name: name, 
                 key: entry[1], 
                 target: defaultData.target, 
                 type: defaultData.type, 
@@ -29,7 +48,7 @@ const formatAdapters = (data: Record<string,any> | null | undefined, defaultData
             }
         ];
 
-        entry[1]["name"] = entry[0];
+        entry[1]["name"] = name;
         if(entry[1]["key"] == null) entry[1]["key"] = entry[0];
         if(entry[1]["target"] == null) entry[1]["target"] = defaultData.target;
         if(entry[1]["type"] == null) entry[1]["type"] = defaultData.type;
@@ -41,12 +60,12 @@ const formatAdapters = (data: Record<string,any> | null | undefined, defaultData
     }));
 } 
 
-const formatAttributes = (data: Record<string,any> | null | undefined, defaultTarget: string | string[], processedKeys: Set<string>, keywords: string[]): Record<string, AttributeEntry> => {
+const formatAttributes = (data: Record<string,any> | null | undefined, defaultTarget: string | string[], getName: EntryNameProvider): Record<string, AttributeEntry> => {
     if(data == null) return {};
     return Object.fromEntries(Object.entries(data).map(entry => {
-        checkKeyCollision(entry[0], processedKeys, keywords);
-        if(typeof entry[1] === 'string') return [entry[0], {name: entry[0], key: entry[1], target: Array.isArray(defaultTarget) ? defaultTarget.join(" | ") : defaultTarget}];
-        entry[1]["name"] = entry[0];
+        const name = getName(...entry);
+        if(typeof entry[1] === 'string') return [name, {name: name, key: entry[1], target: Array.isArray(defaultTarget) ? defaultTarget.join(" | ") : defaultTarget}];
+        entry[1]["name"] = name;
         if(entry[1]["target"] == null) entry[1]["target"] = defaultTarget;
         if(Array.isArray(entry[1]["target"])) entry[1]["target"] = entry[1]["target"].join(" | ");
         if(entry[1]["key"] == null) entry[1]["key"] = entry[0];
@@ -54,12 +73,12 @@ const formatAttributes = (data: Record<string,any> | null | undefined, defaultTa
     }));
 } 
 
-const formatProperties = (data: Record<string,any> | null | undefined, defaultTarget: string | string[], processedKeys: Set<string>, keywords: string[]): Record<string, PropertyEntry> => {
+const formatProperties = (data: Record<string,any> | null | undefined, defaultTarget: string | string[], getName: EntryNameProvider): Record<string, PropertyEntry> => {
     if(data == null) return {};
     return Object.fromEntries(Object.entries(data).map(entry => {
-        checkKeyCollision(entry[0], processedKeys, keywords);
-        if(typeof entry[1] === 'string') return [entry[0], {name: entry[0], key: entry[1], target: Array.isArray(defaultTarget) ? defaultTarget.join(" | ") : defaultTarget}];
-        entry[1]["name"] = entry[0];
+        const name = getName(...entry);
+        if(typeof entry[1] === 'string') return [name, {name: name, key: entry[1], target: Array.isArray(defaultTarget) ? defaultTarget.join(" | ") : defaultTarget}];
+        entry[1]["name"] = name;
         if(entry[1]["target"] == null) entry[1]["target"] = defaultTarget;
         if(Array.isArray(entry[1]["target"])) entry[1]["target"] = entry[1]["target"].join(" | ");
         if(entry[1]["key"] == null) entry[1]["key"] = entry[0];
@@ -67,12 +86,12 @@ const formatProperties = (data: Record<string,any> | null | undefined, defaultTa
     }));
 } 
 
-const formatQueries = (data: Record<string,any> | null | undefined, defaultTarget: string | string[], processedKeys: Set<string>, keywords: string[]): Record<string, QueryEntry> => {
+const formatQueries = (data: Record<string,any> | null | undefined, defaultTarget: string | string[], getName: EntryNameProvider): Record<string, QueryEntry> => {
     if(data == null) return {};
     return Object.fromEntries(Object.entries(data).map(entry => {
-        checkKeyCollision(entry[0], processedKeys, keywords);
-        if(typeof entry[1] === 'string') return [entry[0], {name: entry[0], key: entry[1], getter: "getProp", target: Array.isArray(defaultTarget) ? defaultTarget.join(" | ") : defaultTarget}];
-        entry[1]["name"] = entry[0];
+        const name = getName(...entry);
+        if(typeof entry[1] === 'string') return [name, {name: name, key: entry[1], getter: "getProp", target: Array.isArray(defaultTarget) ? defaultTarget.join(" | ") : defaultTarget}];
+        entry[1]["name"] = name;
         if(entry[1]["target"] == null) entry[1]["target"] = defaultTarget;
         if(Array.isArray(entry[1]["target"])) entry[1]["target"] = entry[1]["target"].join(" | ");
         if(entry[1]["key"] == null) entry[1]["key"] = entry[0];
@@ -81,35 +100,54 @@ const formatQueries = (data: Record<string,any> | null | undefined, defaultTarge
     }));
 } 
 
-const formatActions = (data: Record<string,any> | null | undefined, defaultTarget: string | string[], processedKeys: Set<string>, keywords: string[]): Record<string, ActionEntry> => {
+const formatActionArguments = (data: any): ActionArgEntry[] => {
+    if(data == null) return [];
+    return Object.entries(data).map(entry => {
+        let name : string = entry[0], type : string = "", optional : boolean = false;
+        if(typeof entry[1] === 'string'){
+            type = entry[1];
+        }else if(entry[1] != null){
+            if(entry[1]["type"]) type = entry[1]["type"]+"";
+            if(entry[1]["optional"]) optional = entry[1]["optional"]+"" !== "false";
+        }
+        if(entry[0].slice(-1) === "?"){
+            name = entry[0].slice(0,-1);
+            optional = true;
+        }
+        return {name: name, type: type, optional: optional};
+    });
+}
+
+const formatActions = (data: Record<string,any> | null | undefined, defaultTarget: string | string[], getName: EntryNameProvider): Record<string, ActionEntry> => {
     if(data == null) return {};
     return Object.fromEntries(Object.entries(data).map(entry => {
-        checkKeyCollision(entry[0], processedKeys, keywords);
         const requiredKeys = ["callPath","arguments"];
         requiredKeys.forEach(key => {
             if(entry[1][key] == null) throw new Error(`! Missing required key found while loading action data: [action: ${entry[0]}, missing key: ${key}]`);
-        })
-        entry[1]["name"] = entry[0];
+        });
+        const name = getName(...entry);
+        entry[1]["name"] = name;
         if(entry[1]["target"] == null) entry[1]["target"] = defaultTarget;
         if(Array.isArray(entry[1]["target"])) entry[1]["target"] = entry[1]["target"].join(" | ");
+        entry[1]["arguments"] = formatActionArguments(entry[1]["arguments"]);
         return entry;
     }));
 } 
 
-const formatEvents = (data: Record<string,any> | null | undefined, defaultTarget: string | string[], processedKeys: Set<string>, keywords: string[]): Record<string, EventEntry> => {
+const formatEvents = (data: Record<string,any> | null | undefined, defaultTarget: string | string[], getName: EntryNameProvider): Record<string, EventEntry> => {
     if(data == null) return {};
     return Object.fromEntries(Object.entries(data).map(entry => {
-        checkKeyCollision(entry[0], processedKeys, keywords);
-        if(typeof entry[1] === 'string') return [entry[0], {name: entry[0], key: entry[1], target: Array.isArray(defaultTarget) ? defaultTarget.join(" | ") : defaultTarget}];
-        entry[1]["name"] = entry[0];
-        if(entry[1]["key"] == null) entry[1]["key"] = entry[0].slice(2).toLowerCase();
+        const name = getName('on'+entry[0][0].toUpperCase() + entry[0].slice(1), entry[1]);
+        if(typeof entry[1] === 'string') return [name, {name: name, key: entry[1], target: Array.isArray(defaultTarget) ? defaultTarget.join(" | ") : defaultTarget}];
+        entry[1]["name"] = name;
+        if(entry[1]["key"] == null) entry[1]["key"] = entry[0].toLowerCase();
         if(entry[1]["target"] == null) entry[1]["target"] = defaultTarget;
         if(Array.isArray(entry[1]["target"])) entry[1]["target"] = entry[1]["target"].join(" | ");
         return entry;
     }));
 } 
 
-const formatBaseEntries = (data: Record<string, any>, processedKeys: Set<string>, keywords: string[]): EntryMap => {
+const formatBaseEntries = (data: Record<string, any>, getName: EntryNameProvider): EntryMap => {
     const baseAdapterDefaults : AdapterDefaultData = { target: "Element", type: "html", parent: "undefined", childs: "undefined"};
     const baseAttributeDefaultTarget = "Element";
     const basePropertyDefaultTarget = "Element";
@@ -117,90 +155,90 @@ const formatBaseEntries = (data: Record<string, any>, processedKeys: Set<string>
     const baseActionDefaultTarget = "Element";
     const baseEventDefaultTarget = "EventTarget";
     return {
-        adapter: formatAdapters(data["adapter"], baseAdapterDefaults, processedKeys, keywords),
-        attribute: formatAttributes(data["attribute"], baseAttributeDefaultTarget, processedKeys, keywords),
-        property: formatProperties(data["property"], basePropertyDefaultTarget, processedKeys, keywords),
-        query: formatQueries(data["query"], baseQueryDefaultTarget, processedKeys, keywords),
-        action: formatActions(data["action"], baseActionDefaultTarget, processedKeys, keywords),
-        event: formatEvents(data["event"], baseEventDefaultTarget, processedKeys, keywords),
+        adapter: formatAdapters(data["adapter"], baseAdapterDefaults, getName),
+        attribute: formatAttributes(data["attribute"], baseAttributeDefaultTarget, getName),
+        property: formatProperties(data["property"], basePropertyDefaultTarget, getName),
+        query: formatQueries(data["query"], baseQueryDefaultTarget, getName),
+        action: formatActions(data["action"], baseActionDefaultTarget, getName),
+        event: formatEvents(data["event"], baseEventDefaultTarget, getName),
         provided: {}
     };
 }
 
-const formatHtmlEntries = (data: Record<string, any>, processedKeys: Set<string>, keywords: string[]): EntryMap => {
-    const baseAdapterDefaults : AdapterDefaultData = { target: "HTMLElement", type: "html", parent: "HTMLElement", childs: ["Text", "HTMLElement"]};
+const formatHtmlEntries = (data: Record<string, any>, getName: EntryNameProvider): EntryMap => {
+    const baseAdapterDefaults : AdapterDefaultData = { target: "HTMLElement", type: "html", parent: "HTMLElement", childs: ["Text", "HTMLElement"], preffix: "html"};
     const baseAttributeDefaultTarget = "HTMLElement";
     const basePropertyDefaultTarget = "HTMLElement";
     const baseQueryDefaultTarget = "HTMLElement";
     const baseActionDefaultTarget = "HTMLElement";
     const baseEventDefaultTarget = "HTMLElement";
     return {
-        adapter: formatAdapters(data["adapter"], baseAdapterDefaults, processedKeys, keywords),
-        attribute: formatAttributes(data["attribute"], baseAttributeDefaultTarget, processedKeys, keywords),
-        property: formatProperties(data["property"], basePropertyDefaultTarget, processedKeys, keywords),
-        query: formatQueries(data["query"], baseQueryDefaultTarget, processedKeys, keywords),
-        action: formatActions(data["action"], baseActionDefaultTarget, processedKeys, keywords),
-        event: formatEvents(data["event"], baseEventDefaultTarget, processedKeys, keywords),
+        adapter: formatAdapters(data["adapter"], baseAdapterDefaults, getName),
+        attribute: formatAttributes(data["attribute"], baseAttributeDefaultTarget, getName),
+        property: formatProperties(data["property"], basePropertyDefaultTarget, getName),
+        query: formatQueries(data["query"], baseQueryDefaultTarget, getName),
+        action: formatActions(data["action"], baseActionDefaultTarget, getName),
+        event: formatEvents(data["event"], baseEventDefaultTarget, getName),
         provided: {}
     };
 }
 
-const formatSvgEntries = (data: Record<string, any>, processedKeys: Set<string>, keywords: string[]): EntryMap => {
-    const baseAdapterDefaults : AdapterDefaultData = { target: "SVGElement", type: "svg", parent: "SVGElement", childs: ["Text", "SVGElement"]};
+const formatSvgEntries = (data: Record<string, any>, getName: EntryNameProvider): EntryMap => {
+    const baseAdapterDefaults : AdapterDefaultData = { target: "SVGElement", type: "svg", parent: "SVGElement", childs: ["Text", "SVGElement"], preffix: "svg"};
     const baseAttributeDefaultTarget = "SVGElement";
     const basePropertyDefaultTarget = "SVGElement";
     const baseQueryDefaultTarget = "SVGElement";
     const baseActionDefaultTarget = "SVGElement";
     const baseEventDefaultTarget = "SVGElement";
     return {
-        adapter: formatAdapters(data["adapter"], baseAdapterDefaults, processedKeys, keywords),
-        attribute: formatAttributes(data["attribute"], baseAttributeDefaultTarget, processedKeys, keywords),
-        property: formatProperties(data["property"], basePropertyDefaultTarget, processedKeys, keywords),
-        query: formatQueries(data["query"], baseQueryDefaultTarget, processedKeys, keywords),
-        action: formatActions(data["action"], baseActionDefaultTarget, processedKeys, keywords),
-        event: formatEvents(data["event"], baseEventDefaultTarget, processedKeys, keywords),
+        adapter: formatAdapters(data["adapter"], baseAdapterDefaults, getName),
+        attribute: formatAttributes(data["attribute"], baseAttributeDefaultTarget, getName),
+        property: formatProperties(data["property"], basePropertyDefaultTarget, getName),
+        query: formatQueries(data["query"], baseQueryDefaultTarget, getName),
+        action: formatActions(data["action"], baseActionDefaultTarget, getName),
+        event: formatEvents(data["event"], baseEventDefaultTarget, getName),
         provided: {}
     };
 }
 
-const formatMathmlEntries = (data: Record<string, any>, processedKeys: Set<string>, keywords: string[]): EntryMap => {
-    const baseAdapterDefaults : AdapterDefaultData = { target: "MathMLElement", type: "mathml", parent: "MathMLElement", childs: ["Text", "MathMLElement"]};
+const formatMathmlEntries = (data: Record<string, any>, getName: EntryNameProvider): EntryMap => {
+    const baseAdapterDefaults : AdapterDefaultData = { target: "MathMLElement", type: "mathml", parent: "MathMLElement", childs: ["Text", "MathMLElement"], preffix: "math"};
     const baseAttributeDefaultTarget = "MathMLElement";
     const basePropertyDefaultTarget = "MathMLElement";
     const baseQueryDefaultTarget = "MathMLElement";
     const baseActionDefaultTarget = "MathMLElement";
     const baseEventDefaultTarget = "MathMLElement";
     return {
-        adapter: formatAdapters(data["adapter"], baseAdapterDefaults, processedKeys, keywords),
-        attribute: formatAttributes(data["attribute"], baseAttributeDefaultTarget, processedKeys, keywords),
-        property: formatProperties(data["property"], basePropertyDefaultTarget, processedKeys, keywords),
-        query: formatQueries(data["query"], baseQueryDefaultTarget, processedKeys, keywords),
-        action: formatActions(data["action"], baseActionDefaultTarget, processedKeys, keywords),
-        event: formatEvents(data["event"], baseEventDefaultTarget, processedKeys, keywords),
+        adapter: formatAdapters(data["adapter"], baseAdapterDefaults, getName),
+        attribute: formatAttributes(data["attribute"], baseAttributeDefaultTarget, getName),
+        property: formatProperties(data["property"], basePropertyDefaultTarget, getName),
+        query: formatQueries(data["query"], baseQueryDefaultTarget, getName),
+        action: formatActions(data["action"], baseActionDefaultTarget, getName),
+        event: formatEvents(data["event"], baseEventDefaultTarget, getName),
         provided: {}
     };
 }
 
-const generateAttributeGetter = (attr: AttributeEntry): QueryEntry => {
+const generateAttributeGetter = (getName: EntryNameProvider, key: string, value: AttributeEntry): QueryEntry => {
     return {
-        name: 'get' + attr.name[0].toUpperCase() + attr.name.slice(1),
-        key: attr.name,
-        target: attr.target,
+        name: getName('get' + key[0].toUpperCase() + key.slice(1), value),
+        key: value.key,
+        target: value.target,
         getter: "getAttr"
     }
 }
 
-const generatePropertyGetter = (prop: PropertyEntry): QueryEntry => {
+const generatePropertyGetter = (getName: EntryNameProvider, key: string, value: PropertyEntry): QueryEntry => {
     return {
-        name: 'get' + prop.name[0].toUpperCase() + prop.name.slice(1),
-        key: prop.name,
-        target: prop.target,
+        name: getName('get' + key[0].toUpperCase() + key.slice(1), value),
+        key: value.key,
+        target: value.target,
         getter: "getProp"
     }
 }
 
 
-const buildEntryMap = (corelibSource: string, ...formattedEntries: EntryMap[]): EntryMap => {
+const buildEntryMap = (corelibSource: string, getName: EntryNameProvider, ...formattedEntries: EntryMap[]): EntryMap => {
     const result : EntryMap = {
         adapter: {},
         attribute: {},
@@ -214,12 +252,14 @@ const buildEntryMap = (corelibSource: string, ...formattedEntries: EntryMap[]): 
     formattedEntries.forEach(entry => {
         Object.assign(result.adapter, entry.adapter);
         Object.assign(result.attribute, entry.attribute);
-        Object.values(entry.attribute).forEach(value => {
-            result.query[value.name] = generateAttributeGetter(value);
+        Object.entries(entry.attribute).forEach(item => {
+            const queryData = generateAttributeGetter(getName, ...item);
+            result.query[queryData.name] = queryData
         });
         Object.assign(result.property, entry.property);
-        Object.values(entry.property).forEach(value => {
-            result.query[value.name] = generatePropertyGetter(value);
+        Object.entries(entry.property).forEach(item => {
+            const queryData = generatePropertyGetter(getName, ...item);
+            result.query[queryData.name] = queryData
         });
         Object.assign(result.query, entry.query);
         Object.assign(result.action, entry.action);
@@ -245,19 +285,20 @@ const buildEntryMap = (corelibSource: string, ...formattedEntries: EntryMap[]): 
 
 const keys: Set<string> = new Set([]);
 const keywords = await Deno.readTextFile("../resources/keywords.json").then(content => JSON.parse(content));
+const nameProvider : EntryNameProvider = getEntryNameProvider(keys, keywords);
 
 const coreLib = await Deno.readTextFile("../resources/lib.ts");
 const baseEntryData = await Deno.readTextFile("../resources/baseEntries.json")
-                        .then(content => formatBaseEntries(JSON.parse(content), keys, keywords));
+                        .then(content => formatBaseEntries(JSON.parse(content), nameProvider));
 const htmlEntryData = await Deno.readTextFile("../resources/htmlEntries.json")
-                        .then(content => formatHtmlEntries(JSON.parse(content), keys, keywords));
+                        .then(content => formatHtmlEntries(JSON.parse(content), nameProvider));
 const svgEntryData = await Deno.readTextFile("../resources/svgEntries.json")
-                        .then(content => formatSvgEntries(JSON.parse(content), keys, keywords));
+                        .then(content => formatSvgEntries(JSON.parse(content), nameProvider));
 const mathmlEntryData = await Deno.readTextFile("../resources/mathmlEntries.json")
-                        .then(content => formatMathmlEntries(JSON.parse(content), keys, keywords));
+                        .then(content => formatMathmlEntries(JSON.parse(content), nameProvider));
 
-const entryMap : EntryMap = buildEntryMap(coreLib, baseEntryData, htmlEntryData, svgEntryData, mathmlEntryData);
-const generated_source = await Deno.readTextFile("../main/index.ts")
+const entryMap : EntryMap = buildEntryMap(coreLib, nameProvider, baseEntryData, htmlEntryData, svgEntryData, mathmlEntryData);
+const generated_source = await Deno.readTextFile("./tmp/index.ts")
                         .then(content => content.replace(/\{\/\*entrymap\*\/\}/g, JSON.stringify(entryMap, null, 2)));
 await Deno.writeTextFile("./tmp/index.ts", generated_source);
 console.log("reference build source generated !");

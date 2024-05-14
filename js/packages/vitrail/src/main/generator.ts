@@ -25,11 +25,16 @@ export type QueryEntry = {
     target: string,
     getter: QueryGetterType
 }
+export type ActionArgEntry = {
+    name: string,
+    type: string,
+    optional: boolean
+}
 export type ActionEntry = {
     name: string,
     target: string,
     callPath: string,
-    arguments: [string,string][]
+    arguments: ActionArgEntry[]
 }
 export type EventEntry = {
     name: string,
@@ -58,10 +63,9 @@ const sourceGenerators = {
     adapter: (entry: AdapterEntry): [string, string[]] => {
         const connectorName = (entry.childs === "undefined" ? 'no' : 'append')+'NodeConnector';
         const nodeFactoryName = entry.type+'NodeFactory';
-        const name = entry.name[0] === "$" ? entry.name.slice(1) : entry.name;
 
         return [
-            `export const ${name} = createDOMAdapter<
+            `export const ${entry.name} = createDOMAdapter<
     ${entry.parent}, Document, 
     ${entry.target}, Document, 
     ${entry.childs}, Document, 
@@ -73,38 +77,34 @@ const sourceGenerators = {
 
     //attribute template
     attribute: (entry: AttributeEntry): [string, string[]] => {
-        const name = entry.name[0] === "$" ? entry.name.slice(1) : entry.name;
         return [
-            `export const ${name} = <T extends ${entry.target}, U extends Document>(value: PropertyValueType): NodeTask<T,U> => setAttr('${entry.key}', value);`,
+            `export const ${entry.name} = <T extends ${entry.target}, U extends Document>(value: PropertyValueType): NodeTask<T,U> => setAttr('${entry.key}', value);`,
             ['PropertyValueType','NodeTask','setAttr']
         ];
     },
 
     //property template
     property: (entry: PropertyEntry): [string, string[]] => {
-        const name = entry.name[0] === "$" ? entry.name.slice(1) : entry.name;
         return [
-            `export const ${name} = <T extends ${entry.target}, U extends Document>(value: PropertyValueType): NodeTask<T,U> => setProp('${entry.key}', value);`,
+            `export const ${entry.name} = <T extends ${entry.target}, U extends Document>(value: PropertyValueType): NodeTask<T,U> => setProp('${entry.key}', value);`,
             ['PropertyValueType','NodeTask','setProp']
         ];
     },
 
     //query template
     query: (entry: QueryEntry): [string, string[]] => {
-        const name = entry.name[0] === "$" ? entry.name.slice(1) : entry.name;
         return [
-            `export const ${name} = <T extends ${entry.target}, U extends Document>(key?: string): Filter<[T,U],[string, unknown][]> => ${entry.getter}('${entry.key}', key);`, 
+            `export const ${entry.name} = <T extends ${entry.target}, U extends Document>(key?: string): Filter<[T,U],[string, unknown][]> => ${entry.getter}('${entry.key}', key);`, 
             ['Filter', entry.getter]
         ];
     },
 
     //action template
     action: (entry: ActionEntry): [string, string[]] => {
-        const name = entry.name[0] === "$" ? entry.name.slice(1) : entry.name;
-        const params = entry.arguments.map(arg => arg[0]+': '+arg[1]).join(', ');
-        const inputs = entry.arguments.map(arg => arg[0]).join(', ');
+        const params = entry.arguments.map(arg => arg.name+(arg.optional ? '?' : '')+': '+arg.type).join(', ');
+        const inputs = entry.arguments.map(arg => arg.name).join(', ');
         return [
-            `export const ${name} = <T extends ${entry.target}, U extends Document>(${params}): NodeTask<T,U> => [
+            `export const ${entry.name} = <T extends ${entry.target}, U extends Document>(${params}): NodeTask<T,U> => [
     (entry: [T,U]) => {
         entry[0].${entry.callPath}(${inputs});
         return entry;

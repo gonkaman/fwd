@@ -116,7 +116,13 @@ const formatAdapterArgs: NodeAdapterArgsFormater<Node | undefined, Document, Nod
             if(typeof arg === 'function') return arg(connector);
             if(typeof arg === 'string') return [
                 (entry: [T,Document]) => {
-                    entry[0]?.appendChild(entry[1].createTextNode(arg));
+                    if(entry[0] != null){
+                        try{
+                            entry[0].appendChild(entry[1].createTextNode(arg));
+                        }catch(e){
+                            entry[0].nodeValue = arg; 
+                        }
+                    }
                     return entry;
                 }
             ];
@@ -126,7 +132,7 @@ const formatAdapterArgs: NodeAdapterArgsFormater<Node | undefined, Document, Nod
 //@@ getElement > NodePicker @@//
 export const getElement = <T extends Element, U extends Document>(query: string, container: Document | Element): NodePicker<T,U> => () => {
     const node = container.querySelector(query);
-    return node == null ? node : [node as T, node.ownerDocument as U];
+    return node == null ? null : [node as T, node.ownerDocument as U];
 } 
 
 //@@ fromElement > NodePicker @@//

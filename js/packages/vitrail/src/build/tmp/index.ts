@@ -1,6 +1,6 @@
 import { parse } from "https://deno.land/std@0.217.0/flags/mod.ts";
 import { resolve } from "https://deno.land/std@0.217.0/path/resolve.ts";
-import { EntryMap, generateLibSource } from "./engine.ts";
+import { EntryMap, generateLibSource } from "./generator.ts";
 
 //ugo output_file_path
 //ugo --quiet/--verbose --directory scope_dir --name key_name  ouput_file_path 
@@ -28,784 +28,784 @@ const entryMap: EntryMap = {
   "adapter": {
     "text": {
       "key": "",
-      "target": "TextElement",
+      "target": "Text",
       "type": "text",
       "parent": "Element",
       "name": "text",
       "childs": "undefined"
     },
     "a": {
-      "key": "a",
       "target": "HTMLAnchorElement",
       "name": "a",
+      "key": "a",
       "type": "html",
       "parent": "HTMLElement",
       "childs": "Text | HTMLElement"
     },
     "abbr": {
+      "name": "abbr",
       "key": "abbr",
       "target": "HTMLElement",
-      "name": "abbr",
       "type": "html",
       "parent": "HTMLElement",
       "childs": "Text | HTMLElement"
     },
     "address": {
+      "name": "address",
       "key": "address",
       "target": "HTMLElement",
-      "name": "address",
       "type": "html",
       "parent": "HTMLElement",
       "childs": "Text | HTMLElement"
     },
     "area": {
-      "key": "abbr",
       "target": "HTMLAreaElement",
       "childs": "undefined",
       "name": "area",
+      "key": "area",
       "type": "html",
       "parent": "HTMLElement"
     },
     "article": {
+      "name": "article",
       "key": "article",
       "target": "HTMLElement",
-      "name": "article",
       "type": "html",
       "parent": "HTMLElement",
       "childs": "Text | HTMLElement"
     },
     "aside": {
+      "name": "aside",
       "key": "aside",
       "target": "HTMLElement",
-      "name": "aside",
       "type": "html",
       "parent": "HTMLElement",
       "childs": "Text | HTMLElement"
     },
     "audio": {
-      "key": "audio",
       "target": "HTMLAudioElement",
       "name": "audio",
+      "key": "audio",
       "type": "html",
       "parent": "HTMLElement",
       "childs": "Text | HTMLElement"
     },
     "b": {
+      "name": "b",
       "key": "b",
       "target": "HTMLElement",
-      "name": "b",
       "type": "html",
       "parent": "HTMLElement",
       "childs": "Text | HTMLElement"
     },
     "base": {
-      "key": "base",
       "target": "HTMLBaseElement",
       "childs": "undefined",
       "name": "base",
+      "key": "base",
       "type": "html",
       "parent": "HTMLElement"
     },
     "bdi": {
+      "name": "bdi",
       "key": "bdi",
       "target": "HTMLElement",
-      "name": "bdi",
       "type": "html",
       "parent": "HTMLElement",
       "childs": "Text | HTMLElement"
     },
     "bdo": {
+      "name": "bdo",
       "key": "bdo",
       "target": "HTMLElement",
-      "name": "bdo",
       "type": "html",
       "parent": "HTMLElement",
       "childs": "Text | HTMLElement"
     },
     "blockquote": {
-      "key": "blockquote",
       "target": "HTMLQuoteElement",
       "name": "blockquote",
+      "key": "blockquote",
       "type": "html",
       "parent": "HTMLElement",
       "childs": "Text | HTMLElement"
     },
     "body": {
+      "name": "body",
       "key": "body",
       "target": "HTMLElement",
-      "name": "body",
       "type": "html",
       "parent": "HTMLElement",
       "childs": "Text | HTMLElement"
     },
     "br": {
-      "key": "br",
       "target": "HTMLBRElement",
       "childs": "undefined",
       "name": "br",
+      "key": "br",
       "type": "html",
       "parent": "HTMLElement"
     },
     "button": {
-      "key": "button",
       "target": "HTMLButtonElement",
       "name": "button",
+      "key": "button",
       "type": "html",
       "parent": "HTMLElement",
       "childs": "Text | HTMLElement"
     },
     "canvas": {
-      "key": "canvas",
       "target": "HTMLCanvasElement",
       "name": "canvas",
+      "key": "canvas",
       "type": "html",
       "parent": "HTMLElement",
       "childs": "Text | HTMLElement"
     },
     "caption": {
-      "key": "caption",
       "target": "HTMLTableCaptionElement",
       "name": "caption",
+      "key": "caption",
       "type": "html",
       "parent": "HTMLElement",
       "childs": "Text | HTMLElement"
     },
     "cite": {
-      "key": "cite",
       "target": "HTMLQuoteElement",
       "name": "cite",
+      "key": "cite",
       "type": "html",
       "parent": "HTMLElement",
       "childs": "Text | HTMLElement"
     },
     "code": {
+      "name": "code",
       "key": "code",
       "target": "HTMLElement",
-      "name": "code",
       "type": "html",
       "parent": "HTMLElement",
       "childs": "Text | HTMLElement"
     },
     "col": {
-      "key": "col",
       "target": "HTMLTableColElement",
       "parent": "HTMLTableColElement",
       "childs": "undefined",
       "name": "col",
+      "key": "col",
       "type": "html"
     },
     "colgroup": {
-      "key": "colgroup",
       "target": "HTMLTableColElement",
       "parent": "HTMLTableElement",
       "childs": "HTMLTableColElement",
       "name": "colgroup",
+      "key": "colgroup",
       "type": "html"
     },
     "data": {
-      "key": "data",
       "target": "HTMLDataElement",
       "name": "data",
+      "key": "data",
       "type": "html",
       "parent": "HTMLElement",
       "childs": "Text | HTMLElement"
     },
     "datalist": {
-      "key": "datalist",
       "target": "HTMLDataListElement",
       "name": "datalist",
+      "key": "datalist",
       "type": "html",
       "parent": "HTMLElement",
       "childs": "Text | HTMLElement"
     },
     "dd": {
+      "name": "dd",
       "key": "dd",
       "target": "HTMLElement",
-      "name": "dd",
       "type": "html",
       "parent": "HTMLElement",
       "childs": "Text | HTMLElement"
     },
     "del": {
-      "key": "del",
       "target": "HTMLModElement",
       "name": "del",
+      "key": "del",
       "type": "html",
       "parent": "HTMLElement",
       "childs": "Text | HTMLElement"
     },
     "details": {
+      "name": "details",
       "key": "details",
       "target": "HTMLElement",
-      "name": "details",
       "type": "html",
       "parent": "HTMLElement",
       "childs": "Text | HTMLElement"
     },
     "dfn": {
+      "name": "dfn",
       "key": "dfn",
       "target": "HTMLElement",
-      "name": "dfn",
       "type": "html",
       "parent": "HTMLElement",
       "childs": "Text | HTMLElement"
     },
     "dialog": {
-      "key": "dialog",
       "target": "HTMLDialogElement",
       "name": "dialog",
+      "key": "dialog",
       "type": "html",
       "parent": "HTMLElement",
       "childs": "Text | HTMLElement"
     },
     "div": {
-      "key": "div",
       "target": "HTMLDivElement",
       "name": "div",
+      "key": "div",
       "type": "html",
       "parent": "HTMLElement",
       "childs": "Text | HTMLElement"
     },
     "dl": {
+      "name": "dl",
       "key": "dl",
       "target": "HTMLElement",
-      "name": "dl",
       "type": "html",
       "parent": "HTMLElement",
       "childs": "Text | HTMLElement"
     },
     "dt": {
+      "name": "dt",
       "key": "dt",
       "target": "HTMLElement",
-      "name": "dt",
       "type": "html",
       "parent": "HTMLElement",
       "childs": "Text | HTMLElement"
     },
     "em": {
+      "name": "em",
       "key": "em",
       "target": "HTMLElement",
-      "name": "em",
       "type": "html",
       "parent": "HTMLElement",
       "childs": "Text | HTMLElement"
     },
     "embed": {
-      "key": "embed",
       "target": "HTMLEmbedElement",
       "name": "embed",
+      "key": "embed",
       "type": "html",
       "parent": "HTMLElement",
       "childs": "Text | HTMLElement"
     },
     "fieldset": {
-      "key": "fieldset",
       "target": "HTMLFieldSetElement",
       "name": "fieldset",
+      "key": "fieldset",
       "type": "html",
       "parent": "HTMLElement",
       "childs": "Text | HTMLElement"
     },
     "figcaption": {
+      "name": "figcaption",
       "key": "figcaption",
       "target": "HTMLElement",
-      "name": "figcaption",
       "type": "html",
       "parent": "HTMLElement",
       "childs": "Text | HTMLElement"
     },
     "figure": {
+      "name": "figure",
       "key": "figure",
       "target": "HTMLElement",
-      "name": "figure",
       "type": "html",
       "parent": "HTMLElement",
       "childs": "Text | HTMLElement"
     },
     "footer": {
+      "name": "footer",
       "key": "footer",
       "target": "HTMLElement",
-      "name": "footer",
       "type": "html",
       "parent": "HTMLElement",
       "childs": "Text | HTMLElement"
     },
     "form": {
-      "key": "form",
       "target": "HTMLFormElement",
       "name": "form",
+      "key": "form",
       "type": "html",
       "parent": "HTMLElement",
       "childs": "Text | HTMLElement"
     },
     "h1": {
-      "key": "h1",
       "target": "HTMLHeadingElement",
       "name": "h1",
+      "key": "h1",
       "type": "html",
       "parent": "HTMLElement",
       "childs": "Text | HTMLElement"
     },
     "h2": {
-      "key": "h2",
       "target": "HTMLHeadingElement",
       "name": "h2",
+      "key": "h2",
       "type": "html",
       "parent": "HTMLElement",
       "childs": "Text | HTMLElement"
     },
     "h3": {
-      "key": "h3",
       "target": "HTMLHeadingElement",
       "name": "h3",
+      "key": "h3",
       "type": "html",
       "parent": "HTMLElement",
       "childs": "Text | HTMLElement"
     },
     "h4": {
-      "key": "h4",
       "target": "HTMLHeadingElement",
       "name": "h4",
+      "key": "h4",
       "type": "html",
       "parent": "HTMLElement",
       "childs": "Text | HTMLElement"
     },
     "h5": {
-      "key": "h5",
       "target": "HTMLHeadingElement",
       "name": "h5",
+      "key": "h5",
       "type": "html",
       "parent": "HTMLElement",
       "childs": "Text | HTMLElement"
     },
     "h6": {
-      "key": "h6",
       "target": "HTMLHeadingElement",
       "name": "h6",
+      "key": "h6",
       "type": "html",
       "parent": "HTMLElement",
       "childs": "Text | HTMLElement"
     },
     "head": {
-      "key": "head",
       "target": "HTMLHeadElement",
       "name": "head",
+      "key": "head",
       "type": "html",
       "parent": "HTMLElement",
       "childs": "Text | HTMLElement"
     },
     "header": {
+      "name": "header",
       "key": "header",
       "target": "HTMLElement",
-      "name": "header",
       "type": "html",
       "parent": "HTMLElement",
       "childs": "Text | HTMLElement"
     },
     "hgroup": {
+      "name": "hgroup",
       "key": "hgroup",
       "target": "HTMLElement",
-      "name": "hgroup",
       "type": "html",
       "parent": "HTMLElement",
       "childs": "Text | HTMLElement"
     },
     "hr": {
-      "key": "hr",
       "target": "HTMLHRElement",
       "childs": "undefined",
       "name": "hr",
+      "key": "hr",
       "type": "html",
       "parent": "HTMLElement"
     },
     "html": {
-      "key": "html",
-      "target": "HTMLElement",
       "parent": "undefined",
       "name": "html",
+      "key": "html",
+      "target": "HTMLElement",
       "type": "html",
       "childs": "Text | HTMLElement"
     },
     "i": {
+      "name": "i",
       "key": "i",
       "target": "HTMLElement",
-      "name": "i",
       "type": "html",
       "parent": "HTMLElement",
       "childs": "Text | HTMLElement"
     },
     "iframe": {
-      "key": "iframe",
       "target": "HTMLIFrameElement",
       "name": "iframe",
+      "key": "iframe",
       "type": "html",
       "parent": "HTMLElement",
       "childs": "Text | HTMLElement"
     },
     "img": {
-      "key": "img",
       "target": "HTMLImageElement",
       "childs": "undefined",
       "name": "img",
+      "key": "img",
       "type": "html",
       "parent": "HTMLElement"
     },
     "input": {
-      "key": "input",
       "target": "HTMLInputElement",
       "childs": "undefined",
       "name": "input",
+      "key": "input",
       "type": "html",
       "parent": "HTMLElement"
     },
     "ins": {
-      "key": "ins",
       "target": "HTMLModElement",
       "name": "ins",
+      "key": "ins",
       "type": "html",
       "parent": "HTMLElement",
       "childs": "Text | HTMLElement"
     },
     "kbd": {
+      "name": "kbd",
       "key": "kbd",
       "target": "HTMLElement",
-      "name": "kbd",
       "type": "html",
       "parent": "HTMLElement",
       "childs": "Text | HTMLElement"
     },
     "label": {
-      "key": "label",
       "target": "HTMLLabelElement",
       "name": "label",
+      "key": "label",
       "type": "html",
       "parent": "HTMLElement",
       "childs": "Text | HTMLElement"
     },
     "legend": {
-      "key": "legend",
       "target": "HTMLLegendElement",
       "name": "legend",
+      "key": "legend",
       "type": "html",
       "parent": "HTMLElement",
       "childs": "Text | HTMLElement"
     },
     "li": {
-      "key": "li",
       "target": "HTMLLIElement",
       "name": "li",
+      "key": "li",
       "type": "html",
       "parent": "HTMLElement",
       "childs": "Text | HTMLElement"
     },
     "link": {
-      "key": "link",
       "target": "HTMLLinkElement",
       "name": "link",
+      "key": "link",
       "type": "html",
       "parent": "HTMLElement",
       "childs": "Text | HTMLElement"
     },
     "main": {
+      "name": "main",
       "key": "main",
       "target": "HTMLElement",
-      "name": "main",
       "type": "html",
       "parent": "HTMLElement",
       "childs": "Text | HTMLElement"
     },
     "mark": {
+      "name": "mark",
       "key": "mark",
       "target": "HTMLElement",
-      "name": "mark",
       "type": "html",
       "parent": "HTMLElement",
       "childs": "Text | HTMLElement"
     },
     "menu": {
-      "key": "menu",
       "target": "HTMLMenuElement",
       "name": "menu",
+      "key": "menu",
       "type": "html",
       "parent": "HTMLElement",
       "childs": "Text | HTMLElement"
     },
     "meta": {
+      "name": "meta",
       "key": "meta",
       "target": "HTMLElement",
-      "name": "meta",
       "type": "html",
       "parent": "HTMLElement",
       "childs": "Text | HTMLElement"
     },
     "meter": {
-      "key": "meter",
       "target": "HTMLMeterElement",
       "name": "meter",
+      "key": "meter",
       "type": "html",
       "parent": "HTMLElement",
       "childs": "Text | HTMLElement"
     },
     "nav": {
+      "name": "nav",
       "key": "nav",
       "target": "HTMLElement",
-      "name": "nav",
       "type": "html",
       "parent": "HTMLElement",
       "childs": "Text | HTMLElement"
     },
     "noscript": {
+      "name": "noscript",
       "key": "noscript",
       "target": "HTMLElement",
-      "name": "noscript",
       "type": "html",
       "parent": "HTMLElement",
       "childs": "Text | HTMLElement"
     },
     "object": {
-      "key": "object",
       "target": "HTMLObjectElement",
       "name": "object",
+      "key": "object",
       "type": "html",
       "parent": "HTMLElement",
       "childs": "Text | HTMLElement"
     },
     "ol": {
-      "key": "ol",
       "target": "HTMLOListElement",
       "name": "ol",
+      "key": "ol",
       "type": "html",
       "parent": "HTMLElement",
       "childs": "Text | HTMLElement"
     },
     "optgroup": {
-      "key": "optgroup",
       "target": "HTMLOptGroupElement",
       "name": "optgroup",
+      "key": "optgroup",
       "type": "html",
       "parent": "HTMLElement",
       "childs": "Text | HTMLElement"
     },
     "option": {
-      "key": "option",
       "target": "HTMLOptionElement",
       "name": "option",
+      "key": "option",
       "type": "html",
       "parent": "HTMLElement",
       "childs": "Text | HTMLElement"
     },
     "output": {
-      "key": "output",
       "target": "HTMLOutputElement",
       "name": "output",
+      "key": "output",
       "type": "html",
       "parent": "HTMLElement",
       "childs": "Text | HTMLElement"
     },
     "p": {
-      "key": "p",
       "target": "HTMLParagraphElement",
       "name": "p",
+      "key": "p",
       "type": "html",
       "parent": "HTMLElement",
       "childs": "Text | HTMLElement"
     },
     "param": {
-      "key": "param",
       "target": "HTMLParagraphElement",
       "name": "param",
+      "key": "param",
       "type": "html",
       "parent": "HTMLElement",
       "childs": "Text | HTMLElement"
     },
     "picture": {
-      "key": "picture",
       "target": "HTMLPictureElement",
       "name": "picture",
+      "key": "picture",
       "type": "html",
       "parent": "HTMLElement",
       "childs": "Text | HTMLElement"
     },
     "pre": {
-      "key": "pre",
       "target": "HTMLPreElement",
       "name": "pre",
+      "key": "pre",
       "type": "html",
       "parent": "HTMLElement",
       "childs": "Text | HTMLElement"
     },
     "progress": {
-      "key": "progress",
       "target": "HTMLProgressElement",
       "name": "progress",
+      "key": "progress",
       "type": "html",
       "parent": "HTMLElement",
       "childs": "Text | HTMLElement"
     },
     "q": {
-      "key": "q",
       "target": "HTMLQuoteElement",
       "name": "q",
+      "key": "q",
       "type": "html",
       "parent": "HTMLElement",
       "childs": "Text | HTMLElement"
     },
     "rp": {
+      "name": "rp",
       "key": "rp",
       "target": "HTMLElement",
-      "name": "rp",
       "type": "html",
       "parent": "HTMLElement",
       "childs": "Text | HTMLElement"
     },
     "rt": {
+      "name": "rt",
       "key": "rt",
       "target": "HTMLElement",
-      "name": "rt",
       "type": "html",
       "parent": "HTMLElement",
       "childs": "Text | HTMLElement"
     },
     "ruby": {
+      "name": "ruby",
       "key": "ruby",
       "target": "HTMLElement",
-      "name": "ruby",
       "type": "html",
       "parent": "HTMLElement",
       "childs": "Text | HTMLElement"
     },
     "s": {
+      "name": "s",
       "key": "s",
       "target": "HTMLElement",
-      "name": "s",
       "type": "html",
       "parent": "HTMLElement",
       "childs": "Text | HTMLElement"
     },
     "samp": {
+      "name": "samp",
       "key": "samp",
       "target": "HTMLElement",
-      "name": "samp",
       "type": "html",
       "parent": "HTMLElement",
       "childs": "Text | HTMLElement"
     },
     "script": {
+      "name": "script",
       "key": "script",
       "target": "HTMLElement",
-      "name": "script",
       "type": "html",
       "parent": "HTMLElement",
       "childs": "Text | HTMLElement"
     },
     "search": {
+      "name": "search",
       "key": "search",
       "target": "HTMLElement",
-      "name": "search",
       "type": "html",
       "parent": "HTMLElement",
       "childs": "Text | HTMLElement"
     },
     "section": {
+      "name": "section",
       "key": "section",
       "target": "HTMLElement",
-      "name": "section",
       "type": "html",
       "parent": "HTMLElement",
       "childs": "Text | HTMLElement"
     },
     "select": {
-      "key": "select",
       "target": "HTMLSelectElement",
       "name": "select",
+      "key": "select",
       "type": "html",
       "parent": "HTMLElement",
       "childs": "Text | HTMLElement"
     },
-    "$slot": {
+    "htmlSlot": {
       "key": "slot",
       "target": "HTMLSlotElement",
-      "name": "$slot",
+      "name": "htmlSlot",
       "type": "html",
       "parent": "HTMLElement",
       "childs": "Text | HTMLElement"
     },
     "small": {
+      "name": "small",
       "key": "small",
       "target": "HTMLElement",
-      "name": "small",
       "type": "html",
       "parent": "HTMLElement",
       "childs": "Text | HTMLElement"
     },
     "source": {
-      "key": "source",
       "target": "HTMLSourceElement",
       "name": "source",
+      "key": "source",
       "type": "html",
       "parent": "HTMLElement",
       "childs": "Text | HTMLElement"
     },
     "span": {
+      "name": "span",
       "key": "span",
       "target": "HTMLElement",
-      "name": "span",
       "type": "html",
       "parent": "HTMLElement",
       "childs": "Text | HTMLElement"
     },
     "strong": {
+      "name": "strong",
       "key": "strong",
       "target": "HTMLElement",
-      "name": "strong",
       "type": "html",
       "parent": "HTMLElement",
       "childs": "Text | HTMLElement"
     },
     "style": {
+      "name": "style",
       "key": "style",
       "target": "HTMLElement",
-      "name": "style",
       "type": "html",
       "parent": "HTMLElement",
       "childs": "Text | HTMLElement"
     },
     "sub": {
+      "name": "sub",
       "key": "sub",
       "target": "HTMLElement",
-      "name": "sub",
       "type": "html",
       "parent": "HTMLElement",
       "childs": "Text | HTMLElement"
     },
     "summary": {
+      "name": "summary",
       "key": "summary",
       "target": "HTMLElement",
-      "name": "summary",
       "type": "html",
       "parent": "HTMLElement",
       "childs": "Text | HTMLElement"
     },
     "sup": {
+      "name": "sup",
       "key": "sup",
       "target": "HTMLElement",
-      "name": "sup",
       "type": "html",
       "parent": "HTMLElement",
       "childs": "Text | HTMLElement"
     },
     "table": {
-      "key": "table",
       "target": "HTMLTableElement",
       "name": "table",
+      "key": "table",
       "type": "html",
       "parent": "HTMLElement",
       "childs": "Text | HTMLElement"
     },
     "tbody": {
-      "key": "tbody",
       "target": "HTMLTableSectionElement",
       "name": "tbody",
+      "key": "tbody",
       "type": "html",
       "parent": "HTMLElement",
       "childs": "Text | HTMLElement"
@@ -819,113 +819,113 @@ const entryMap: EntryMap = {
       "childs": "Text | HTMLElement"
     },
     "template": {
-      "key": "template",
       "target": "HTMLTemplateElement",
       "name": "template",
+      "key": "template",
       "type": "html",
       "parent": "HTMLElement",
       "childs": "Text | HTMLElement"
     },
     "textarea": {
-      "key": "textarea",
       "target": "HTMLTextAreaElement",
       "name": "textarea",
+      "key": "textarea",
       "type": "html",
       "parent": "HTMLElement",
       "childs": "Text | HTMLElement"
     },
     "tfoot": {
-      "key": "tfoot",
       "target": "HTMLTableSectionElement",
       "name": "tfoot",
+      "key": "tfoot",
       "type": "html",
       "parent": "HTMLElement",
       "childs": "Text | HTMLElement"
     },
     "th": {
-      "key": "th",
       "target": "HTMLTableCellElement",
       "name": "th",
+      "key": "th",
       "type": "html",
       "parent": "HTMLElement",
       "childs": "Text | HTMLElement"
     },
     "thead": {
-      "key": "thead",
       "target": "HTMLTableSectionElement",
       "name": "thead",
+      "key": "thead",
       "type": "html",
       "parent": "HTMLElement",
       "childs": "Text | HTMLElement"
     },
     "tile": {
-      "key": "time",
       "target": "HTMLTimeElement",
       "name": "tile",
+      "key": "tile",
       "type": "html",
       "parent": "HTMLElement",
       "childs": "Text | HTMLElement"
     },
     "htmlTitle": {
-      "key": "title",
       "target": "HTMLTitleElement",
       "name": "htmlTitle",
+      "key": "htmlTitle",
       "type": "html",
       "parent": "HTMLElement",
       "childs": "Text | HTMLElement"
     },
     "tr": {
-      "key": "tr",
       "target": "HTMLTableRowElement",
       "name": "tr",
+      "key": "tr",
       "type": "html",
       "parent": "HTMLElement",
       "childs": "Text | HTMLElement"
     },
     "track": {
-      "key": "track",
       "target": "HTMLTrackElement",
       "name": "track",
+      "key": "track",
       "type": "html",
       "parent": "HTMLElement",
       "childs": "Text | HTMLElement"
     },
     "u": {
+      "name": "u",
       "key": "u",
       "target": "HTMLElement",
-      "name": "u",
       "type": "html",
       "parent": "HTMLElement",
       "childs": "Text | HTMLElement"
     },
     "ul": {
-      "key": "ul",
       "target": "HTMLUListElement",
       "name": "ul",
+      "key": "ul",
       "type": "html",
       "parent": "HTMLElement",
       "childs": "Text | HTMLElement"
     },
-    "$var": {
+    "htmlVar": {
       "key": "var",
+      "name": "htmlVar",
       "target": "HTMLElement",
-      "name": "$var",
       "type": "html",
       "parent": "HTMLElement",
       "childs": "Text | HTMLElement"
     },
     "video": {
-      "key": "video",
       "target": "HTMLVideoElement",
       "name": "video",
+      "key": "video",
       "type": "html",
       "parent": "HTMLElement",
       "childs": "Text | HTMLElement"
     },
     "wbr": {
+      "name": "wbr",
       "key": "wbr",
       "target": "HTMLElement",
-      "name": "wbr",
       "type": "html",
       "parent": "HTMLElement",
       "childs": "Text | HTMLElement"
@@ -934,83 +934,83 @@ const entryMap: EntryMap = {
   "attribute": {
     "id": {
       "name": "id",
-      "key": "id",
-      "target": "Element"
+      "target": "Element",
+      "key": "id"
     },
     "accesskey": {
       "name": "accesskey",
-      "key": "accesskey",
-      "target": "Element"
+      "target": "Element",
+      "key": "accesskey"
     },
     "autocapitalize": {
       "name": "autocapitalize",
-      "key": "autocapitalize",
-      "target": "Element"
+      "target": "Element",
+      "key": "autocapitalize"
     },
     "autofocus": {
       "name": "autofocus",
-      "key": "autofocus",
-      "target": "Element"
+      "target": "Element",
+      "key": "autofocus"
     },
     "enterkeyhint": {
       "name": "enterkeyhint",
-      "key": "enterkeyhint",
-      "target": "Element"
+      "target": "Element",
+      "key": "enterkeyhint"
     },
     "exportparts": {
       "name": "exportparts",
-      "key": "exportparts",
-      "target": "Element"
+      "target": "Element",
+      "key": "exportparts"
     },
     "hidden": {
       "name": "hidden",
-      "key": "hidden",
-      "target": "Element"
+      "target": "Element",
+      "key": "hidden"
     },
     "inert": {
       "name": "inert",
-      "key": "inert",
-      "target": "Element"
+      "target": "Element",
+      "key": "inert"
     },
     "inputmode": {
       "name": "inputmode",
-      "key": "inputmode",
-      "target": "Element"
+      "target": "Element",
+      "key": "inputmode"
     },
     "is": {
       "name": "is",
-      "key": "is",
-      "target": "Element"
+      "target": "Element",
+      "key": "is"
     },
     "nonce": {
       "name": "nonce",
-      "key": "nonce",
-      "target": "Element"
+      "target": "Element",
+      "key": "nonce"
     },
     "part": {
       "name": "part",
-      "key": "part",
-      "target": "Element"
+      "target": "Element",
+      "key": "part"
     },
     "popover": {
       "name": "popover",
-      "key": "popover",
-      "target": "Element"
+      "target": "Element",
+      "key": "popover"
     },
     "slot": {
       "name": "slot",
-      "key": "slot",
-      "target": "Element"
+      "target": "Element",
+      "key": "slot"
     },
     "spellcheck": {
       "name": "spellcheck",
-      "key": "spellcheck",
-      "target": "Element"
+      "target": "Element",
+      "key": "spellcheck"
     },
     "translate": {
       "name": "translate",
-      "key": "translate",
-      "target": "Element"
+      "target": "Element",
+      "key": "translate"
     },
     "className": {
       "name": "className",
@@ -1019,532 +1019,532 @@ const entryMap: EntryMap = {
     },
     "title": {
       "name": "title",
-      "key": "title",
-      "target": "HTMLElement"
+      "target": "HTMLElement",
+      "key": "title"
     },
     "tabIndex": {
       "name": "tabIndex",
-      "key": "tabIndex",
-      "target": "HTMLElement"
+      "target": "HTMLElement",
+      "key": "tabIndex"
     },
     "lang": {
       "name": "lang",
-      "key": "lang",
-      "target": "HTMLElement"
+      "target": "HTMLElement",
+      "key": "lang"
     },
     "dir": {
       "name": "dir",
-      "key": "dir",
-      "target": "HTMLElement"
+      "target": "HTMLElement",
+      "key": "dir"
     },
     "draggable": {
       "name": "draggable",
-      "key": "draggable",
-      "target": "HTMLElement"
+      "target": "HTMLElement",
+      "key": "draggable"
     },
     "itemid": {
       "name": "itemid",
-      "key": "itemid",
-      "target": "HTMLElement"
+      "target": "HTMLElement",
+      "key": "itemid"
     },
     "itemprop": {
       "name": "itemprop",
-      "key": "itemprop",
-      "target": "HTMLElement"
+      "target": "HTMLElement",
+      "key": "itemprop"
     },
     "itemref": {
       "name": "itemref",
-      "key": "itemref",
-      "target": "HTMLElement"
+      "target": "HTMLElement",
+      "key": "itemref"
     },
     "itemscope": {
       "name": "itemscope",
-      "key": "itemscope",
-      "target": "HTMLElement"
+      "target": "HTMLElement",
+      "key": "itemscope"
     },
     "itemtype": {
       "name": "itemtype",
-      "key": "itemtype",
-      "target": "HTMLElement"
+      "target": "HTMLElement",
+      "key": "itemtype"
     },
     "crossorigin": {
       "name": "crossorigin",
-      "key": "crossorigin",
-      "target": "HTMLElement"
+      "target": "HTMLElement",
+      "key": "crossorigin"
     },
     "disabled": {
       "name": "disabled",
-      "key": "disabled",
-      "target": "HTMLElement"
+      "target": "HTMLElement",
+      "key": "disabled"
     },
     "elementtiming": {
       "name": "elementtiming",
-      "key": "elementtiming",
-      "target": "HTMLElement"
+      "target": "HTMLElement",
+      "key": "elementtiming"
     },
     "max": {
       "name": "max",
-      "key": "max",
-      "target": "HTMLElement"
+      "target": "HTMLElement",
+      "key": "max"
     },
     "min": {
       "name": "min",
-      "key": "min",
-      "target": "HTMLElement"
+      "target": "HTMLElement",
+      "key": "min"
     },
     "step": {
-      "key": "step",
       "target": "HTMLInputElement",
-      "name": "step"
+      "name": "step",
+      "key": "step"
     },
     "type": {
-      "key": "type",
       "target": "HTMLInputElement",
-      "name": "type"
+      "name": "type",
+      "key": "type"
     },
     "accept": {
-      "key": "accept",
       "target": "HTMLInputElement",
-      "name": "accept"
+      "name": "accept",
+      "key": "accept"
     },
     "capture": {
-      "key": "capture",
       "target": "HTMLInputElement",
-      "name": "capture"
+      "name": "capture",
+      "key": "capture"
     },
     "pattern": {
-      "key": "pattern",
       "target": "HTMLInputElement",
-      "name": "pattern"
+      "name": "pattern",
+      "key": "pattern"
     },
     "placeholder": {
-      "key": "placeholder",
       "target": "HTMLInputElement",
-      "name": "placeholder"
+      "name": "placeholder",
+      "key": "placeholder"
     },
-    "$for": {
-      "key": "for",
+    "for": {
       "target": "HTMLLabelElement | HTMLOutputElement",
-      "name": "$for"
+      "name": "$for",
+      "key": "for"
     },
     "size": {
-      "key": "size",
       "target": "HTMLInputElement | HTMLSelectElement",
-      "name": "size"
+      "name": "size",
+      "key": "size"
     },
     "dirname": {
-      "key": "dirname",
       "target": "HTMLInputElement | HTMLTextAreaElement",
-      "name": "dirname"
+      "name": "dirname",
+      "key": "dirname"
     },
     "multiple": {
-      "key": "multiple",
       "target": "HTMLInputElement | HTMLTextAreaElement",
-      "name": "multiple"
+      "name": "multiple",
+      "key": "multiple"
     },
     "readonly": {
-      "key": "readonly",
       "target": "HTMLInputElement | HTMLTextAreaElement",
-      "name": "readonly"
+      "name": "readonly",
+      "key": "readonly"
     },
     "maxlength": {
-      "key": "maxlength",
       "target": "HTMLInputElement | HTMLTextAreaElement",
-      "name": "maxlength"
+      "name": "maxlength",
+      "key": "maxlength"
     },
     "minlength": {
-      "key": "minlength",
       "target": "HTMLInputElement | HTMLTextAreaElement",
-      "name": "minlength"
+      "name": "minlength",
+      "key": "minlength"
     },
     "required": {
-      "key": "required",
       "target": "HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement",
-      "name": "required"
+      "name": "required",
+      "key": "required"
     },
     "rel": {
-      "key": "rel",
       "target": "HTMLAnchorElement | HTMLAreaElement | HTMLLinkElement | HTMLFormElement",
-      "name": "rel"
+      "name": "rel",
+      "key": "rel"
     },
     "autocomplete": {
-      "key": "autocomplete",
       "target": "HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement | HTMLFormElement",
-      "name": "autocomplete"
+      "name": "autocomplete",
+      "key": "autocomplete"
     }
   },
   "property": {
     "nodeValue": {
-      "key": "nodeValue",
       "target": "Node",
-      "name": "nodeValue"
+      "name": "nodeValue",
+      "key": "nodeValue"
     },
     "textContent": {
-      "key": "textContent",
       "target": "Node",
-      "name": "textContent"
+      "name": "textContent",
+      "key": "textContent"
     },
     "innerHTML": {
-      "key": "innerHTML",
+      "name": "innerHTML",
       "target": "Element",
-      "name": "innerHTML"
+      "key": "innerHTML"
     },
     "outerHTML": {
-      "key": "outerHTML",
+      "name": "outerHTML",
       "target": "Element",
-      "name": "outerHTML"
+      "key": "outerHTML"
     }
   },
   "query": {
-    "id": {
+    "getId": {
       "name": "getId",
       "key": "id",
       "target": "Element",
       "getter": "getAttr"
     },
-    "accesskey": {
+    "getAccesskey": {
       "name": "getAccesskey",
       "key": "accesskey",
       "target": "Element",
       "getter": "getAttr"
     },
-    "autocapitalize": {
+    "getAutocapitalize": {
       "name": "getAutocapitalize",
       "key": "autocapitalize",
       "target": "Element",
       "getter": "getAttr"
     },
-    "autofocus": {
+    "getAutofocus": {
       "name": "getAutofocus",
       "key": "autofocus",
       "target": "Element",
       "getter": "getAttr"
     },
-    "enterkeyhint": {
+    "getEnterkeyhint": {
       "name": "getEnterkeyhint",
       "key": "enterkeyhint",
       "target": "Element",
       "getter": "getAttr"
     },
-    "exportparts": {
+    "getExportparts": {
       "name": "getExportparts",
       "key": "exportparts",
       "target": "Element",
       "getter": "getAttr"
     },
-    "hidden": {
+    "getHidden": {
       "name": "getHidden",
       "key": "hidden",
       "target": "Element",
       "getter": "getAttr"
     },
-    "inert": {
+    "getInert": {
       "name": "getInert",
       "key": "inert",
       "target": "Element",
       "getter": "getAttr"
     },
-    "inputmode": {
+    "getInputmode": {
       "name": "getInputmode",
       "key": "inputmode",
       "target": "Element",
       "getter": "getAttr"
     },
-    "is": {
+    "getIs": {
       "name": "getIs",
       "key": "is",
       "target": "Element",
       "getter": "getAttr"
     },
-    "nonce": {
+    "getNonce": {
       "name": "getNonce",
       "key": "nonce",
       "target": "Element",
       "getter": "getAttr"
     },
-    "part": {
+    "getPart": {
       "name": "getPart",
       "key": "part",
       "target": "Element",
       "getter": "getAttr"
     },
-    "popover": {
+    "getPopover": {
       "name": "getPopover",
       "key": "popover",
       "target": "Element",
       "getter": "getAttr"
     },
-    "slot": {
+    "getSlot": {
       "name": "getSlot",
       "key": "slot",
       "target": "Element",
       "getter": "getAttr"
     },
-    "spellcheck": {
+    "getSpellcheck": {
       "name": "getSpellcheck",
       "key": "spellcheck",
       "target": "Element",
       "getter": "getAttr"
     },
-    "translate": {
+    "getTranslate": {
       "name": "getTranslate",
       "key": "translate",
       "target": "Element",
       "getter": "getAttr"
     },
-    "className": {
+    "getClassName": {
       "name": "getClassName",
-      "key": "className",
+      "key": "class",
       "target": "Element",
       "getter": "getAttr"
     },
-    "nodeValue": {
+    "getNodeValue": {
       "name": "getNodeValue",
       "key": "nodeValue",
       "target": "Node",
       "getter": "getProp"
     },
-    "textContent": {
+    "getTextContent": {
       "name": "getTextContent",
       "key": "textContent",
       "target": "Node",
       "getter": "getProp"
     },
-    "innerHTML": {
+    "getInnerHTML": {
       "name": "getInnerHTML",
       "key": "innerHTML",
       "target": "Element",
       "getter": "getProp"
     },
-    "outerHTML": {
+    "getOuterHTML": {
       "name": "getOuterHTML",
       "key": "outerHTML",
       "target": "Element",
       "getter": "getProp"
     },
     "nodeName": {
-      "key": "nodeName",
       "target": "Node",
       "name": "nodeName",
+      "key": "nodeName",
       "getter": "getProp"
     },
     "nodeType": {
-      "key": "nodeType",
       "target": "Node",
       "name": "nodeType",
+      "key": "nodeType",
       "getter": "getProp"
     },
     "clientHeight": {
-      "key": "clientHeight",
-      "target": "Element",
       "name": "clientHeight",
+      "target": "Element",
+      "key": "clientHeight",
       "getter": "getProp"
     },
     "clientLeft": {
-      "key": "clientLeft",
-      "target": "Element",
       "name": "clientLeft",
+      "target": "Element",
+      "key": "clientLeft",
       "getter": "getProp"
     },
     "clientTop": {
-      "key": "clientTop",
-      "target": "Element",
       "name": "clientTop",
+      "target": "Element",
+      "key": "clientTop",
       "getter": "getProp"
     },
     "clientWidth": {
-      "key": "clientWidth",
-      "target": "Element",
       "name": "clientWidth",
+      "target": "Element",
+      "key": "clientWidth",
       "getter": "getProp"
     },
     "tagName": {
-      "key": "tagName",
-      "target": "Element",
       "name": "tagName",
+      "target": "Element",
+      "key": "tagName",
       "getter": "getProp"
     },
-    "title": {
+    "getTitle": {
       "name": "getTitle",
       "key": "title",
       "target": "HTMLElement",
       "getter": "getAttr"
     },
-    "tabIndex": {
+    "getTabIndex": {
       "name": "getTabIndex",
       "key": "tabIndex",
       "target": "HTMLElement",
       "getter": "getAttr"
     },
-    "lang": {
+    "getLang": {
       "name": "getLang",
       "key": "lang",
       "target": "HTMLElement",
       "getter": "getAttr"
     },
-    "dir": {
+    "getDir": {
       "name": "getDir",
       "key": "dir",
       "target": "HTMLElement",
       "getter": "getAttr"
     },
-    "draggable": {
+    "getDraggable": {
       "name": "getDraggable",
       "key": "draggable",
       "target": "HTMLElement",
       "getter": "getAttr"
     },
-    "itemid": {
+    "getItemid": {
       "name": "getItemid",
       "key": "itemid",
       "target": "HTMLElement",
       "getter": "getAttr"
     },
-    "itemprop": {
+    "getItemprop": {
       "name": "getItemprop",
       "key": "itemprop",
       "target": "HTMLElement",
       "getter": "getAttr"
     },
-    "itemref": {
+    "getItemref": {
       "name": "getItemref",
       "key": "itemref",
       "target": "HTMLElement",
       "getter": "getAttr"
     },
-    "itemscope": {
+    "getItemscope": {
       "name": "getItemscope",
       "key": "itemscope",
       "target": "HTMLElement",
       "getter": "getAttr"
     },
-    "itemtype": {
+    "getItemtype": {
       "name": "getItemtype",
       "key": "itemtype",
       "target": "HTMLElement",
       "getter": "getAttr"
     },
-    "crossorigin": {
+    "getCrossorigin": {
       "name": "getCrossorigin",
       "key": "crossorigin",
       "target": "HTMLElement",
       "getter": "getAttr"
     },
-    "disabled": {
+    "getDisabled": {
       "name": "getDisabled",
       "key": "disabled",
       "target": "HTMLElement",
       "getter": "getAttr"
     },
-    "elementtiming": {
+    "getElementtiming": {
       "name": "getElementtiming",
       "key": "elementtiming",
       "target": "HTMLElement",
       "getter": "getAttr"
     },
-    "max": {
+    "getMax": {
       "name": "getMax",
       "key": "max",
       "target": "HTMLElement",
       "getter": "getAttr"
     },
-    "min": {
+    "getMin": {
       "name": "getMin",
       "key": "min",
       "target": "HTMLElement",
       "getter": "getAttr"
     },
-    "step": {
+    "getStep": {
       "name": "getStep",
       "key": "step",
       "target": "HTMLInputElement",
       "getter": "getAttr"
     },
-    "type": {
+    "getType": {
       "name": "getType",
       "key": "type",
       "target": "HTMLInputElement",
       "getter": "getAttr"
     },
-    "accept": {
+    "getAccept": {
       "name": "getAccept",
       "key": "accept",
       "target": "HTMLInputElement",
       "getter": "getAttr"
     },
-    "capture": {
+    "getCapture": {
       "name": "getCapture",
       "key": "capture",
       "target": "HTMLInputElement",
       "getter": "getAttr"
     },
-    "pattern": {
+    "getPattern": {
       "name": "getPattern",
       "key": "pattern",
       "target": "HTMLInputElement",
       "getter": "getAttr"
     },
-    "placeholder": {
+    "getPlaceholder": {
       "name": "getPlaceholder",
       "key": "placeholder",
       "target": "HTMLInputElement",
       "getter": "getAttr"
     },
-    "$for": {
-      "name": "get$for",
-      "key": "$for",
+    "getFor": {
+      "name": "getFor",
+      "key": "for",
       "target": "HTMLLabelElement | HTMLOutputElement",
       "getter": "getAttr"
     },
-    "size": {
+    "getSize": {
       "name": "getSize",
       "key": "size",
       "target": "HTMLInputElement | HTMLSelectElement",
       "getter": "getAttr"
     },
-    "dirname": {
+    "getDirname": {
       "name": "getDirname",
       "key": "dirname",
       "target": "HTMLInputElement | HTMLTextAreaElement",
       "getter": "getAttr"
     },
-    "multiple": {
+    "getMultiple": {
       "name": "getMultiple",
       "key": "multiple",
       "target": "HTMLInputElement | HTMLTextAreaElement",
       "getter": "getAttr"
     },
-    "readonly": {
+    "getReadonly": {
       "name": "getReadonly",
       "key": "readonly",
       "target": "HTMLInputElement | HTMLTextAreaElement",
       "getter": "getAttr"
     },
-    "maxlength": {
+    "getMaxlength": {
       "name": "getMaxlength",
       "key": "maxlength",
       "target": "HTMLInputElement | HTMLTextAreaElement",
       "getter": "getAttr"
     },
-    "minlength": {
+    "getMinlength": {
       "name": "getMinlength",
       "key": "minlength",
       "target": "HTMLInputElement | HTMLTextAreaElement",
       "getter": "getAttr"
     },
-    "required": {
+    "getRequired": {
       "name": "getRequired",
       "key": "required",
       "target": "HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement",
       "getter": "getAttr"
     },
-    "rel": {
+    "getRel": {
       "name": "getRel",
       "key": "rel",
       "target": "HTMLAnchorElement | HTMLAreaElement | HTMLLinkElement | HTMLFormElement",
       "getter": "getAttr"
     },
-    "autocomplete": {
+    "getAutocomplete": {
       "name": "getAutocomplete",
       "key": "autocomplete",
       "target": "HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement | HTMLFormElement",
@@ -1556,10 +1556,11 @@ const entryMap: EntryMap = {
       "target": "Element",
       "callPath": "classList.add",
       "arguments": [
-        [
-          "name",
-          "string"
-        ]
+        {
+          "name": "name",
+          "type": "string",
+          "optional": false
+        }
       ],
       "name": "addClass"
     },
@@ -1567,10 +1568,11 @@ const entryMap: EntryMap = {
       "target": "Element",
       "callPath": "classList.remove",
       "arguments": [
-        [
-          "name",
-          "string"
-        ]
+        {
+          "name": "name",
+          "type": "string",
+          "optional": false
+        }
       ],
       "name": "removeClass"
     },
@@ -1578,10 +1580,11 @@ const entryMap: EntryMap = {
       "target": "Element",
       "callPath": "classList.toggle",
       "arguments": [
-        [
-          "name",
-          "string"
-        ]
+        {
+          "name": "name",
+          "type": "string",
+          "optional": false
+        }
       ],
       "name": "toggleClass"
     },
@@ -1589,126 +1592,127 @@ const entryMap: EntryMap = {
       "target": "EventTarget",
       "callPath": "dispatchEvent",
       "arguments": [
-        [
-          "name",
-          "string"
-        ]
+        {
+          "name": "event",
+          "type": "Event",
+          "optional": false
+        }
       ],
       "name": "dispatch"
     }
   },
   "event": {
-    "onClick": {
+    "click": {
       "name": "onClick",
       "key": "click",
       "target": "EventTarget"
     },
-    "onDbClick": {
+    "dbClick": {
       "name": "onDbClick",
       "key": "dbclick",
       "target": "EventTarget"
     },
-    "onBlur": {
+    "blur": {
       "name": "onBlur",
       "key": "blur",
       "target": "EventTarget"
     },
-    "onFocus": {
+    "focus": {
       "name": "onFocus",
       "key": "focus",
       "target": "EventTarget"
     },
-    "onChange": {
+    "change": {
       "name": "onChange",
       "key": "change",
       "target": "EventTarget"
     },
-    "onMouseDown": {
+    "mouseDown": {
       "name": "onMouseDown",
       "key": "mousedown",
       "target": "EventTarget"
     },
-    "onMouseEnter": {
+    "mouseEnter": {
       "name": "onMouseEnter",
       "key": "mouseenter",
       "target": "EventTarget"
     },
-    "onMouseLeave": {
+    "mouseLeave": {
       "name": "onMouseLeave",
       "key": "mouseleave",
       "target": "EventTarget"
     },
-    "onMouseMove": {
+    "mouseMove": {
       "name": "onMouseMove",
       "key": "mousemove",
       "target": "EventTarget"
     },
-    "onMouseOut": {
+    "mouseOut": {
       "name": "onMouseOut",
       "key": "mouseout",
       "target": "EventTarget"
     },
-    "onMouseOver": {
+    "mouseOver": {
       "name": "onMouseOver",
       "key": "mouseover",
       "target": "EventTarget"
     },
-    "onMouseUp": {
+    "mouseUp": {
       "name": "onMouseUp",
       "key": "mouseup",
       "target": "EventTarget"
     },
-    "onWheel": {
+    "wheel": {
       "name": "onWheel",
       "key": "wheel",
       "target": "EventTarget"
     },
-    "onScroll": {
+    "scroll": {
       "name": "onScroll",
       "key": "scroll",
       "target": "EventTarget"
     },
-    "onKeyDown": {
+    "keyDown": {
       "name": "onKeyDown",
       "key": "keydown",
       "target": "EventTarget"
     },
-    "onKeyPress": {
+    "keyPress": {
       "name": "onKeyPress",
       "key": "keypress",
       "target": "EventTarget"
     },
-    "onKeyUp": {
+    "keyUp": {
       "name": "onKeyUp",
       "key": "keyup",
       "target": "EventTarget"
     },
-    "onCopy": {
+    "copy": {
       "name": "onCopy",
       "key": "copy",
       "target": "EventTarget"
     },
-    "onCut": {
+    "cut": {
       "name": "onCut",
       "key": "cut",
       "target": "EventTarget"
     },
-    "onPaste": {
+    "paste": {
       "name": "onPaste",
       "key": "paste",
       "target": "EventTarget"
     },
-    "onSelect": {
+    "select": {
       "name": "onSelect",
       "key": "select",
       "target": "EventTarget"
     },
-    "onFocusIn": {
+    "focusIn": {
       "name": "onFocusIn",
       "key": "focusin",
       "target": "EventTarget"
     },
-    "onFocusOut": {
+    "focusOut": {
       "name": "onFocusOut",
       "key": "focusout",
       "target": "EventTarget"
@@ -1910,14 +1914,14 @@ const entryMap: EntryMap = {
       "deps": [
         "NodeAdapterArgsFormater"
       ],
-      "body": "const formatAdapterArgs: NodeAdapterArgsFormater<Node | undefined, Document, Node | undefined, Document, string | undefined> = \n    <T extends Node | undefined, V extends Node | undefined>(connector: NodeConnector<T,Document,V,Document>) => \n    (args: NodeAdapterArg<T,Document,V,Document,string | undefined>): NodeTask<T,Document>[] => \n        (args.filter(arg => arg != null) as NodeAdapterArg<T,Document,V,Document,string>).map(arg => {\n            if(typeof arg === 'function') return arg(connector);\n            if(typeof arg === 'string') return [\n                (entry: [T,Document]) => {\n                    entry[0]?.appendChild(entry[1].createTextNode(arg));\n                    return entry;\n                }\n            ];\n            return arg;\n        });"
+      "body": "const formatAdapterArgs: NodeAdapterArgsFormater<Node | undefined, Document, Node | undefined, Document, string | undefined> = \n    <T extends Node | undefined, V extends Node | undefined>(connector: NodeConnector<T,Document,V,Document>) => \n    (args: NodeAdapterArg<T,Document,V,Document,string | undefined>): NodeTask<T,Document>[] => \n        (args.filter(arg => arg != null) as NodeAdapterArg<T,Document,V,Document,string>).map(arg => {\n            if(typeof arg === 'function') return arg(connector);\n            if(typeof arg === 'string') return [\n                (entry: [T,Document]) => {\n                    if(entry[0] != null){\n                        try{\n                            entry[0].appendChild(entry[1].createTextNode(arg));\n                        }catch(e){\n                            entry[0].nodeValue = arg; \n                        }\n                    }\n                    return entry;\n                }\n            ];\n            return arg;\n        });"
     },
     "getElement": {
       "name": "getElement",
       "deps": [
         "NodePicker"
       ],
-      "body": "export const getElement = <T extends Element, U extends Document>(query: string, container: Document | Element): NodePicker<T,U> => () => {\n    const node = container.querySelector(query);\n    return node == null ? node : [node as T, node.ownerDocument as U];\n}"
+      "body": "export const getElement = <T extends Element, U extends Document>(query: string, container: Document | Element): NodePicker<T,U> => () => {\n    const node = container.querySelector(query);\n    return node == null ? null : [node as T, node.ownerDocument as U];\n}"
     },
     "fromElement": {
       "name": "fromElement",
