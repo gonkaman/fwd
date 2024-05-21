@@ -203,6 +203,6 @@ const renderSelectedEntries = (entryMap: EntryMap, tokens: string[]): string => 
     return hiddenSources.concat(exposedSources).join('\n');
 }
 
-export const generateLibSource = (entryMap: EntryMap, tokens?: string[]): string => 
+export const generateLibSource = (entryMap: EntryMap, tokens: string[] | null): string => 
     tokens == null ? renderAllEntries(entryMap) : 
     (tokens.length > 0 ? renderSelectedEntries(entryMap, tokens) : renderAllEntries(entryMap));
