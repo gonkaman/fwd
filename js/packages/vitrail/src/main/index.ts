@@ -100,12 +100,8 @@ const handleCommand = async (command: BuildCommand) => {
                     generateSource(getTokens(command.options.files, command.options.filters))
                 );
             }else{
-                await Deno.writeTextFile(
-                    getOuputWithExtension(getOutputFileName(command.output)), 
-                    generateSource()
-                );
+                displayHelp();
             }
-            
             break;
         default:
             displayHelp();

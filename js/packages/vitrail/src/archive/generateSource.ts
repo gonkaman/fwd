@@ -681,236 +681,236 @@ dark
 </div>`;
 
 
-type ElementEntry = {
-    tagName: string,
-    isEmpty: boolean,
-    isCustom: boolean,
-    isText: boolean,
-    attrs: [string, string][],
-    childs: number[],
-    parent?: number,
-    index: number,
-    value: string
-}
+// type ElementEntry = {
+//     tagName: string,
+//     isEmpty: boolean,
+//     isCustom: boolean,
+//     isText: boolean,
+//     attrs: [string, string][],
+//     childs: number[],
+//     parent?: number,
+//     index: number,
+//     value: string
+// }
 
-const create_new_token = (index: number, parent?: number): ElementEntry => {
-    return { index: index, tagName: "", isEmpty: false, isCustom: false, isText: false, parent: parent, childs: [], attrs: [], value: "" };
-}
+// const create_new_token = (index: number, parent?: number): ElementEntry => {
+//     return { index: index, tagName: "", isEmpty: false, isCustom: false, isText: false, parent: parent, childs: [], attrs: [], value: "" };
+// }
 
-const isBlank = (char: string): boolean => /\s/g.test(char);
+// const isBlank = (char: string): boolean => /\s/g.test(char);
 
-const parse_html = (source: string, empty_tags: string[]): ElementEntry[] => {
-    const elements: ElementEntry[] = [];
-    ///states
-    const s_start = "start";
-    const s_opening_tag = "opening_tag";
-    const s_reading_tagName = "reading_tagName";
-    const s_tagName_read = "tagName_read";
-    const s_reading_attr = "reading_attr";
-    const s_assigning_attr = "assigning_attr";
-    const s_reading_attr_value = "reading_attr_value";
-    const s_reading_attr_sqvalue = "reading_attr_sqvalue";
-    const s_reading_attr_dqvalue = "reading_attr_dqvalue";
-    const s_tag_opened = "tag_opened";
-    const s_closing_tag = "closing_tag";
-    const s_close_tagName_read = "s_close_tagName_read";
-    const s_reading_text = "reading_text";
-    const s_reading_comment = "reading_comment";
+// const parse_html = (source: string, empty_tags: string[]): ElementEntry[] => {
+//     const elements: ElementEntry[] = [];
+//     ///states
+//     const s_start = "start";
+//     const s_opening_tag = "opening_tag";
+//     const s_reading_tagName = "reading_tagName";
+//     const s_tagName_read = "tagName_read";
+//     const s_reading_attr = "reading_attr";
+//     const s_assigning_attr = "assigning_attr";
+//     const s_reading_attr_value = "reading_attr_value";
+//     const s_reading_attr_sqvalue = "reading_attr_sqvalue";
+//     const s_reading_attr_dqvalue = "reading_attr_dqvalue";
+//     const s_tag_opened = "tag_opened";
+//     const s_closing_tag = "closing_tag";
+//     const s_close_tagName_read = "s_close_tagName_read";
+//     const s_reading_text = "reading_text";
+//     const s_reading_comment = "reading_comment";
 
-    let state = s_start, index = 0, token = create_new_token(0), cc = source[index], can = "", cav="", close_tagName = "";
+//     let state = s_start, index = 0, token = create_new_token(0), cc = source[index], can = "", cav="", close_tagName = "";
 
-    while(index < source.length){
-        switch(state){
-            case s_start:
-                if(cc === '<'){
-                    state = s_opening_tag;
-                }else{
-                    state = s_reading_text;
-                    token.isText = true;
-                    token.value += cc;
-                }
-                break;
-            case s_opening_tag:
-                if(cc === '/'){
-                    state = s_closing_tag;
-                }else if(cc === '!' && source[index+1] === '-' && source[index+2] === '-'){
-                    state = s_reading_comment;
-                    index+=2;
-                }else if(!isBlank(cc)){
-                    state = s_reading_tagName;
-                    token.tagName += cc;
-                }
-                break;
-            case s_reading_tagName:
-                if(cc === '>'){
-                    if(empty_tags.indexOf(token.tagName) >= 0){
-                        state = s_start;
-                        token.isEmpty = true;
-                        elements.push(token);
-                        if(token.parent != null){
-                            elements[token.parent].childs.push(elements.length - 1);
-                        }
-                        token = create_new_token(elements.length, token.parent);
-                    }else{
-                        state = s_tag_opened;
-                        elements.push(token);
-                        if(token.parent != null){
-                            elements[token.parent].childs.push(elements.length - 1);
-                        }
-                        token = create_new_token(elements.length - 1);
-                    }
-                }else if(!isBlank(cc)){
-                    token.tagName += cc;
-                }else{
-                    state = s_tagName_read;
-                }
-                break;
-            case s_tagName_read:
-                if(cc === '>'){
-                    if(empty_tags.indexOf(token.tagName) >= 0){
-                        state = s_start;
-                        token.isEmpty = true;
-                        elements.push(token);
-                        if(token.parent != null){
-                            elements[token.parent].childs.push(elements.length - 1);
-                        }
-                        token = create_new_token(elements.length, token.parent);
-                    }else{
-                        state = s_tag_opened;
-                        elements.push(token);
-                        if(token.parent != null){
-                            elements[token.parent].childs.push(elements.length - 1);
-                        }
-                        token = create_new_token(elements.length, elements.length - 1);
-                    }
-                }else if(!isBlank(cc) && cc !== '/'){
-                    state = s_reading_attr;
-                    can += cc;
-                }
-                break;
-            case s_reading_attr:
-                if(isBlank(cc)){
-                    state = s_tagName_read;
-                    token.attrs.push([can, can]);
-                    can = '';
-                }else if(cc === '='){
-                    state = s_assigning_attr;
-                }else{
-                    can += cc;
-                }
-                break;
-            case s_assigning_attr:
-                if(cc === '"'){
-                    state = s_reading_attr_dqvalue;
-                }else if(cc === "'"){
-                    state = s_reading_attr_sqvalue;
-                }else if(!isBlank(cc)){
-                    state = s_reading_attr_value;
-                    cav += cc;
-                }
-                break;
-            case s_reading_attr_sqvalue:
-                if(cc === "'" && source[index-1] != "\\"){
-                    state = s_tagName_read;
-                    token.attrs.push([can, cav]);
-                    can = '';
-                    cav = '';
-                }else{
-                    cav += cc;
-                }
-                break;
-            case s_reading_attr_dqvalue:
-                if(cc === '"' && source[index-1] != "\\"){
-                    state = s_tagName_read;
-                    token.attrs.push([can, cav]);
-                    can = '';
-                    cav = '';
-                }else{
-                    cav += cc;
-                }
-                break;
-            case s_reading_attr_value:
-                if(isBlank(cc)){
-                    state = s_tagName_read;
-                    token.attrs.push([can, cav]);
-                    can = '';
-                    cav = '';
-                }else{
-                    cav += cc;
-                }
-                break;
-            case s_tag_opened:
-                if(cc === '<'){
-                    state = s_opening_tag;
-                }else if(!isBlank(cc)){
-                    state = s_reading_text;
-                    token.isText = true;
-                    token.value += cc;
-                }
-                break;
-            case s_reading_text:
-                if(cc === '<'){
-                    state = s_opening_tag;
-                    elements.push(token);
-                    if(token.parent != null){
-                        elements[token.parent].childs.push(elements.length - 1);
-                    }
-                    token = create_new_token(elements.length, token.parent);
-                }else{
-                    token.value += cc;
-                }
-                break;
-            case s_closing_tag:
-                if(cc === '>'){
-                    state = s_start;
-                    if(token.parent){
-                        if(elements[token.parent].tagName === close_tagName){
-                            token = create_new_token(elements.length, elements[token.parent].parent);
-                        }
-                    }
-                    close_tagName = '';
-                }else if(!isBlank(cc)){
-                    close_tagName += cc;
-                }else{
-                    state = s_close_tagName_read;
-                }
-                break;
-            case s_close_tagName_read:
-                if(cc === '>'){
-                    state = s_start;
-                    if(token.parent){
-                        if(elements[token.parent].tagName === close_tagName){
-                            token = create_new_token(elements.length, elements[token.parent].parent);
-                        }
-                    }
-                    close_tagName = '';
-                }
-                break;
-            case s_reading_comment:
-                if(cc === '-' && source[index+1] === '-' && source[index+2] === '>'){
-                    state = s_start;
-                    index+=2;
-                }
-                break;
-            default:
-                break;
-        }
-        index++;
-        cc = source[index];
-    }
-    return elements;
-}
-
-
+//     while(index < source.length){
+//         switch(state){
+//             case s_start:
+//                 if(cc === '<'){
+//                     state = s_opening_tag;
+//                 }else{
+//                     state = s_reading_text;
+//                     token.isText = true;
+//                     token.value += cc;
+//                 }
+//                 break;
+//             case s_opening_tag:
+//                 if(cc === '/'){
+//                     state = s_closing_tag;
+//                 }else if(cc === '!' && source[index+1] === '-' && source[index+2] === '-'){
+//                     state = s_reading_comment;
+//                     index+=2;
+//                 }else if(!isBlank(cc)){
+//                     state = s_reading_tagName;
+//                     token.tagName += cc;
+//                 }
+//                 break;
+//             case s_reading_tagName:
+//                 if(cc === '>'){
+//                     if(empty_tags.indexOf(token.tagName) >= 0){
+//                         state = s_start;
+//                         token.isEmpty = true;
+//                         elements.push(token);
+//                         if(token.parent != null){
+//                             elements[token.parent].childs.push(elements.length - 1);
+//                         }
+//                         token = create_new_token(elements.length, token.parent);
+//                     }else{
+//                         state = s_tag_opened;
+//                         elements.push(token);
+//                         if(token.parent != null){
+//                             elements[token.parent].childs.push(elements.length - 1);
+//                         }
+//                         token = create_new_token(elements.length - 1);
+//                     }
+//                 }else if(!isBlank(cc)){
+//                     token.tagName += cc;
+//                 }else{
+//                     state = s_tagName_read;
+//                 }
+//                 break;
+//             case s_tagName_read:
+//                 if(cc === '>'){
+//                     if(empty_tags.indexOf(token.tagName) >= 0){
+//                         state = s_start;
+//                         token.isEmpty = true;
+//                         elements.push(token);
+//                         if(token.parent != null){
+//                             elements[token.parent].childs.push(elements.length - 1);
+//                         }
+//                         token = create_new_token(elements.length, token.parent);
+//                     }else{
+//                         state = s_tag_opened;
+//                         elements.push(token);
+//                         if(token.parent != null){
+//                             elements[token.parent].childs.push(elements.length - 1);
+//                         }
+//                         token = create_new_token(elements.length, elements.length - 1);
+//                     }
+//                 }else if(!isBlank(cc) && cc !== '/'){
+//                     state = s_reading_attr;
+//                     can += cc;
+//                 }
+//                 break;
+//             case s_reading_attr:
+//                 if(isBlank(cc)){
+//                     state = s_tagName_read;
+//                     token.attrs.push([can, can]);
+//                     can = '';
+//                 }else if(cc === '='){
+//                     state = s_assigning_attr;
+//                 }else{
+//                     can += cc;
+//                 }
+//                 break;
+//             case s_assigning_attr:
+//                 if(cc === '"'){
+//                     state = s_reading_attr_dqvalue;
+//                 }else if(cc === "'"){
+//                     state = s_reading_attr_sqvalue;
+//                 }else if(!isBlank(cc)){
+//                     state = s_reading_attr_value;
+//                     cav += cc;
+//                 }
+//                 break;
+//             case s_reading_attr_sqvalue:
+//                 if(cc === "'" && source[index-1] != "\\"){
+//                     state = s_tagName_read;
+//                     token.attrs.push([can, cav]);
+//                     can = '';
+//                     cav = '';
+//                 }else{
+//                     cav += cc;
+//                 }
+//                 break;
+//             case s_reading_attr_dqvalue:
+//                 if(cc === '"' && source[index-1] != "\\"){
+//                     state = s_tagName_read;
+//                     token.attrs.push([can, cav]);
+//                     can = '';
+//                     cav = '';
+//                 }else{
+//                     cav += cc;
+//                 }
+//                 break;
+//             case s_reading_attr_value:
+//                 if(isBlank(cc)){
+//                     state = s_tagName_read;
+//                     token.attrs.push([can, cav]);
+//                     can = '';
+//                     cav = '';
+//                 }else{
+//                     cav += cc;
+//                 }
+//                 break;
+//             case s_tag_opened:
+//                 if(cc === '<'){
+//                     state = s_opening_tag;
+//                 }else if(!isBlank(cc)){
+//                     state = s_reading_text;
+//                     token.isText = true;
+//                     token.value += cc;
+//                 }
+//                 break;
+//             case s_reading_text:
+//                 if(cc === '<'){
+//                     state = s_opening_tag;
+//                     elements.push(token);
+//                     if(token.parent != null){
+//                         elements[token.parent].childs.push(elements.length - 1);
+//                     }
+//                     token = create_new_token(elements.length, token.parent);
+//                 }else{
+//                     token.value += cc;
+//                 }
+//                 break;
+//             case s_closing_tag:
+//                 if(cc === '>'){
+//                     state = s_start;
+//                     if(token.parent){
+//                         if(elements[token.parent].tagName === close_tagName){
+//                             token = create_new_token(elements.length, elements[token.parent].parent);
+//                         }
+//                     }
+//                     close_tagName = '';
+//                 }else if(!isBlank(cc)){
+//                     close_tagName += cc;
+//                 }else{
+//                     state = s_close_tagName_read;
+//                 }
+//                 break;
+//             case s_close_tagName_read:
+//                 if(cc === '>'){
+//                     state = s_start;
+//                     if(token.parent){
+//                         if(elements[token.parent].tagName === close_tagName){
+//                             token = create_new_token(elements.length, elements[token.parent].parent);
+//                         }
+//                     }
+//                     close_tagName = '';
+//                 }
+//                 break;
+//             case s_reading_comment:
+//                 if(cc === '-' && source[index+1] === '-' && source[index+2] === '>'){
+//                     state = s_start;
+//                     index+=2;
+//                 }
+//                 break;
+//             default:
+//                 break;
+//         }
+//         index++;
+//         cc = source[index];
+//     }
+//     return elements;
+// }
 
 
-const emptyTags: string[] = [
-    "area", "base",   "br",     "col",  "embed",
-    "hr",   "img",    "input",  "link", "meta",
-    "para", "source", "track",  "wbr"
-];
 
-// parse_html(raw_source, emptyTags);
 
-console.log(JSON.stringify(parse_html(raw_source, emptyTags), null, 2));
+// const emptyTags: string[] = [
+//     "area", "base",   "br",     "col",  "embed",
+//     "hr",   "img",    "input",  "link", "meta",
+//     "para", "source", "track",  "wbr"
+// ];
+
+// // parse_html(raw_source, emptyTags);
+
+// console.log(JSON.stringify(parse_html(raw_source, emptyTags), null, 2));
 

@@ -885,6 +885,384 @@ export const wbr = createDOMAdapter<
     Text | HTMLElement, Document, 
     string
 >('wbr', htmlNodeFactory, appendNodeConnector, formatAdapterArgs);
+export const animateColor = createDOMAdapter<
+    SVGElement, Document, 
+    SVGAnimateColorElement, Document,
+    Text | SVGElement, Document, 
+    string
+>('animateColor', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
+export const animate = createDOMAdapter<
+    SVGElement, Document, 
+    SVGAnimateElement, Document, 
+    Text | SVGElement, Document, 
+    string
+>('animate', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
+export const animateMotion = createDOMAdapter<
+    SVGElement, Document, 
+    SVGAnimateMotionElement, Document, 
+    Text | SVGElement, Document, 
+    string
+>('animateMotion', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
+export const animateTransform = createDOMAdapter<
+    SVGElement, Document, 
+    SVGAnimateTransformElement, Document, 
+    Text | SVGElement, Document, 
+    string
+>('animateTransform', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
+export const circle = createDOMAdapter<
+    SVGElement, Document, 
+    SVGCircleElement, Document, 
+    Text | SVGElement, Document, 
+    string
+>('circle', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
+export const clipPath = createDOMAdapter<
+    SVGElement, Document, 
+    SVGClipPathElement, Document, 
+    Text | SVGElement, Document, 
+    string
+>('clipPath', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
+export const defs = createDOMAdapter<
+    SVGElement, Document, 
+    SVGDefsElement, Document, 
+    Text | SVGElement, Document, 
+    string
+>('defs', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
+export const desc = createDOMAdapter<
+    SVGElement, Document, 
+    SVGDescElement, Document, 
+    Text | SVGElement, Document, 
+    string
+>('desc', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
+export const ellipse = createDOMAdapter<
+    SVGElement, Document, 
+    SVGEllipseElement, Document, 
+    Text | SVGElement, Document, 
+    string
+>('ellipse', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
+export const feBlend = createDOMAdapter<
+    SVGElement, Document, 
+    SVGFEBlendElement, Document, 
+    Text | SVGElement, Document, 
+    string
+>('feBlend', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
+export const feColorMatrix = createDOMAdapter<
+    SVGElement, Document, 
+    SVGFEColorMatrixElement, Document, 
+    Text | SVGElement, Document, 
+    string
+>('feColorMatrix', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
+export const feComponentTransfer = createDOMAdapter<
+    SVGElement, Document, 
+    SVGFEComponentTransferElement, Document, 
+    Text | SVGElement, Document, 
+    string
+>('feComponentTransfer', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
+export const feComposite = createDOMAdapter<
+    SVGElement, Document, 
+    SVGFECompositeElement, Document, 
+    Text | SVGElement, Document, 
+    string
+>('feComposite', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
+export const feConvolveMatrix = createDOMAdapter<
+    SVGElement, Document, 
+    SVGFEConvolveMatrixElement, Document, 
+    Text | SVGElement, Document, 
+    string
+>('feConvolveMatrix', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
+export const feDiffuseLighting = createDOMAdapter<
+    SVGElement, Document, 
+    SVGFEDiffuseLightingElement, Document, 
+    Text | SVGElement, Document, 
+    string
+>('feDiffuseLighting', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
+export const feDisplacementMap = createDOMAdapter<
+    SVGElement, Document, 
+    SVGFEDisplacementMapElement, Document, 
+    Text | SVGElement, Document, 
+    string
+>('feDisplacementMap', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
+export const feDistantLight = createDOMAdapter<
+    SVGElement, Document, 
+    SVGFEDistantLightElement, Document, 
+    Text | SVGElement, Document, 
+    string
+>('feDistantLight', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
+export const feDropShadow = createDOMAdapter<
+    SVGElement, Document, 
+    SVGFEDropShadowElement, Document, 
+    Text | SVGElement, Document, 
+    string
+>('feDropShadow', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
+export const feFlood = createDOMAdapter<
+    SVGElement, Document, 
+    SVGFEFloodElement, Document, 
+    Text | SVGElement, Document, 
+    string
+>('feFlood', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
+export const feFuncA = createDOMAdapter<
+    SVGElement, Document, 
+    SVGFEFuncAElement, Document, 
+    Text | SVGElement, Document, 
+    string
+>('feFuncA', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
+export const feFuncB = createDOMAdapter<
+    SVGElement, Document, 
+    SVGFEFuncBElement, Document, 
+    Text | SVGElement, Document, 
+    string
+>('feFuncB', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
+export const feFuncG = createDOMAdapter<
+    SVGElement, Document, 
+    SVGFEFuncGElement, Document, 
+    Text | SVGElement, Document, 
+    string
+>('feFuncG', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
+export const feFuncR = createDOMAdapter<
+    SVGElement, Document, 
+    SVGFEFuncRElement, Document, 
+    Text | SVGElement, Document, 
+    string
+>('feFuncR', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
+export const feGaussianBlur = createDOMAdapter<
+    SVGElement, Document, 
+    SVGFEGaussianBlurElement, Document, 
+    Text | SVGElement, Document, 
+    string
+>('feGaussianBlur', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
+export const feImage = createDOMAdapter<
+    SVGElement, Document, 
+    SVGFEImageElement, Document, 
+    Text | SVGElement, Document, 
+    string
+>('feImage', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
+export const feMerge = createDOMAdapter<
+    SVGElement, Document, 
+    SVGFEMergeElement, Document, 
+    Text | SVGElement, Document, 
+    string
+>('feMerge', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
+export const feMergeNode = createDOMAdapter<
+    SVGElement, Document, 
+    SVGFEMergeNodeElement, Document, 
+    Text | SVGElement, Document, 
+    string
+>('feMergeNode', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
+export const feMorphology = createDOMAdapter<
+    SVGElement, Document, 
+    SVGFEMorphologyElement, Document, 
+    Text | SVGElement, Document, 
+    string
+>('feMorphology', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
+export const feOffset = createDOMAdapter<
+    SVGElement, Document, 
+    SVGFEOffsetElement, Document, 
+    Text | SVGElement, Document, 
+    string
+>('feOffset', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
+export const fePointLight = createDOMAdapter<
+    SVGElement, Document, 
+    SVGFEPointLightElement, Document, 
+    Text | SVGElement, Document, 
+    string
+>('fePointLight', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
+export const feSpecularLighting = createDOMAdapter<
+    SVGElement, Document, 
+    SVGFESpecularLightingElement, Document, 
+    Text | SVGElement, Document, 
+    string
+>('feSpecularLighting', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
+export const feSpotLight = createDOMAdapter<
+    SVGElement, Document, 
+    SVGFESpotLightElement, Document, 
+    Text | SVGElement, Document, 
+    string
+>('feSpotLight', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
+export const feTile = createDOMAdapter<
+    SVGElement, Document, 
+    SVGFETileElement, Document, 
+    Text | SVGElement, Document, 
+    string
+>('feTile', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
+export const feTurbulence = createDOMAdapter<
+    SVGElement, Document, 
+    SVGFETurbulenceElement, Document, 
+    Text | SVGElement, Document, 
+    string
+>('feTurbulence', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
+export const filter = createDOMAdapter<
+    SVGElement, Document, 
+    SVGFilterElement, Document, 
+    Text | SVGElement, Document, 
+    string
+>('filter', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
+export const g = createDOMAdapter<
+    SVGElement, Document, 
+    SVGGElement, Document, 
+    Text | SVGElement, Document, 
+    string
+>('g', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
+export const image = createDOMAdapter<
+    SVGElement, Document, 
+    SVGImageElement, Document, 
+    Text | SVGElement, Document, 
+    string
+>('image', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
+export const line = createDOMAdapter<
+    SVGElement, Document, 
+    SVGLineElement, Document, 
+    Text | SVGElement, Document, 
+    string
+>('line', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
+export const linearGradient = createDOMAdapter<
+    SVGElement, Document, 
+    SVGLinearGradientElement, Document, 
+    Text | SVGElement, Document, 
+    string
+>('linearGradient', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
+export const marker = createDOMAdapter<
+    SVGElement, Document, 
+    SVGMarkerElement, Document, 
+    Text | SVGElement, Document, 
+    string
+>('marker', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
+export const mask = createDOMAdapter<
+    SVGElement, Document, 
+    SVGMaskElement, Document, 
+    Text | SVGElement, Document, 
+    string
+>('mask', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
+export const metadata = createDOMAdapter<
+    SVGElement, Document, 
+    SVGMetadataElement, Document, 
+    Text | SVGElement, Document, 
+    string
+>('metadata', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
+export const mpath = createDOMAdapter<
+    SVGElement, Document, 
+    SVGMPathElement, Document, 
+    Text | SVGElement, Document, 
+    string
+>('mpath', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
+export const path = createDOMAdapter<
+    SVGElement, Document, 
+    SVGPathElement, Document, 
+    Text | SVGElement, Document, 
+    string
+>('path', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
+export const polygon = createDOMAdapter<
+    SVGElement, Document, 
+    SVGPolygonElement, Document, 
+    Text | SVGElement, Document, 
+    string
+>('polygon', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
+export const polyline = createDOMAdapter<
+    SVGElement, Document, 
+    SVGPolylineElement, Document, 
+    Text | SVGElement, Document, 
+    string
+>('polyline', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
+export const radialGradient = createDOMAdapter<
+    SVGElement, Document, 
+    SVGRadialGradientElement, Document, 
+    Text | SVGElement, Document, 
+    string
+>('radialGradient', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
+export const rect = createDOMAdapter<
+    SVGElement, Document, 
+    SVGRectElement, Document, 
+    Text | SVGElement, Document, 
+    string
+>('rect', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
+export const stop = createDOMAdapter<
+    SVGElement, Document, 
+    SVGStopElement, Document, 
+    Text | SVGElement, Document, 
+    string
+>('stop', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
+export const svg = createDOMAdapter<
+    SVGElement, Document, 
+    SVGSVGElement, Document, 
+    Text | SVGElement, Document, 
+    string
+>('svg', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
+export const set = createDOMAdapter<
+    SVGElement, Document, 
+    SVGSetElement, Document, 
+    Text | SVGElement, Document, 
+    string
+>('set', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
+export const svgA = createDOMAdapter<
+    SVGElement, Document, 
+    SVGAElement, Document, 
+    Text | SVGElement, Document, 
+    string
+>('a', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
+export const svgPattern = createDOMAdapter<
+    SVGElement, Document, 
+    SVGPatternElement, Document, 
+    Text | SVGElement, Document, 
+    string
+>('svgPattern', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
+export const svgScript = createDOMAdapter<
+    SVGElement, Document, 
+    SVGScriptElement, Document, 
+    Text | SVGElement, Document, 
+    string
+>('svgScript', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
+export const svgStyle = createDOMAdapter<
+    SVGElement, Document, 
+    SVGStyleElement, Document, 
+    Text | SVGElement, Document, 
+    string
+>('svgStyle', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
+export const svgSwitch = createDOMAdapter<
+    SVGElement, Document, 
+    SVGSwitchElement, Document, 
+    Text | SVGElement, Document, 
+    string
+>('svgSwitch', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
+export const svgSymbol = createDOMAdapter<
+    SVGElement, Document, 
+    SVGSymbolElement, Document, 
+    Text | SVGElement, Document, 
+    string
+>('svgSymbol', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
+export const svgText = createDOMAdapter<
+    SVGElement, Document, 
+    SVGTextElement, Document, 
+    Text | SVGElement, Document, 
+    string
+>('svgText', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
+export const svgTitle = createDOMAdapter<
+    SVGElement, Document, 
+    SVGTitleElement, Document, 
+    Text | SVGElement, Document, 
+    string
+>('svgTitle', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
+export const textPath = createDOMAdapter<
+    SVGElement, Document, 
+    SVGTextPathElement, Document, 
+    Text | SVGElement, Document, 
+    string
+>('textPath', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
+export const tspan = createDOMAdapter<
+    SVGElement, Document, 
+    SVGTSpanElement, Document, 
+    Text | SVGElement, Document, 
+    string
+>('tspan', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
+export const use = createDOMAdapter<
+    SVGElement, Document, 
+    SVGUseElement, Document, 
+    Text | SVGElement, Document, 
+    string
+>('use', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
+export const view = createDOMAdapter<
+    SVGElement, Document, 
+    SVGViewElement, Document, 
+    Text | SVGElement, Document, 
+    string
+>('view', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
 export const id = <T extends Element, U extends Document>(value: PropertyValueType): NodeTask<T,U> => setAttr('id', value);
 export const accesskey = <T extends Element, U extends Document>(value: PropertyValueType): NodeTask<T,U> => setAttr('accesskey', value);
 export const autocapitalize = <T extends Element, U extends Document>(value: PropertyValueType): NodeTask<T,U> => setAttr('autocapitalize', value);

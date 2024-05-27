@@ -1,17 +1,46 @@
+import { getEntryNameProvider, EntryNameProvider, buildEntryMap, formatBaseEntries, formatHtmlEntries, formatSvgEntries, formatMathmlEntries } from "./format.ts";
 
-const keywords = await Deno.readTextFile("../resources/keywords.json")
+const keys: Set<string> = new Set([]);
 const coreLib = await Deno.readTextFile("../resources/lib.ts");
-const baseEntryData = await Deno.readTextFile("../resources/baseEntries.json");
-const htmlEntryData = await Deno.readTextFile("../resources/htmlEntries.json");
-const svgEntryData = await Deno.readTextFile("../resources/svgEntries.json");
-const mathmlEntryData = await Deno.readTextFile("../resources/mathmlEntries.json");
+const keywords = await Deno.readTextFile("../resources/keywords.json")
+                            .then((content: string) => JSON.parse(content), (err: any) => []);
+const baseEntryData = await Deno.readTextFile("../resources/baseEntries.json")
+                                .then((content: string) => JSON.parse(content), (err: any) => []);
+const htmlEntryData = await Deno.readTextFile("../resources/htmlEntries.json")
+                                .then((content: string) => JSON.parse(content), (err: any) => []);
+const svgEntryData = await Deno.readTextFile("../resources/svgEntries.json")
+                                .then((content: string) => JSON.parse(content), (err: any) => []);
+const mathmlEntryData = await Deno.readTextFile("../resources/mathmlEntries.json")
+                                .then((content: string) => JSON.parse(content), (err: any) => []);
 
-const generated_source = await Deno.readTextFile("./tmp/libData.ts")
-                        .then(content => content.replace(/"";\/\/corelib/g, `\`${coreLib}\`;`)
-                                                .replace(/\{\};\/\/base/g, `${baseEntryData};`)
-                                                .replace(/\{\};\/\/html/g, `${htmlEntryData};`)
-                                                .replace(/\{\};\/\/svg/g, `${svgEntryData};`)
-                                                .replace(/\{\};\/\/mathml/g, `${mathmlEntryData};`)
-                                                .replace(/\[\];\/\/keywords/g, `${keywords};`));
-await Deno.writeTextFile("./tmp/libData.ts", generated_source);
+
+const nameProvider : EntryNameProvider = getEntryNameProvider(keys, keywords);
+const entryMap = buildEntryMap(
+    nameProvider, coreLib,
+    formatBaseEntries(baseEntryData, nameProvider),
+    formatHtmlEntries(htmlEntryData, nameProvider),
+    formatSvgEntries(svgEntryData, nameProvider),
+    formatMathmlEntries(mathmlEntryData, nameProvider)
+);
+
+const generator_source = await Deno.readTextFile("./tmp/generator.ts").then(
+    (content: string) => content.replace(/\{\}\sas\sEntryMap;/g, `${JSON.stringify(entryMap, null, 2)}`)
+);
+
+const isEmptyTag = (type: string, childs: string) => 
+    ["html","svg","mathml"].indexOf(type.toLowerCase().trim()) >= 0 && childs === "undefined";
+
+const html_source = await Deno.readTextFile("./tmp/html.ts").then(
+    (content: string) => content.replace(
+        /\["empty_tags"\]/g, 
+        JSON.stringify(Object.values(entryMap.adapter)
+            .filter(value => isEmptyTag(value.type, value.childs))
+            .map(value => value.key)
+        )
+    )
+);
+
+await Deno.writeTextFile("./tmp/generator.ts", generator_source);
+await Deno.writeTextFile("./tmp/html.ts", html_source);
 console.log("reference build source generated !");
+
