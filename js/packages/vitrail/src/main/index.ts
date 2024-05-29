@@ -16,7 +16,7 @@ enum BuildCommandType {
     help = "help",
     version = "version",
     render = "render",
-    optimize = "optimize"
+    prune = "prune"
 }
 type BuildParameterType = {
     html: string[],
@@ -33,7 +33,7 @@ type Flags = {
     _: (string | number)[],
     file?: string,
     html?: string,
-    match?: string,
+    prune?: string,
     help: boolean
     version: boolean
 }
@@ -52,7 +52,7 @@ const getArgValues = (arg?: string): string[] => {
     return [arg];
 }
 
-const getOutputFileName = (name?: string): string => {
+const getOutputFileName = (name: string | undefined | null | number): string => {
     if(!name) return "serenia.ts";
     if(typeof name === 'string') return name;
     return name+"";
@@ -64,20 +64,20 @@ const getCommand = (args: Flags): BuildCommand => {
     if(args.help) return { type: BuildCommandType.help };
     if(args.version) return { type: BuildCommandType.version };
     if(args.file != null || args.html != null) {
-        const output = (args.file != null) ? getOutputFileName(args._[0]+"") : args._[0]+"";
+        const output = (args.file != null) ? getOutputFileName(args._[0]) : args._[0]+"";
         return { 
-            type: BuildCommandType.optimize, 
+            type: BuildCommandType.prune, 
             output: output, 
             options: {
                 html: getArgValues(args.html),
                 files: getArgValues(args.file),
-                filters: (args.file != null && output != null && args.match == null ) ? [output] : getArgValues(args.match)
+                filters: (args.file != null && output != null && args.prune == null ) ? [output] : getArgValues(args.prune)
             } 
         };
     }
     return { 
         type: BuildCommandType.render, 
-        output: getOuputWithExtension(getOutputFileName(args._[0]+"")) 
+        output: getOuputWithExtension(getOutputFileName(args._[0])) 
     };
 }
 
@@ -93,7 +93,7 @@ const handleCommand = async (command: BuildCommand) => {
         case BuildCommandType.render:
             await Deno.writeTextFile(command.output+"", generateSource());
             break;
-        case BuildCommandType.optimize:
+        case BuildCommandType.prune:
             if(command.options != null){
                 await Deno.writeTextFile(
                     getOuputWithExtension(getOutputFileName(command.output)), 
@@ -121,11 +121,11 @@ const handleCommand = async (command: BuildCommand) => {
 
 const flags : Flags = parse(Deno.args, {
     boolean: ["help", "version","verbose", "quiet"],
-    string: [ "file", "html", "match"],
+    string: [ "file", "html", "prune"],
     alias: {  
         "file": "f",
         "html": "H",
-        "match": "m",
+        "prune": "p",
         "help": "h", 
         "version": "V",
         "quiet": "q", 

@@ -1,4 +1,4 @@
-export type AdapterType = "html" | "svg" | "mathml" | "text";
+export type AdapterType = "html" | "svg" | "mathml" | "text" | "contextual";
 export type QueryGetterType = "getAttr" | "getProp";
 
 export type AdapterEntry = {
@@ -62,41 +62,38 @@ const sourceGenerators = {
 
     //adapters template
     adapter: (entry: AdapterEntry): [string, string[]] => {
-        const connectorName = (entry.childs === "undefined" ? 'no' : 'append')+'NodeConnector';
-        const nodeFactoryName = entry.type+'NodeFactory';
-
+        const connectorName = (entry.childs === "undefined" ? 'no' : 'append')+'Connector';
+        const childs = entry.childs === "undefined" ? entry.childs : `DOMTaskData<${entry.childs}>`;
         return [
-            `export const ${entry.name} = createDOMAdapter<
-    ${entry.parent}, Document, 
-    ${entry.target}, Document, 
-    ${entry.childs}, Document, 
-    string
->('${entry.key}', ${nodeFactoryName}, ${connectorName}, formatAdapterArgs);`, 
-            ['createDOMAdapter', nodeFactoryName, connectorName, 'formatAdapterArgs']
+            `export const ${entry.name} = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<${entry.target}>, 
+    ${childs}, string
+>(nodeFactory<${entry.target}>("${entry.key}", ${entry.type}Scope), ${connectorName}, deriveDOMTaskArg, defaultConvert);`, 
+            ['createTreeNodeAdapter', "nodeFactory", connectorName, 'deriveDOMTaskArg', 'defaultConvert']
         ];
     },
 
     //attribute template
     attribute: (entry: AttributeEntry): [string, string[]] => {
         return [
-            `export const ${entry.name} = <T extends ${entry.target}, U extends Document>(value: PropertyValueType): NodeTask<T,U> => setAttr('${entry.key}', value);`,
-            ['PropertyValueType','NodeTask','setAttr']
+            `export const ${entry.name} = <T extends ${entry.target}>(value: DOMPropertyValue): Task<DOMTaskData<T>> => attr('${entry.key}', value);`,
+            ['DOMPropertyValue','Task','DOMTaskData','attr']
         ];
     },
 
     //property template
     property: (entry: PropertyEntry): [string, string[]] => {
         return [
-            `export const ${entry.name} = <T extends ${entry.target}, U extends Document>(value: PropertyValueType): NodeTask<T,U> => setProp('${entry.key}', value);`,
-            ['PropertyValueType','NodeTask','setProp']
+            `export const ${entry.name} = <T extends ${entry.target}>(value: DOMPropertyValue): Task<DOMTaskData<T>> => prop('${entry.key}', value);`,
+            ['DOMPropertyValue','Task','DOMTaskData','prop']
         ];
     },
 
     //query template
     query: (entry: QueryEntry): [string, string[]] => {
         return [
-            `export const ${entry.name} = <T extends ${entry.target}, U extends Document>(key?: string): Filter<[T,U],[string, unknown][]> => ${entry.getter}('${entry.key}', key);`, 
-            ['Filter', entry.getter]
+            `export const ${entry.name} = <T extends ${entry.target}>(alias?: string): Filter<DOMTaskData<T>,[string, unknown][]> => ${entry.getter}<T>('${entry.key}', alias);`, 
+            ['Filter','DOMTaskData', entry.getter]
         ];
     },
 
@@ -105,24 +102,22 @@ const sourceGenerators = {
         const params = entry.arguments.map(arg => arg.name+(arg.optional ? '?' : '')+': '+arg.type).join(', ');
         const inputs = entry.arguments.map(arg => arg.name).join(', ');
         return [
-            `export const ${entry.name} = <T extends ${entry.target}, U extends Document>(${params}): NodeTask<T,U> => [
-    (entry: [T,U]) => {
-        entry[0].${entry.callPath}(${inputs});
-        return entry;
-    }
-];`,
-            ['NodeTask']
+            `export const ${entry.name} = <T extends ${entry.target}>(${params}): Task<DOMTaskData<T>> => (data: DOMTaskData<T>): DOMTaskData<T> => {
+    data.element.${entry.callPath}(${inputs});
+    return data;
+};`,
+            ['Task','DOMTaskData']
         ];
     },
 
     //event template
     event: (entry: EventEntry): [string, string[]] => {
         return [
-            `export const ${entry.name} = <T extends ${entry.target}, U extends Document>(
+            `export const ${entry.name} = <T extends ${entry.target}>(
     listener: EventListenerOrEventListenerObject, 
     options?: boolean | AddEventListenerOptions
-): NodeTask<T,U> => subscribe('${entry.key}', listener, options);`,
-            ['NodeTask','subscribe']
+): Task<DOMTaskData<T>> => subscribe('${entry.key}', listener, options);`,
+            ['Task','DOMTaskData','subscribe']
         ];
     }
 

@@ -13,7 +13,6 @@ const svgEntryData = await Deno.readTextFile("../resources/svgEntries.json")
 const mathmlEntryData = await Deno.readTextFile("../resources/mathmlEntries.json")
                                 .then((content: string) => JSON.parse(content), (err: any) => []);
 
-
 const nameProvider : EntryNameProvider = getEntryNameProvider(keys, keywords);
 const entryMap = buildEntryMap(
     nameProvider, coreLib,
@@ -27,20 +26,24 @@ const generator_source = await Deno.readTextFile("./tmp/generator.ts").then(
     (content: string) => content.replace(/\{\}\sas\sEntryMap;/g, `${JSON.stringify(entryMap, null, 2)}`)
 );
 
-const isEmptyTag = (type: string, childs: string) => 
-    ["html","svg","mathml"].indexOf(type.toLowerCase().trim()) >= 0 && childs === "undefined";
-
-const html_source = await Deno.readTextFile("./tmp/html.ts").then(
-    (content: string) => content.replace(
-        /\["empty_tags"\]/g, 
-        JSON.stringify(Object.values(entryMap.adapter)
-            .filter(value => isEmptyTag(value.type, value.childs))
-            .map(value => value.key)
-        )
-    )
-);
-
 await Deno.writeTextFile("./tmp/generator.ts", generator_source);
-await Deno.writeTextFile("./tmp/html.ts", html_source);
 console.log("reference build source generated !");
+
+
+// const isEmptyTag = (type: string, childs: string) => 
+//     ["html","svg","mathml"].indexOf(type.toLowerCase().trim()) >= 0 && childs === "undefined";
+
+// const emptyTags = Object.values(entryMap.adapter)
+//                     .filter(value => isEmptyTag(value.type, value.childs))
+//                     .map(value => value.key);
+// const allKeys: string[] = []; 
+
+
+
+// const html_source = await Deno.readTextFile("./tmp/html.ts").then(
+//     (content: string) => content.replace(/\["empty_tags"\]/g, JSON.stringify(emptyTags))
+//                                 .replace(/\["regular_keys"\]/g, JSON.stringify(allKeys))
+// );
+
+// await Deno.writeTextFile("./tmp/html.ts", html_source);
 

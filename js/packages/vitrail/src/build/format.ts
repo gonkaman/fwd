@@ -40,8 +40,8 @@ const formatAdapters = (data: Record<string,any> | null | undefined, defaultData
             {
                 name: name, 
                 key: entry[1], 
-                target: defaultData.target, 
                 type: defaultData.type, 
+                target: Array.isArray(defaultData.target) ? defaultData.target.join(" | ") : defaultData.target, 
                 parent: Array.isArray(defaultData.parent) ? defaultData.parent.join(" | ") : defaultData.parent,
                 childs: Array.isArray(defaultData.childs) ? defaultData.childs.join(" | ") : defaultData.childs
             }
@@ -49,8 +49,9 @@ const formatAdapters = (data: Record<string,any> | null | undefined, defaultData
 
         entry[1]["name"] = name;
         if(entry[1]["key"] == null) entry[1]["key"] = entry[0];
-        if(entry[1]["target"] == null) entry[1]["target"] = defaultData.target;
         if(entry[1]["type"] == null) entry[1]["type"] = defaultData.type;
+        if(entry[1]["target"] == null) entry[1]["target"] = defaultData.target;
+        if(Array.isArray(entry[1]["target"])) entry[1]["target"] = entry[1]["target"].join(" | ");
         if(entry[1]["parent"] == null) entry[1]["parent"] = defaultData.parent;
         if(Array.isArray(entry[1]["parent"])) entry[1]["parent"] = entry[1]["parent"].join(" | ");
         if(entry[1]["childs"] == null) entry[1]["childs"] = defaultData.childs;
@@ -163,6 +164,7 @@ export const formatBaseEntries = (data: Record<string, any>, getName: EntryNameP
         provided: {}
     };
 }
+
 
 export const formatHtmlEntries = (data: Record<string, any>, getName: EntryNameProvider): EntryMap => {
     const baseAdapterDefaults : AdapterDefaultData = { target: "HTMLElement", type: "html", parent: "HTMLElement", childs: ["Text", "HTMLElement"], preffix: "html"};

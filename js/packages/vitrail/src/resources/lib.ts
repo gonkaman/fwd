@@ -1,52 +1,17 @@
 //@@ Filter @@//
-export type Filter<U,V> = (arg: U) => V;
+export type Filter<TArg,TResult> = (arg: TArg) => TResult;
 
 //@@ Task > Filter @@//
-export type Task<T> = [Filter<T,T>, ...string[]];
+export type Task<T> = Filter<T,T>;
 
-//@@ Connector > Task @@//
-export type Connector<TParent,TArg,TChild> = <T extends TParent, U extends TArg, V extends TChild>(filter: Filter<U,V>) => Task<T>
+//@@ Connector > Filter, Task @@//
+export type Connector<TTarget, TArg, TChild> = <T extends TTarget>(filter: Filter<TArg,TChild>, deriveArg: Filter<TTarget, TArg>) => Task<T>;
 
-//@@ Branch > Task @@//
-export type Branch<TParent,U,V> = <T extends TParent>(connect: ((filter: Filter<U,V>) => Task<T>)) => Task<T>; 
+//@@ Branch > Filter, Task, Connector @@//
+export type Branch<TArg, TTarget> = <TParent>(connector: Connector<TParent, TArg, TTarget>, deriveArg: Filter<TParent, TArg>) => Task<TParent>;
 
 //@@ Adapter > Task, Branch @@//
-export type Adapter<TParent, U, T, TConvert> = <K extends TConvert>(...args: (Task<T> | K)[]) => Branch<TParent,U,T>;
-
-//@@ NodeTask > Task @@//
-export type NodeTask<T,U> = Task<[T,U]>;
-
-//@@ NodeFactory @@//
-export type NodeFactory<PDoc,TNode,TDoc> = <TArg extends PDoc, T extends TNode, U extends TDoc>(doc: TArg, tag: string) => [T,U];
-
-//@@ NodeConnector > Connector @@//
-export type NodeConnector<T,TDoc,V,VDoc> = Connector<[T,TDoc],TDoc,[V,VDoc]>; 
-
-//@@ NodeBranch > Branch @@//
-export type NodeBranch<TNode,TDoc,TChild,VDoc> = Branch<[TNode,TDoc],TDoc,[TChild,VDoc]>; 
-
-//@@ NodeAdapterArg > NodeTask, NodeBranch @@//
-export type NodeAdapterArg<T,TDoc,V,VDoc,TConvert> = (NodeTask<T,TDoc> | TConvert | NodeBranch<T,TDoc,V,VDoc>)[];
-
-//@@ NodeAdapterArgsFormater > NodeConnector, NodeAdapterArg, NodeTask @@//
-export type NodeAdapterArgsFormater<TNode,TDoc,TChild, VDoc, TConvert> = 
-    <T extends TNode, V extends TChild>(connector: NodeConnector<T,TDoc,V,VDoc>) => (args: NodeAdapterArg<T,TDoc,V,VDoc,TConvert>) => NodeTask<T,TDoc>[];
-
-//@@ NodeAdapter > Adapter, NodeBranch @@//
-export type NodeAdapter<P,PDoc,T,TDoc,V,VDoc,TConvert> = Adapter<[P,PDoc],PDoc,[T,TDoc],TConvert | NodeBranch<T,TDoc,V,VDoc>>; 
-
-//@@ createDOMAdapter > NodeFactory, NodeConnector, NodeAdapterArgsFormater, NodeAdapter, NodeAdapterArg, NodeBranch @@//
-const createDOMAdapter = <P,PDoc,T,TDoc,V,VDoc,TConvert>(
-    tagName: string,
-    factory: NodeFactory<PDoc,T,TDoc>, 
-    connector: NodeConnector<T,TDoc,V,VDoc>,
-    format: NodeAdapterArgsFormater<T,TDoc,V,VDoc,TConvert>
-): NodeAdapter<P,PDoc,T,TDoc,V,VDoc,TConvert> => 
-    (...args: NodeAdapterArg<T,TDoc,V,VDoc,TConvert>): NodeBranch<P,PDoc,T,TDoc> => {
-        const tasks = format(connector)(args).map(entry => entry[0]);
-        const build: Filter<PDoc,[T,TDoc]> = (doc: PDoc) => tasks.reduce((node, task) => task(node), factory(doc, tagName));
-        return <TParent extends [P,PDoc]>(connect: ((filter: Filter<PDoc,[T,TDoc]>) => Task<TParent>)):Task<TParent> => connect(build);
-    }
+export type Adapter<TArg, TTarget, TCompat> = (...args: (Task<TTarget> | TCompat)[]) => Branch<TArg, TTarget>;
 
 //@@ Lookup > Filter @@//
 export type Lookup<T> = Filter<void,T|null|undefined>;
@@ -55,284 +20,426 @@ export type Lookup<T> = Filter<void,T|null|undefined>;
 export type Curator<T> = (lookup: Lookup<T>) => void; 
 
 //@@ Store > Curator, Lookup @@//
-export type Store<T> = [Curator<T>, Lookup<T>];
+export type Delegate<T> = [Curator<T>, Lookup<T>];
 
-//@@ Query > Store @@//
-export type Query = Store<[string, unknown][]>;
+//@@ createTreeNodeAdapter > Filter, Connector, Branch, Adapter @@//
+export const createTreeNodeAdapter = <TArg, TTarget, TChild, K>(
+    factory: Filter<TArg, TTarget>,
+    connect: Connector<TTarget, TArg, TChild>,
+    deriveArg: Filter<TTarget, TArg>,
+    convert: Filter<K, Task<TTarget>>
+): Adapter<TArg, TTarget, K | Branch<TArg, TChild>> => 
+    (...args: (Task<TTarget> | K | Branch<TArg, TChild>)[]): Branch<TArg, TTarget> => 
+        <T>(tConnect: Connector<T, TArg, TTarget>, tDerive: Filter<T, TArg>): Task<T> => 
+            tConnect(
+                args.reduce((filter, arg) => typeof arg === "function" ?
+                    (arg.length == 1 ? 
+                        (ctx: TArg) => (arg as Task<TTarget>)(filter(ctx)) :
+                        (ctx: TArg) => (arg as Branch<TArg, TChild>)<TTarget>(connect, deriveArg)(filter(ctx))) :
+                    (ctx: TArg) => convert(arg)(filter(ctx)), factory), 
+                tDerive
+            );
 
+//@@ noConnector > Filter, Task @@//
+export const noConnector = <TArg, T>(_: Filter<TArg, any>): Task<T> => (target: T) => target;
 
-//@@ NodePicker > Lookup @@//
-export type NodePicker<T,U> = Lookup<[T,U]>;
+//@@ DOMTaskContext @@//
+export type DOMTaskContext = { document: Document, scope: string }
 
-//@@ NodeRenderer > NodePicker, NodeTask @@//
-export type NodeRenderer<TNode,TDoc> = <T extends TNode, U extends TDoc>(lookup: NodePicker<T,U>, ...tasks: NodeTask<T,U>[]) => NodePicker<T,U>;
+//@@ DOMTaskData @@//
+export type DOMTaskData<T> = { element: T, document: Document, scope: string }
 
-//@@ textNodeFactory > NodeFactory @@//
-const textNodeFactory: NodeFactory<Document | XMLDocument, Text, Document> = <T extends Text, U extends Document>(doc: Document, _: string) => 
-    [doc.createTextNode('') as T, doc as U];
+//@@ DOMTaskArg > DOMTaskContext @@//
+export type DOMTaskArg = DOMTaskContext | null | undefined;
 
-//@@ htmlNodeFactory > NodeFactory @@//
-const htmlNodeFactory: NodeFactory<Document, HTMLElement, Document> = <T extends HTMLElement, U extends Document>(doc: Document, tagName: string) => 
-    [doc.createElement(tagName) as T, doc as U];
+//@@ DOMTaskCompatible @@//
+export type DOMTaskCompatible = string | number; // | Date | string[] | number[] | Element;
 
-//@@ svgNodeFactory > NodeFactory @@//
-const svgNodeFactory: NodeFactory<Document, SVGElement, XMLDocument> = <T extends SVGElement, U extends XMLDocument>(doc: XMLDocument, tagName: string) => 
-    [doc.createElementNS("http://www.w3.org/2000/svg", tagName) as T, doc as U];
+//@@ htmlScope @@//
+const htmlScope = "http://www.w3.org/1999/xhtml";
 
-//@@ mathmlNodeFactory > NodeFactory @@//
-const mathmlNodeFactory: NodeFactory<Document, MathMLElement, XMLDocument> = <T extends MathMLElement, U extends XMLDocument>(doc: XMLDocument, tagName: string) => 
-    [doc.createElementNS("http://www.w3.org/1998/Math/MathML", tagName) as T, doc as U];
+//@@ svgScope @@//
+const svgScope = "http://www.w3.org/2000/svg";
 
+//@@ mathmlScope @@//
+const mathmlScope = "http://www.w3.org/1998/Math/MathML";
 
-//@@ appendNodeConnector > NodeConnector  @@//
-const appendNodeConnector: NodeConnector<Node, Document, Node, Document> = 
-    <T extends [Node, Document], TArg extends Document, V extends [Node,Document]>(filter: Filter<TArg,V>): Task<T> => [
-        (entry: T) => {
-            entry[0].appendChild(filter(entry[1] as TArg)[0]);
-            return entry;
+//@@ textScope @@//
+const textScope = "text";
+
+//@@ contextualScope @@//
+const contextualScope = "ctx";
+
+//@@ defaultNodeFactory > Filter, DOMTaskArg, DOMTaskData, htmlScope @@//
+const defaultNodeFactory = <T>(tagName: string): Filter<DOMTaskArg, DOMTaskData<T>> => (arg: DOMTaskArg): DOMTaskData<T> => {
+    if(arg == null) arg = { document: document, scope: htmlScope };
+    (arg as DOMTaskData<T>).element = arg.document.createElement(tagName) as T;
+    return arg as DOMTaskData<T>;
+}
+
+//@@ nodeFactory > Filter, DOMTaskArg, DOMTaskData, defaultNodeFactory, htmlScope, svgScope, mathmlScope, textScope, contextualScope @@//
+export const nodeFactory = <T>(tagName: string, scope?: string): Filter<DOMTaskArg, DOMTaskData<T>> => {
+    if(scope == null) return defaultNodeFactory(tagName);
+    switch(scope){
+        case htmlScope: return defaultNodeFactory(tagName);
+        case svgScope: return (arg: DOMTaskArg): DOMTaskData<T> => {
+            if(arg == null) arg = { document: document, scope: svgScope };
+            (arg as DOMTaskData<T>).element = arg.document.createElementNS(svgScope, tagName) as T;
+            return arg as DOMTaskData<T>;
+        };
+        case mathmlScope: return (arg: DOMTaskArg): DOMTaskData<T> => {
+            if(arg == null) arg = { document: document, scope: mathmlScope };
+            (arg as DOMTaskData<T>).element = arg.document.createElementNS(mathmlScope, tagName) as T;
+            return arg as DOMTaskData<T>;
+        };
+        case textScope: return (arg: DOMTaskArg): DOMTaskData<T> => {
+            if(arg == null) arg = { document: document, scope: textScope };
+            (arg as DOMTaskData<T>).element = arg.document.createTextNode(tagName) as T;
+            return arg as DOMTaskData<T>;
+        };
+        case contextualScope: return (arg: DOMTaskArg): DOMTaskData<T> => {
+            if(arg == null) arg = { document: document, scope: htmlScope };
+            return nodeFactory<T>(tagName, arg.scope)(arg);
+        };
+        default: return defaultNodeFactory(tagName);
+    }
+}
+
+//@@ deriveDOMTaskArg > DOMTaskData, DOMTaskArg @@//
+export const deriveDOMTaskArg = <T>(data: DOMTaskData<T>): DOMTaskArg => data;
+
+//@@ defaultConvert > Task, DOMTaskData, DOMTaskCompatible, textScope @@//
+export const defaultConvert = <T extends Node>(arg: DOMTaskCompatible): Task<DOMTaskData<T>> => 
+    (data: DOMTaskData<T>): DOMTaskData<T> => {
+        if(data.scope === textScope){
+            data.element.nodeValue = arg+"";
+        }else{
+            data.element.appendChild(data.document.createTextNode(arg+""));
         }
-    ];
+        return data;
+    }
 
-//@@ prependNodeConnector > NodeConnector  @@//
-const prependNodeConnector: NodeConnector<Element, Document, Node, Document> = 
-    <T extends [Element, Document], TArg extends Document, V extends [Node,Document]>(filter: Filter<TArg,V>): Task<T> => [
-        (entry: T) => {
-            entry[0].prepend(filter(entry[1] as TArg)[0]);
-            return entry;
-        }
-    ];
+//@@ appendConnector > Filter, Task, DOMTaskData, DOMTaskArg @@//
+export const appendConnector = <T extends DOMTaskData<Element>>(filter: Filter<DOMTaskArg,DOMTaskData<Node>>): Task<T> =>
+    (data: T): T => {
+        data.element.appendChild(filter(data).element);
+        return data;
+    }
 
-//@@ noNodeConnector > NodeConnector  @@//
-const noNodeConnector: NodeConnector<Node, Document, Node | undefined, Document> = 
-    <T extends [Node, Document], U extends Document, V extends [Node | undefined, Document]>(_: Filter<U,V>): Task<T> => [
-        (entry: T) => entry
-    ];
+//@@ append > Task, Branch, DOMTaskData, DOMTaskArg, appendConnector, deriveDOMTaskArg @@//
+export const append = <T extends Element>(branch: Branch<DOMTaskArg, DOMTaskData<Node>>): Task<DOMTaskData<T>> => 
+    branch<DOMTaskData<T>>(appendConnector, deriveDOMTaskArg);
 
-//@@ formatAdapterArgs > NodeAdapterArgsFormater @@//
-const formatAdapterArgs: NodeAdapterArgsFormater<Node | undefined, Document, Node | undefined, Document, string | undefined> = 
-    <T extends Node | undefined, V extends Node | undefined>(connector: NodeConnector<T,Document,V,Document>) => 
-    (args: NodeAdapterArg<T,Document,V,Document,string | undefined>): NodeTask<T,Document>[] => 
-        (args.filter(arg => arg != null) as NodeAdapterArg<T,Document,V,Document,string>).map(arg => {
-            if(typeof arg === 'function') return arg(connector);
-            if(typeof arg === 'string') return [
-                (entry: [T,Document]) => {
-                    if(entry[0] != null){
-                        try{
-                            entry[0].appendChild(entry[1].createTextNode(arg));
-                        }catch(e){
-                            entry[0].nodeValue = arg; 
-                        }
-                    }
-                    return entry;
-                }
-            ];
-            return arg;
-        });
+//@@ appendTo > Task, Lookup, DOMTaskData, DOMTaskArg @@//
+export const appendTo = <T extends Node>(lookup: Lookup<DOMTaskData<Element>>): Task<DOMTaskData<T>> => 
+    (node: DOMTaskData<T>): DOMTaskData<T> => {
+        lookup()?.element.appendChild(node.element);
+        return node; 
+    }
 
-//@@ getElement > NodePicker @@//
-export const getElement = <T extends Element, U extends Document>(query: string, container: Document | Element): NodePicker<T,U> => () => {
-    const node = container.querySelector(query);
-    return node == null ? null : [node as T, node.ownerDocument as U];
-} 
+//@@ prependConnector > Filter, Task, DOMTaskData, DOMTaskArg @@//
+export const prependConnector = <T extends DOMTaskData<Element>>(filter: Filter<DOMTaskArg,DOMTaskData<Node>>): Task<T> =>
+    (data: T): T => {
+        data.element.prepend(filter(data).element);
+        return data;
+    }
 
-//@@ fromElement > NodePicker @@//
-export const fromElement = <T extends Element, U extends Document>(node: Element): NodePicker<T,U> => () => [node as T,node.ownerDocument as U];
+//@@ prepend > Task, Branch, DOMTaskData, DOMTaskArg, prependConnector, deriveDOMTaskArg @@//
+export const prepend = <T extends Element>(branch: Branch<DOMTaskArg, DOMTaskData<Node>>): Task<DOMTaskData<T>> =>
+    branch<DOMTaskData<T>>(prependConnector, deriveDOMTaskArg);
 
-//@@ render > NodeRenderer @@//
-export const render : NodeRenderer<Element,Document> = <T extends Element, U extends Document>( lookup: NodePicker<T,U>, ...tasks: NodeTask<T,U>[]): NodePicker<T,U> => () => {
+//@@ prependTo > Task, Lookup, DOMTaskData, DOMTaskArg @@//
+export const prependTo = <T extends Node>(lookup: Lookup<DOMTaskData<Element>>): Task<DOMTaskData<T>> =>
+    (node: DOMTaskData<T>): DOMTaskData<T> => {
+        lookup()?.element.prepend(node.element);
+        return node;
+    }
+ 
+//@@ getElement > Lookup, DOMTaskData, htmlScope @@//
+export const getElement = <T extends Element>(query: string, container: Element | Document): Lookup<DOMTaskData<T>> => () => {
+    const elt = container.querySelector(query);
+    return elt == null ? null : { 
+        element: elt as T, 
+        document: elt.ownerDocument, 
+        scope: elt.namespaceURI ?? htmlScope
+    };
+}
+
+//@@ fromElement > Lookup, DOMTaskData, htmlScope @@//
+export const fromElement = <T extends Element>(element: T): Lookup<DOMTaskData<T>> => () => {
+    return {
+        element: element,
+        document: element.ownerDocument,
+        scope: element.namespaceURI ?? htmlScope
+    }
+}
+
+//@@ render > Task, Lookup, DOMTaskData @@//
+export const render = <T extends Element>(lookup: Lookup<DOMTaskData<T>>, ...tasks: Task<DOMTaskData<T>>[]): Lookup<DOMTaskData<T>> => () => {
     const target = lookup();
-    return target == null ? target : tasks.map(task => task[0]).reduce((node, task) => task(node), target);
+    return target == null ? null : tasks.reduce((data, task) => task(data), target);
 }
 
-//@@ createRef > Store @@//
-export const createRef = <T extends Node,U extends Document>(): Store<[T,U]> => {
-    let innerLookup: Lookup<[T,U]> = () => null;
-    return [
-        (lookup: Lookup<[T,U]>) => { innerLookup = lookup; },
-        () => innerLookup()
-    ];
+//@@ renderAll > Task, Lookup, DOMTaskData @@//
+export const renderAll = <T extends Element>(lookup: Lookup<DOMTaskData<T>[]>, ...tasks: Task<DOMTaskData<T>>[]): Lookup<DOMTaskData<T>[]> => () => {
+    const targets = lookup();
+    return targets == null ? null : targets.map(target => tasks.reduce((data, task) => task(data), target));
 }
 
-//@@ createQuery > Query @@//
-export const createQuery = (): Query => {
-    const registeredLookups: Lookup<[string, unknown][]>[] = [];
+//@@ handleNode > Task, DOMTaskData @@//
+export const handleNode = <T extends Node>(task: Task<T>): Task<DOMTaskData<T>> => (data: DOMTaskData<T>) => {
+    data.element = task(data.element);
+    return data;
+}
+
+//@@ createRef > Lookup, Delegate, DOMTaskData @@//
+export const createRef = <T extends Node>(): Delegate<DOMTaskData<T>> => {
+    let getData: Lookup<DOMTaskData<T>> = () => null;
     return [
-        (lookup: Lookup<[string, unknown][]>) => { registeredLookups.push(lookup); },
-        () => registeredLookups.reduce((entries: [string, unknown][], lookup) => entries.concat(lookup() ?? []), [])
+        (lookup: Lookup<DOMTaskData<T>>) => { getData = lookup; },
+        () => getData()
     ]
 }
 
-//@@ store > Curator, NodeTask @@//
-export const store = <T extends Node,U extends Document>(curator: Curator<[T,U]>): NodeTask<T,U> => [
-    (entry: [T,U]) => {
-        curator(() => entry);
-        return entry;
-    }
-]
-
-//@@ query > Curator, NodeTask @@//
-export const query = <T extends Node,U extends Document>(curator: Curator<[string, unknown][]>, ...queries: Filter<[T,U],[string, unknown][]>[]): NodeTask<T,U> => [
-    (entry: [T,U]) => {
-        curator(() => queries.reduce((entries: [string, unknown][], query) => entries.concat(query(entry)), []));
-        return entry;
-    }
-]
-
-//@@ apply > NodeTask @@//
-export const apply = <T extends Node, U extends Document>(action: ((tnode: T, udoc: U) => [T,U])): NodeTask<T,U> => [
-    (entry: [T,U]) => action(...entry)
-]
-
-//@@ elementFactory > htmlNodeFactory, svgNodeFactory, mathmlNodeFactory @@//
-const elementFactory = <T extends Element, U extends Document>(doc: Document, tagName: string | [string,string]) => {
-    if(typeof tagName === 'string') return htmlNodeFactory(doc, tagName) as unknown as [T,U];
-    switch(tagName[1]){
-        case 'svg': return svgNodeFactory(doc, tagName[0]) as unknown as [T,U];
-        case 'mathml': return mathmlNodeFactory(doc, tagName[0]) as unknown as [T,U];
-        default: return htmlNodeFactory(doc, tagName[0]) as unknown as [T,U];
-    }
-} 
-
-//@@ element > NodeAdapterArg, elementFactory, formatAdapterArgs, appendNodeConnector @@//
-export const element = <T extends Element>(
-    tagName: string | [string,string], 
-    ...args: NodeAdapterArg<T,Document,Node,Document,string | undefined>
-): NodeBranch<Element,Document,Element,Document> => {
-    const tasks = formatAdapterArgs<T,Node>(appendNodeConnector)(args).map(entry => entry[0]);
-    const build: Filter<Document,[T,Document]> = (doc: Document) => tasks.reduce((node, task) => task(node), elementFactory<T,Document>(doc, tagName));
-    return <TParent extends [Element,Document]>(connect: ((filter: Filter<Document,[T,Document]>) => Task<TParent>)):Task<TParent> => connect(build);
+//@@ createMultiRef > Curator, Lookup, DOMTaskData @@//
+export const createMultiRef = <T extends Node>(): [Curator<DOMTaskData<T>>, Lookup<DOMTaskData<T>[]>] => {
+    let getters: Lookup<DOMTaskData<T>>[] = [];
+    return [
+        (lookup: Lookup<DOMTaskData<T>>) => { getters.push(lookup); },
+        () => getters.map(getData => getData()).filter(data => data != null) as DOMTaskData<T>[]
+    ]
 }
 
-//@@ append > NodeBranch, appendNodeConnector @@//
-export const append = <T extends Node, U extends Document>(branch: NodeBranch<T,U,Node,Document>): NodeTask<T,U> => branch(appendNodeConnector);
+//@@ createQuery > Lookup, Delegate, DOMTaskData @@//
+export const createQuery = (): Delegate<[string, unknown][]> => {
+    const getters: Lookup<[string, unknown][]>[] = [];
+    return [
+        (lookup: Lookup<[string, unknown][]>) => { getters.push(lookup); },
+        () => getters.reduce((entries: [string, unknown][], getData) => entries.concat(getData() ?? []), [])
+    ]
+}
 
-//@@ prepend > NodeBranch, prependNodeConnector @@//
-export const prepend = <T extends Element, U extends Document>(branch: NodeBranch<T,U,Node,Document>): NodeTask<T,U> => branch(prependNodeConnector);
-
-//@@ appendTo > NodePicker, NodeTask @@//
-export const appendTo = <T extends Node, V extends Node, U extends Document>(lookup: NodePicker<V,U>): NodeTask<T,U> => [
-    (entry: [T,U]) => {
-        lookup()?.[0].appendChild(entry[0]);
-        return entry;
+//@@ ref > Task, Curator, DOMTaskData @@//
+export const ref = <T extends Node>(curator: Curator<DOMTaskData<T>>): Task<DOMTaskData<T>> => 
+    (data: DOMTaskData<T>) => {
+        curator(() => data);
+        return data;
     }
-]
 
-//@@ prependTo > NodePicker, NodeTask @@//
-export const prependTo = <T extends Node, V extends Element, U extends Document>(lookup: NodePicker<V,U>): NodeTask<T,U> => [
-    (entry: [T,U]) => {
-        lookup()?.[0].prepend(entry[0]);
-        return entry;
+//@@ query > Filter, Task, Curator, DOMTaskData @@//
+export const query = <T extends Node>(curator: Curator<[string, unknown][]>, ...queries: Filter<DOMTaskData<T>, [string, unknown][]>[]): Task<DOMTaskData<T>> =>
+    (data: DOMTaskData<T>) => {
+        curator(() => queries.reduce((entries: [string, unknown][], query) => entries.concat(query(data)), []));
+        return data;
     }
-]
 
-//@@ PropertyValueType @@//
-export type PropertyValueType = string | ((previousValue: string | null) => string) | undefined;
+//@@ tag > Filter, Task, Connector, Branch, DOMTaskArg, DOMTaskData, DOMTaskCompatible, nodeFactory, defaultConvert, appendConnector, deriveDOMTaskArg @@//
+export const tag = <T extends Element>(
+    tag: string | [string, string], 
+    ...tasks: (Task<DOMTaskData<T>> | Branch<DOMTaskArg, DOMTaskData<Element>> | DOMTaskCompatible)[]
+): Branch<DOMTaskArg, DOMTaskData<T>> => 
+<TParent>(pConnect: Connector<TParent, DOMTaskArg, DOMTaskData<T>>, pDerive: Filter<TParent, DOMTaskArg>): Task<TParent> => 
+    pConnect( 
+        tasks.reduce(
+            (filter: Filter<DOMTaskArg, DOMTaskData<T>>, task) => typeof task === "function" ?
+                (task.length == 1 ? 
+                    (ctx: DOMTaskArg) => (task as Task<DOMTaskData<T>>)(filter(ctx)) :
+                    (ctx: DOMTaskArg) => (task as Branch<DOMTaskArg, DOMTaskData<Element>>)<DOMTaskData<T>>(
+                        appendConnector, deriveDOMTaskArg
+                    )(filter(ctx))) :
+                (ctx: DOMTaskArg) => defaultConvert<T>(task)(filter(ctx)), 
+            typeof tag === 'string' ? nodeFactory<T>(tag) : nodeFactory<T>(tag[0], tag[1])),
+        pDerive
+    );
 
-//@@ PropertyAdapter > PropertyValueType, NodeTask @@//
-export type PropertyAdapter = <T extends Node, U extends Document>(value: PropertyValueType) => NodeTask<T,U>;
+//@@ DOMPropertyValue @@//
+export type DOMPropertyValue = string | ((previous?: string) => string) | undefined;
 
-//@@ DataPropertyValueType @@//
-export type DataPropertyValueType = string | ((previousValue?: string) => string) | undefined;
+//@@ DOMPropertyTask > DOMPropertyValue, Task, DOMTaskData @@//
+export type DOMPropertyTask = <T extends Node>(value: DOMPropertyValue) => Task<DOMTaskData<T>>;
 
-//@@ CssValueType @@//
-export type CssValueType = string | ((previousValue: string) => string);
-
-//@@ setProp > PropertyValueType, NodeTask @@//
-export const setProp = <T extends Node, U extends Document>(key: string, value: PropertyValueType): NodeTask<T, U> => [
+//@@ prop > Task, DOMTaskData, DOMPropertyValue @@//
+export const prop = <T extends Node>(key: string, value: DOMPropertyValue): Task<DOMTaskData<T>> =>
     value === undefined ?
-        (entry: [T,U]) => { entry[0][key] = null; return entry; } :
-        typeof value === 'function' ?
-            (entry: [T,U]) => { entry[0][key] = value(entry[0][key]); return entry; } :
-            (entry: [T,U]) => { entry[0][key] = value; return entry; }
-];
+        (data: DOMTaskData<T>) => { data.element[key] = null; return data; } :
+        typeof value === "function" ?
+            (data: DOMTaskData<T>) => { data.element[key] = value(data.element[key]); return data; } :
+            (data: DOMTaskData<T>) => { data.element[key] = value; return data; }
 
-//@@ removeProp > PropertyAdapter, NodeTask @@//
-export const removeProp = <T extends Node, U extends Document>(adapter: PropertyAdapter): NodeTask<T,U> => adapter(undefined);
+//@@ getProp > Filter, DOMTaskData @@//
+export const getProp = <T extends Node>(key: string, alias?: string): Filter<DOMTaskData<T>,[string, unknown][]> =>
+    (data: DOMTaskData<T>) => [[alias || key, data.element[key]]];
 
-//@@ getProp > Filter @@//
-export const getProp = <T extends Node, U extends Document>(name: string, key?: string): Filter<[T,U],[string, unknown][]> =>
-    (entry: [T,U]) => ([[key || name, entry[0][name]]] as [string, unknown][]);
+//@@ removeProp > Task, DOMTaskData @@//
+export const removeProp = <T extends Node>(key: string): Task<DOMTaskData<T>> => prop<T>(key, undefined);
 
 
-//@@ setAttr > PropertyValueType, NodeTask @@//
-export const setAttr = <T extends Element, U extends Document>(key: string, value: PropertyValueType): NodeTask<T, U> => [
+//@@ attr > Task, DOMTaskData, DOMPropertyValue @@//
+export const attr = <T extends Element>(key: string, value: DOMPropertyValue): Task<DOMTaskData<T>> =>
     value === undefined ?
-        (entry: [T,U]) => { entry[0].removeAttribute(key); return entry; } :
-        typeof value === 'function' ?
-            (entry: [T,U]) => { entry[0].setAttribute(key, value(entry[0].getAttribute(key))); return entry; } :
-            (entry: [T,U]) => { entry[0].setAttribute(key, value); return entry; }
-];
+        (data: DOMTaskData<T>) => { data.element.removeAttribute(key); return data; } :
+        typeof value === "function" ?
+            (data: DOMTaskData<T>) => { data.element.setAttribute(key, value(data.element.getAttribute(key) ?? undefined)); return data; } :
+            (data: DOMTaskData<T>) => { data.element.setAttribute(key, value); return data; }
 
-//@@ removeAttr > setAttr @@//
-export const removeAttr = <T extends Element, U extends Document>(key: string): NodeTask<T,U> => setAttr(key, undefined);
+//@@ getAttr > Filter, DOMTaskData @@//
+export const getAttr = <T extends Element>(key: string, alias?: string): Filter<DOMTaskData<T>,[string, unknown][]> =>
+    (data: DOMTaskData<T>) => [[alias || key, data.element.getAttribute(key)]];
 
-//@@ getAttr > Filter @@//
-export const getAttr = <T extends Element, U extends Document>(name: string, key?: string): Filter<[T,U],[string, unknown][]> =>
-    (entry: [T,U]) => ([[key || name, entry[0].getAttribute(name)]] as [string, unknown][]);
+//@@ removeAttr > Task, DOMTaskData @@//
+export const removeAttr = <T extends Element>(key: string): Task<DOMTaskData<T>> => attr<T>(key, undefined);
 
-//@@ setAria > setAttr @@//
-export const setAria = <T extends Element, U extends Document>(key: string, value: PropertyValueType): NodeTask<T, U> => setAttr('aria-'+key, value);
+//@@ ariaPreffix @@//
+const ariaPreffix = "aria-";
 
-//@@ removeAria > removeAttr @@//
-export const removeAria = <T extends Element, U extends Document>(key: string): NodeTask<T,U> => removeAttr('aria-'+key);
+//@@ aria > Task, DOMTaskData, DOMPropertyValue, ariaPreffix @@//
+export const aria = <T extends Element>(key: string, value: DOMPropertyValue): Task<DOMTaskData<T>> => attr<T>(ariaPreffix+key, value);
 
-//@@ getAria > getAttr @@//
-export const getAria = <T extends Element, U extends Document>(name: string, key?: string): Filter<[T,U],[string, unknown][]> => getAttr('aria-'+name, key);
+//@@ getAria > Filter, DOMTaskData, ariaPreffix @@//
+export const getAria = <T extends Element>(key: string, alias?: string): Filter<DOMTaskData<T>,[string, unknown][]> => getAttr<T>(ariaPreffix+key, alias);
 
-//@@ setData > DataPropertyValueType, NodeTask @@//
-export const setData = <T extends HTMLElement, U extends Document>(key: string, value: DataPropertyValueType): NodeTask<T, U> => [
+//@@ removeAria > Task, DOMTaskData, ariaPreffix @@//
+export const removeAria = <T extends Element>(key: string): Task<DOMTaskData<T>> => aria<T>(ariaPreffix+key, undefined);
+
+//@@ SpecializedElement @@//
+export type SpecializedElement = HTMLElement | SVGElement | MathMLElement;
+
+//@@ dataAttr > Task, DOMTaskData, DOMPropertyValue, SpecializedElement @@//
+export const dataAttr = <T extends SpecializedElement>(key: string, value: DOMPropertyValue): Task<DOMTaskData<T>> =>
     value === undefined ?
-        (entry: [T,U]) => { delete entry[0].dataset[key]; return entry; } :
-        typeof value === 'function' ?
-            (entry: [T,U]) => { entry[0].dataset[key] = value(entry[0].dataset[key]); return entry; } :
-            (entry: [T,U]) => { entry[0].dataset[key] = value; return entry; }
-];
+        (data: DOMTaskData<T>) => { delete data.element.dataset[key]; return data; } :
+        typeof value === "function" ?
+            (data: DOMTaskData<T>) => { data.element.dataset[key] = value(data.element.dataset[key] ?? undefined); return data; } :
+            (data: DOMTaskData<T>) => { data.element.dataset[key] = value; return data; }
 
-//@@ removeData > setData @@//
-export const removeData = <T extends HTMLElement, U extends Document>(key: string): NodeTask<T,U> => setData(key, undefined);
+//@@ getDataAttr > Filter, DOMTaskData, SpecializedElement @@//
+export const getDataAttr = <T extends SpecializedElement>(key: string, alias?: string): Filter<DOMTaskData<T>,[string, unknown][]> =>
+    (data: DOMTaskData<T>) => [[alias || key, data.element.dataset[key]]];
 
-//@@ getData > Filter @@//
-export const getData = <T extends HTMLElement, U extends Document>(name: string, key?: string): Filter<[T,U],[string, unknown][]> =>
-    (entry: [T,U]) => ([[key || name, entry[0].dataset[name]]] as [string, unknown][]);
+//@@ removeDataAttr > Task, DOMTaskData, SpecializedElement @@//
+export const removeDataAttr = <T extends SpecializedElement>(key: string): Task<DOMTaskData<T>> => dataAttr<T>(key, undefined);
 
-//@@ setStyle > DataPropertyValueType, NodeTask @@//
-export const setStyle = <T extends HTMLElement, U extends Document>(key: string, value: DataPropertyValueType): NodeTask<T, U> => [
+//@@ style > Task, DOMTaskData, DOMPropertyValue, SpecializedElement @@//
+export const style = <T extends SpecializedElement>(key: string, value: DOMPropertyValue): Task<DOMTaskData<T>> =>
     value === undefined ?
-        (entry: [T,U]) => { entry[0].style[key] = null; return entry; } :
-        typeof value === 'function' ?
-            (entry: [T,U]) => { entry[0].style[key] = value(entry[0].style[key]); return entry; } :
-            (entry: [T,U]) => { entry[0].style[key] = value; return entry; }
-];
+        (data: DOMTaskData<T>) => { data.element.style[key] = null; return data; } :
+        typeof value === "function" ?
+            (data: DOMTaskData<T>) => { data.element.style[key] = value(data.element.style[key] ?? undefined); return data; } :
+            (data: DOMTaskData<T>) => { data.element.style[key] = value; return data; }
 
-//@@ setCss > CssValueType, NodeTask @@//
-export const setCss = <T extends HTMLElement, U extends Document>(value: CssValueType): NodeTask<T, U> => [
-    typeof value === 'function' ?
-            (entry: [T,U]) => { entry[0].style.cssText = value(entry[0].style.cssText); return entry; } :
-            (entry: [T,U]) => { entry[0].style.cssText = value; return entry; }
-];
+//@@ css > Task, DOMTaskData, SpecializedElement @@//
+export const css = <T extends SpecializedElement>(value: string | ((previous: string) => string)): Task<DOMTaskData<T>> =>
+    typeof value === "function" ?
+        (data: DOMTaskData<T>) => { data.element.style.cssText = value(data.element.style.cssText); return data; } :
+        (data: DOMTaskData<T>) => { data.element.style.cssText = value; return data; }
 
-//@@ removeStyle > setStyle @@//
-export const removeStyle = <T extends HTMLElement, U extends Document>(key: string): NodeTask<T,U> => setStyle(key, undefined);
+//@@ getStyle > Filter, DOMTaskData, SpecializedElement @@//
+export const getStyle = <T extends SpecializedElement>(key: string, alias?: string): Filter<DOMTaskData<T>,[string, unknown][]> =>
+    (data: DOMTaskData<T>) => [[alias || key, data.element.style[key]]];
 
-//@@ getStyle > Filter @@//
-export const getStyle = <T extends HTMLElement, U extends Document>(name: string, key?: string): Filter<[T,U],[string, unknown][]> =>
-    (entry: [T,U]) => ([[key || name, entry[0].style[name]]] as [string, unknown][]);
+//@@ removeStyle > Task, DOMTaskData, SpecializedElement @@//
+export const removeStyle = <T extends SpecializedElement>(key: string): Task<DOMTaskData<T>> => style<T>(key, undefined);
 
+//@@ remove > Task, DOMTaskData, DOMPropertyTask @@//
+export const remove = <T extends Node>(property: DOMPropertyTask): Task<DOMTaskData<T>> => property(undefined);
 
-//@@ subscribe > NodeTask @@//
-export const subscribe = <T extends EventTarget, U extends Document>(
-    eventType: string, 
+//@@ subscribe > Task, DOMTaskData @@//
+export const subscribe = <T extends EventTarget>(
+    eventType: string,
     listener: EventListenerOrEventListenerObject, 
     options?: boolean | AddEventListenerOptions
-): NodeTask<T,U> => [
-    (entry: [T,U]) => { entry[0].addEventListener(eventType, listener, options); return entry; }
-]
+): Task<DOMTaskData<T>> => (data: DOMTaskData<T>) => { 
+    data.element.addEventListener(eventType, listener, options); 
+    return data; 
+}
 
-//@@ unsubscribe > NodeTask @@//
-export const unsubscribe = <T extends EventTarget, U extends Document>(
-    eventType: string, 
+//@@ unsubscribe > Task, DOMTaskData @@//
+export const unsubscribe = <T extends EventTarget>(
+    eventType: string,
     listener: EventListenerOrEventListenerObject, 
     options?: boolean | AddEventListenerOptions
-): NodeTask<T,U> => [
-    (entry: [T,U]) => { entry[0].removeEventListener(eventType, listener, options); return entry; }
-]
+): Task<DOMTaskData<T>> => (data: DOMTaskData<T>) => { 
+    data.element.removeEventListener(eventType, listener, options); 
+    return data; 
+}
+
+//@@ HTMLProxyTarget > Adapter, Branch, DOMTaskArg, DOMTaskData @@//
+export type HTMLProxyTarget = Record<string, Adapter<DOMTaskArg, DOMTaskData<HTMLElement>, string | Branch<DOMTaskArg, DOMTaskData<Text | HTMLElement>>>>;
+
+//@@ SVGProxyTarget > Adapter, Branch, DOMTaskArg, DOMTaskData @@//
+export type SVGProxyTarget = Record<string, Adapter<DOMTaskArg, DOMTaskData<SVGElement>, string | Branch<DOMTaskArg, DOMTaskData<Text | SVGElement>>>>;
+
+//@@ MathMLProxyTarget > Adapter, Branch, DOMTaskArg, DOMTaskData @@//
+export type MathMLProxyTarget = Record<string, Adapter<DOMTaskArg, DOMTaskData<MathMLElement>, string | Branch<DOMTaskArg, DOMTaskData<Text | MathMLElement>>>>;
+
+//@@ DOMPropertyProxyTarget > DOMPropertyTask @@//
+export type DOMPropertyProxyTarget = Record<string, DOMPropertyTask>;
+
+//@@ DOMAttributeProxyTarget > Task, DOMTaskData, DOMPropertyValue @@//
+export type DOMAttributeProxyTarget = Record<string, (value: DOMPropertyValue) => Task<DOMTaskData<Element>>>;
+
+//@@ DOMStylePropertyProxyTarget > Task, DOMTaskData, DOMPropertyValue, SpecializedElement @@//
+export type DOMStylePropertyProxyTarget = Record<string, (value: DOMPropertyValue) => Task<DOMTaskData<SpecializedElement>>>;
+
+//@@ DOMEventProxyTarget > Task, DOMTaskData @@//
+export type DOMEventProxyTarget = Record<string, (listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions) => Task<DOMTaskData<EventTarget>>>;
+
+//@@ adapters > HTMLProxyTarget, SVGProxyTarget, MathMLProxyTarget, DOMTaskArg, DOMTaskData, createTreeNodeAdapter, nodeFactory, appendConnector, deriveDOMTaskArg, defaultConvert, htmlScope, svgScope, mathmlScope @@//
+export const adapters = {
+    html: new Proxy<HTMLProxyTarget>({}, {
+        get(target, key, receiver) {
+            if(typeof key === "string") return createTreeNodeAdapter<
+                DOMTaskArg, DOMTaskData<HTMLElement>, DOMTaskData<Text | HTMLElement>, string
+            >(nodeFactory<HTMLElement>(key, htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+            return Reflect.get(target, key, receiver);
+        }
+    }),
+    svg: new Proxy<SVGProxyTarget>({}, {
+        get(target, key, receiver) {
+            if(typeof key === "string") return createTreeNodeAdapter<
+                DOMTaskArg, DOMTaskData<SVGElement>, DOMTaskData<Text | SVGElement>, string
+            >(nodeFactory<SVGElement>(key, svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+            return Reflect.get(target, key, receiver);
+        }
+    }),
+    math: new Proxy<MathMLProxyTarget>({}, {
+        get(target, key, receiver) {
+            if(typeof key === "string") return createTreeNodeAdapter<
+                DOMTaskArg, DOMTaskData<MathMLElement>, DOMTaskData<Text | MathMLElement>, string
+            >(nodeFactory<MathMLElement>(key, mathmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+            return Reflect.get(target, key, receiver);
+        }
+    }),
+    props: new Proxy<DOMPropertyProxyTarget>({}, {
+        get(target, key, receiver) {
+            if(typeof key === "string") return (value: DOMPropertyValue): Task<DOMTaskData<Node>> => prop(key, value);
+            return Reflect.get(target, key, receiver);
+        }
+    }),
+    attrs: new Proxy<DOMAttributeProxyTarget>({}, {
+        get(target, key, receiver) {
+            if(typeof key === "string") return (value: DOMPropertyValue): Task<DOMTaskData<Element>> => 
+                attr(/^aria[A-Z].*$/g.test(key) ? key.replace('aria', ariaPreffix) : key, value);
+            return Reflect.get(target, key, receiver);
+        }
+    }),
+    style: new Proxy<DOMStylePropertyProxyTarget>({}, {
+        get(target, key, receiver) {
+            if(typeof key === "string") return (value: DOMPropertyValue): Task<DOMTaskData<SpecializedElement>> => style(key, value);
+            return Reflect.get(target, key, receiver);
+        }
+    }),
+    events: new Proxy<DOMEventProxyTarget>({}, {
+        get(target, key, receiver) {
+            if(typeof key === "string") return (key.startsWith('on') && key.length > 2) ? 
+                (listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions): Task<DOMTaskData<EventTarget>> => subscribe(key.slice(2).toLowerCase(), listener, options) :
+                (key.startsWith('off') && key.length > 3) ?
+                    (listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions): Task<DOMTaskData<EventTarget>> => unsubscribe(key.slice(3).toLowerCase(), listener, options) :
+                    (listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions): Task<DOMTaskData<EventTarget>> => subscribe(key, listener, options);
+
+            return Reflect.get(target, key, receiver);
+        }
+    })
+}
+
+

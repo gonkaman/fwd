@@ -18,6 +18,8 @@ type ElementEntry = {
     value: string
 }
 
+type RegularKeyMap = Record<string, Record<string,string>>;
+
 const createNewToken = (index: number, parent?: number): ElementEntry => {
     return { index: index, tagName: "", isEmpty: false, isCustom: false, isText: false, parent: parent, childs: [], attrs: [], value: "" };
 }
@@ -73,7 +75,7 @@ const parseHtmlSource = (source: string): ElementEntry[] => {
                     if(empty_tags.indexOf(token.tagName) >= 0){
                         state = s_start;
                         token.isEmpty = true;
-                        token.isCustom = regular_keys.indexOf(token.tagName) < 0;
+                        // token.isCustom = regular_keys.indexOf(token.tagName) < 0;
                         elements.push(token);
                         if(token.parent != null){
                             elements[token.parent].childs.push(elements.length - 1);
@@ -81,7 +83,7 @@ const parseHtmlSource = (source: string): ElementEntry[] => {
                         token = createNewToken(elements.length, token.parent);
                     }else{
                         state = s_tag_opened;
-                        token.isCustom = regular_keys.indexOf(token.tagName) < 0;
+                        // token.isCustom = regular_keys.indexOf(token.tagName) < 0;
                         elements.push(token);
                         if(token.parent != null){
                             elements[token.parent].childs.push(elements.length - 1);
@@ -99,7 +101,7 @@ const parseHtmlSource = (source: string): ElementEntry[] => {
                     if(empty_tags.indexOf(token.tagName) >= 0){
                         state = s_start;
                         token.isEmpty = true;
-                        token.isCustom = regular_keys.indexOf(token.tagName) < 0;
+                        // token.isCustom = regular_keys.indexOf(token.tagName) < 0;
                         elements.push(token);
                         if(token.parent != null){
                             elements[token.parent].childs.push(elements.length - 1);
@@ -107,7 +109,7 @@ const parseHtmlSource = (source: string): ElementEntry[] => {
                         token = createNewToken(elements.length, token.parent);
                     }else{
                         state = s_tag_opened;
-                        token.isCustom = regular_keys.indexOf(token.tagName) < 0;
+                        // token.isCustom = regular_keys.indexOf(token.tagName) < 0;
                         elements.push(token);
                         if(token.parent != null){
                             elements[token.parent].childs.push(elements.length - 1);
@@ -122,7 +124,7 @@ const parseHtmlSource = (source: string): ElementEntry[] => {
             case s_reading_attr:
                 if(isBlank(cc)){
                     state = s_tagName_read;
-                    token.attrs.push([can, can, regular_keys.indexOf(can) < 0]);
+                    // token.attrs.push([can, can, regular_keys.indexOf(can) < 0]);
                     can = '';
                 }else if(cc === '='){
                     state = s_assigning_attr;
@@ -143,7 +145,7 @@ const parseHtmlSource = (source: string): ElementEntry[] => {
             case s_reading_attr_sqvalue:
                 if(cc === "'" && source[index-1] != "\\"){
                     state = s_tagName_read;
-                    token.attrs.push([can, cav, regular_keys.indexOf(can) < 0]);
+                    // token.attrs.push([can, cav, regular_keys.indexOf(can) < 0]);
                     can = '';
                     cav = '';
                 }else{
@@ -153,7 +155,7 @@ const parseHtmlSource = (source: string): ElementEntry[] => {
             case s_reading_attr_dqvalue:
                 if(cc === '"' && source[index-1] != "\\"){
                     state = s_tagName_read;
-                    token.attrs.push([can, cav, regular_keys.indexOf(can) < 0]);
+                    // token.attrs.push([can, cav, regular_keys.indexOf(can) < 0]);
                     can = '';
                     cav = '';
                 }else{
@@ -163,7 +165,7 @@ const parseHtmlSource = (source: string): ElementEntry[] => {
             case s_reading_attr_value:
                 if(isBlank(cc)){
                     state = s_tagName_read;
-                    token.attrs.push([can, cav, regular_keys.indexOf(can) < 0]);
+                    // token.attrs.push([can, cav, regular_keys.indexOf(can) < 0]);
                     can = '';
                     cav = '';
                 }else{

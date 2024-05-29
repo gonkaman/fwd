@@ -1,6 +1,10 @@
 {
     "adapter": {
-        "text": { "key": "", "target": "Text", "type": "text", "parent": "Element" }
+        "textNode": { "key": "", "target": "Text", "type": "text", "parent": "Element" },
+        "a": { "target": ["HTMLAnchorElement","SVGAElement"], "type": "contextual" },
+        "titleTag": { "key": "title", "target": ["HTMLTitleElement", "SVGTitleElement"], "type": "contextual" },
+        "scriptTag": { "key": "script", "target": ["HTMLElement", "SVGScriptElement"] },
+        "styleTag": { "key": "style", "target": ["HTMLElement", "SVGStyleElement"]}
     },
     "attribute": {
         "id": {},
