@@ -1,1492 +1,1287 @@
-export type Filter<U,V> = (arg: U) => V;
-export type Task<T> = [Filter<T,T>, ...string[]];
-export type Connector<TParent,TArg,TChild> = <T extends TParent, U extends TArg, V extends TChild>(filter: Filter<U,V>) => Task<T>
-export type Branch<TParent,U,V> = <T extends TParent>(connect: ((filter: Filter<U,V>) => Task<T>)) => Task<T>;
-export type Adapter<TParent, U, T, TConvert> = <K extends TConvert>(...args: (Task<T> | K)[]) => Branch<TParent,U,T>;
-export type NodeTask<T,U> = Task<[T,U]>;
-export type NodeFactory<PDoc,TNode,TDoc> = <TArg extends PDoc, T extends TNode, U extends TDoc>(doc: TArg, tag: string) => [T,U];
-export type NodeConnector<T,TDoc,V,VDoc> = Connector<[T,TDoc],TDoc,[V,VDoc]>;
-export type NodeBranch<TNode,TDoc,TChild,VDoc> = Branch<[TNode,TDoc],TDoc,[TChild,VDoc]>;
-export type NodeAdapterArg<T,TDoc,V,VDoc,TConvert> = (NodeTask<T,TDoc> | TConvert | NodeBranch<T,TDoc,V,VDoc>)[];
-export type NodeAdapterArgsFormater<TNode,TDoc,TChild, VDoc, TConvert> = 
-    <T extends TNode, V extends TChild>(connector: NodeConnector<T,TDoc,V,VDoc>) => (args: NodeAdapterArg<T,TDoc,V,VDoc,TConvert>) => NodeTask<T,TDoc>[];
-export type NodeAdapter<P,PDoc,T,TDoc,V,VDoc,TConvert> = Adapter<[P,PDoc],PDoc,[T,TDoc],TConvert | NodeBranch<T,TDoc,V,VDoc>>;
-const createDOMAdapter = <P,PDoc,T,TDoc,V,VDoc,TConvert>(
-    tagName: string,
-    factory: NodeFactory<PDoc,T,TDoc>, 
-    connector: NodeConnector<T,TDoc,V,VDoc>,
-    format: NodeAdapterArgsFormater<T,TDoc,V,VDoc,TConvert>
-): NodeAdapter<P,PDoc,T,TDoc,V,VDoc,TConvert> => 
-    (...args: NodeAdapterArg<T,TDoc,V,VDoc,TConvert>): NodeBranch<P,PDoc,T,TDoc> => {
-        const tasks = format(connector)(args).map(entry => entry[0]);
-        const build: Filter<PDoc,[T,TDoc]> = (doc: PDoc) => tasks.reduce((node, task) => task(node), factory(doc, tagName));
-        return <TParent extends [P,PDoc]>(connect: ((filter: Filter<PDoc,[T,TDoc]>) => Task<TParent>)):Task<TParent> => connect(build);
-    }
+export type Filter<TArg,TResult> = (arg: TArg) => TResult;
+export type Task<T> = Filter<T,T>;
+export type Connector<TTarget, TArg, TChild> = <T extends TTarget>(filter: Filter<TArg,TChild>, deriveArg: Filter<TTarget, TArg>) => Task<T>;
+export type Branch<TArg, TTarget, TParent> = (connector: Connector<TParent, TArg, TTarget>, deriveArg: Filter<TParent, TArg>) => Task<TParent>;
+export type Adapter<TArg, TTarget, TCompat> = <TParent>(...args: (Task<TTarget> | TCompat)[]) => Branch<TArg, TTarget, TParent>;
 export type Lookup<T> = Filter<void,T|null|undefined>;
 export type Curator<T> = (lookup: Lookup<T>) => void;
-export type Store<T> = [Curator<T>, Lookup<T>];
-export type Query = Store<[string, unknown][]>;
-export type NodePicker<T,U> = Lookup<[T,U]>;
-export type NodeRenderer<TNode,TDoc> = <T extends TNode, U extends TDoc>(lookup: NodePicker<T,U>, ...tasks: NodeTask<T,U>[]) => NodePicker<T,U>;
-const textNodeFactory: NodeFactory<Document | XMLDocument, Text, Document> = <T extends Text, U extends Document>(doc: Document, _: string) => 
-    [doc.createTextNode('') as T, doc as U];
-const htmlNodeFactory: NodeFactory<Document, HTMLElement, Document> = <T extends HTMLElement, U extends Document>(doc: Document, tagName: string) => 
-    [doc.createElement(tagName) as T, doc as U];
-const svgNodeFactory: NodeFactory<Document, SVGElement, XMLDocument> = <T extends SVGElement, U extends XMLDocument>(doc: XMLDocument, tagName: string) => 
-    [doc.createElementNS("http://www.w3.org/2000/svg", tagName) as T, doc as U];
-const mathmlNodeFactory: NodeFactory<Document, MathMLElement, XMLDocument> = <T extends MathMLElement, U extends XMLDocument>(doc: XMLDocument, tagName: string) => 
-    [doc.createElementNS("http://www.w3.org/1998/Math/MathML", tagName) as T, doc as U];
-const appendNodeConnector: NodeConnector<Node, Document, Node, Document> = 
-    <T extends [Node, Document], TArg extends Document, V extends [Node,Document]>(filter: Filter<TArg,V>): Task<T> => [
-        (entry: T) => {
-            entry[0].appendChild(filter(entry[1] as TArg)[0]);
-            return entry;
-        }
-    ];
-const prependNodeConnector: NodeConnector<Element, Document, Node, Document> = 
-    <T extends [Element, Document], TArg extends Document, V extends [Node,Document]>(filter: Filter<TArg,V>): Task<T> => [
-        (entry: T) => {
-            entry[0].prepend(filter(entry[1] as TArg)[0]);
-            return entry;
-        }
-    ];
-const noNodeConnector: NodeConnector<Node, Document, Node | undefined, Document> = 
-    <T extends [Node, Document], U extends Document, V extends [Node | undefined, Document]>(_: Filter<U,V>): Task<T> => [
-        (entry: T) => entry
-    ];
-const formatAdapterArgs: NodeAdapterArgsFormater<Node | undefined, Document, Node | undefined, Document, string | undefined> = 
-    <T extends Node | undefined, V extends Node | undefined>(connector: NodeConnector<T,Document,V,Document>) => 
-    (args: NodeAdapterArg<T,Document,V,Document,string | undefined>): NodeTask<T,Document>[] => 
-        (args.filter(arg => arg != null) as NodeAdapterArg<T,Document,V,Document,string>).map(arg => {
-            if(typeof arg === 'function') return arg(connector);
-            if(typeof arg === 'string') return [
-                (entry: [T,Document]) => {
-                    if(entry[0] != null){
-                        try{
-                            entry[0].appendChild(entry[1].createTextNode(arg));
-                        }catch(e){
-                            entry[0].nodeValue = arg; 
-                        }
-                    }
-                    return entry;
-                }
-            ];
-            return arg;
-        });
-export const getElement = <T extends Element, U extends Document>(query: string, container: Document | Element): NodePicker<T,U> => () => {
-    const node = container.querySelector(query);
-    return node == null ? null : [node as T, node.ownerDocument as U];
+export type Delegate<T> = [Curator<T>, Lookup<T>];
+export const createTreeNodeAdapter = <TArg, TTarget, TChild, K>(
+    factory: Filter<TArg, TTarget>,
+    connect: Connector<TTarget, TArg, TChild>,
+    deriveArg: Filter<TTarget, TArg>,
+    convert: Filter<K, Task<TTarget>>
+): Adapter<TArg, TTarget, K | Branch<TArg, TChild, TTarget>> => 
+    <T>(...args: (Task<TTarget> | K | Branch<TArg, TChild, TTarget>)[]): Branch<TArg, TTarget, T> => 
+        (tConnect: Connector<T, TArg, TTarget>, tDerive: Filter<T, TArg>): Task<T> => 
+            tConnect(
+                args.reduce((filter, arg) => typeof arg === "function" ?
+                    (arg.length == 1 ? 
+                        (ctx: TArg) => (arg as Task<TTarget>)(filter(ctx)) :
+                        (ctx: TArg) => (arg as Branch<TArg, TChild, TTarget>)(connect, deriveArg)(filter(ctx))) :
+                    (ctx: TArg) => convert(arg)(filter(ctx)), factory), 
+                tDerive
+            );
+
+export const noConnector = <TArg, T>(_: Filter<TArg, any>): Task<T> => (target: T) => target;
+export type DOMTaskContext = { document: Document, scope: string }
+export type DOMTaskData<T> = { element: T, document: Document, scope: string }
+export type DOMTaskArg = DOMTaskContext | null | undefined;
+export type DOMTaskCompatible = string | number; // | Date | string[] | number[] | Element;
+const htmlScope = "http://www.w3.org/1999/xhtml";
+const svgScope = "http://www.w3.org/2000/svg";
+const mathmlScope = "http://www.w3.org/1998/Math/MathML";
+const textScope = "text";
+const contextualScope = "ctx";
+const defaultNodeFactory = <T>(tagName: string): Filter<DOMTaskArg, DOMTaskData<T>> => (arg: DOMTaskArg): DOMTaskData<T> => {
+    if(arg == null) arg = { document: document, scope: htmlScope };
+    (arg as DOMTaskData<T>).element = arg.document.createElement(tagName) as T;
+    return arg as DOMTaskData<T>;
 }
-export const fromElement = <T extends Element, U extends Document>(node: Element): NodePicker<T,U> => () => [node as T,node.ownerDocument as U];
-export const render : NodeRenderer<Element,Document> = <T extends Element, U extends Document>( lookup: NodePicker<T,U>, ...tasks: NodeTask<T,U>[]): NodePicker<T,U> => () => {
+export const nodeFactory = <T>(tagName: string, scope?: string): Filter<DOMTaskArg, DOMTaskData<T>> => {
+    if(scope == null) return defaultNodeFactory(tagName);
+    switch(scope){
+        case htmlScope: return defaultNodeFactory(tagName);
+        case svgScope: return (arg: DOMTaskArg): DOMTaskData<T> => {
+            if(arg == null) arg = { document: document, scope: svgScope };
+            (arg as DOMTaskData<T>).element = arg.document.createElementNS(svgScope, tagName) as T;
+            return arg as DOMTaskData<T>;
+        };
+        case mathmlScope: return (arg: DOMTaskArg): DOMTaskData<T> => {
+            if(arg == null) arg = { document: document, scope: mathmlScope };
+            (arg as DOMTaskData<T>).element = arg.document.createElementNS(mathmlScope, tagName) as T;
+            return arg as DOMTaskData<T>;
+        };
+        case textScope: return (arg: DOMTaskArg): DOMTaskData<T> => {
+            if(arg == null) arg = { document: document, scope: textScope };
+            (arg as DOMTaskData<T>).element = arg.document.createTextNode(tagName) as T;
+            return arg as DOMTaskData<T>;
+        };
+        case contextualScope: return (arg: DOMTaskArg): DOMTaskData<T> => {
+            if(arg == null) arg = { document: document, scope: htmlScope };
+            return nodeFactory<T>(tagName, arg.scope)(arg);
+        };
+        default: return defaultNodeFactory(tagName);
+    }
+}
+export const deriveDOMTaskArg = <T>(data: DOMTaskData<T>): DOMTaskArg => data;
+export const defaultConvert = <T extends Node>(arg: DOMTaskCompatible): Task<DOMTaskData<T>> => 
+    (data: DOMTaskData<T>): DOMTaskData<T> => {
+        if(data.scope === textScope){
+            data.element.nodeValue = arg+"";
+        }else{
+            data.element.appendChild(data.document.createTextNode(arg+""));
+        }
+        return data;
+    }
+export const appendConnector = <T extends DOMTaskData<Element>>(filter: Filter<DOMTaskArg,DOMTaskData<Node>>): Task<T> =>
+    (data: T): T => {
+        data.element.appendChild(filter(data).element);
+        return data;
+    }
+export const append = <T extends Element>(branch: Branch<DOMTaskArg, DOMTaskData<Node>, DOMTaskData<T> | unknown>): Task<DOMTaskData<T>> => 
+    (branch as Branch<DOMTaskArg, DOMTaskData<Node>, DOMTaskData<T>>)(appendConnector, deriveDOMTaskArg);
+export const appendTo = <T extends Node>(lookup: Lookup<DOMTaskData<Element>>): Task<DOMTaskData<T>> => 
+    (node: DOMTaskData<T>): DOMTaskData<T> => {
+        lookup()?.element.appendChild(node.element);
+        return node; 
+    }
+export const prependConnector = <T extends DOMTaskData<Element>>(filter: Filter<DOMTaskArg,DOMTaskData<Node>>): Task<T> =>
+    (data: T): T => {
+        data.element.prepend(filter(data).element);
+        return data;
+    }
+export const prepend = <T extends Element>(branch: Branch<DOMTaskArg, DOMTaskData<Node>, DOMTaskData<T> | unknown>): Task<DOMTaskData<T>> =>
+    (branch as Branch<DOMTaskArg, DOMTaskData<Node>, DOMTaskData<T>>)(prependConnector, deriveDOMTaskArg);
+export const prependTo = <T extends Node>(lookup: Lookup<DOMTaskData<Element>>): Task<DOMTaskData<T>> =>
+    (node: DOMTaskData<T>): DOMTaskData<T> => {
+        lookup()?.element.prepend(node.element);
+        return node;
+    }
+export const getElement = <T extends Element>(query: string, container: Element | Document): Lookup<DOMTaskData<T>> => () => {
+    const elt = container.querySelector(query);
+    return elt == null ? null : { 
+        element: elt as T, 
+        document: elt.ownerDocument, 
+        scope: elt.namespaceURI ?? htmlScope
+    };
+}
+export const fromElement = <T extends Element>(element: T): Lookup<DOMTaskData<T>> => () => {
+    return {
+        element: element,
+        document: element.ownerDocument,
+        scope: element.namespaceURI ?? htmlScope
+    }
+}
+export const render = <T extends Element>(lookup: Lookup<DOMTaskData<T>>, ...tasks: Task<DOMTaskData<T>>[]): Lookup<DOMTaskData<T>> => () => {
     const target = lookup();
-    return target == null ? target : tasks.map(task => task[0]).reduce((node, task) => task(node), target);
+    return target == null ? null : tasks.reduce((data, task) => task(data), target);
 }
-export const createRef = <T extends Node,U extends Document>(): Store<[T,U]> => {
-    let innerLookup: Lookup<[T,U]> = () => null;
-    return [
-        (lookup: Lookup<[T,U]>) => { innerLookup = lookup; },
-        () => innerLookup()
-    ];
+export const renderAll = <T extends Element>(lookup: Lookup<DOMTaskData<T>[]>, ...tasks: Task<DOMTaskData<T>>[]): Lookup<DOMTaskData<T>[]> => () => {
+    const targets = lookup();
+    return targets == null ? null : targets.map(target => tasks.reduce((data, task) => task(data), target));
 }
-export const createQuery = (): Query => {
-    const registeredLookups: Lookup<[string, unknown][]>[] = [];
+export const handleNode = <T extends Node>(task: Task<T>): Task<DOMTaskData<T>> => (data: DOMTaskData<T>) => {
+    data.element = task(data.element);
+    return data;
+}
+export const createRef = <T extends Node>(): Delegate<DOMTaskData<T>> => {
+    let getData: Lookup<DOMTaskData<T>> = () => null;
     return [
-        (lookup: Lookup<[string, unknown][]>) => { registeredLookups.push(lookup); },
-        () => registeredLookups.reduce((entries: [string, unknown][], lookup) => entries.concat(lookup() ?? []), [])
+        (lookup: Lookup<DOMTaskData<T>>) => { getData = lookup; },
+        () => getData()
     ]
 }
-export const store = <T extends Node,U extends Document>(curator: Curator<[T,U]>): NodeTask<T,U> => [
-    (entry: [T,U]) => {
-        curator(() => entry);
-        return entry;
-    }
-]
-export const query = <T extends Node,U extends Document>(curator: Curator<[string, unknown][]>, ...queries: Filter<[T,U],[string, unknown][]>[]): NodeTask<T,U> => [
-    (entry: [T,U]) => {
-        curator(() => queries.reduce((entries: [string, unknown][], query) => entries.concat(query(entry)), []));
-        return entry;
-    }
-]
-export const apply = <T extends Node, U extends Document>(action: ((tnode: T, udoc: U) => [T,U])): NodeTask<T,U> => [
-    (entry: [T,U]) => action(...entry)
-]
-const elementFactory = <T extends Element, U extends Document>(doc: Document, tagName: string | [string,string]) => {
-    if(typeof tagName === 'string') return htmlNodeFactory(doc, tagName) as unknown as [T,U];
-    switch(tagName[1]){
-        case 'svg': return svgNodeFactory(doc, tagName[0]) as unknown as [T,U];
-        case 'mathml': return mathmlNodeFactory(doc, tagName[0]) as unknown as [T,U];
-        default: return htmlNodeFactory(doc, tagName[0]) as unknown as [T,U];
-    }
+export const createMultiRef = <T extends Node>(): [Curator<DOMTaskData<T>>, Lookup<DOMTaskData<T>[]>] => {
+    let getters: Lookup<DOMTaskData<T>>[] = [];
+    return [
+        (lookup: Lookup<DOMTaskData<T>>) => { getters.push(lookup); },
+        () => getters.map(getData => getData()).filter(data => data != null) as DOMTaskData<T>[]
+    ]
 }
-export const element = <T extends Element>(
-    tagName: string | [string,string], 
-    ...args: NodeAdapterArg<T,Document,Node,Document,string | undefined>
-): NodeBranch<Element,Document,Element,Document> => {
-    const tasks = formatAdapterArgs<T,Node>(appendNodeConnector)(args).map(entry => entry[0]);
-    const build: Filter<Document,[T,Document]> = (doc: Document) => tasks.reduce((node, task) => task(node), elementFactory<T,Document>(doc, tagName));
-    return <TParent extends [Element,Document]>(connect: ((filter: Filter<Document,[T,Document]>) => Task<TParent>)):Task<TParent> => connect(build);
+export const createQuery = (): Delegate<[string, unknown][]> => {
+    const getters: Lookup<[string, unknown][]>[] = [];
+    return [
+        (lookup: Lookup<[string, unknown][]>) => { getters.push(lookup); },
+        () => getters.reduce((entries: [string, unknown][], getData) => entries.concat(getData() ?? []), [])
+    ]
 }
-export const append = <T extends Node, U extends Document>(branch: NodeBranch<T,U,Node,Document>): NodeTask<T,U> => branch(appendNodeConnector);
-export const prepend = <T extends Element, U extends Document>(branch: NodeBranch<T,U,Node,Document>): NodeTask<T,U> => branch(prependNodeConnector);
-export const appendTo = <T extends Node, V extends Node, U extends Document>(lookup: NodePicker<V,U>): NodeTask<T,U> => [
-    (entry: [T,U]) => {
-        lookup()?.[0].appendChild(entry[0]);
-        return entry;
+export const ref = <T extends Node>(curator: Curator<DOMTaskData<T>>): Task<DOMTaskData<T>> => 
+    (data: DOMTaskData<T>) => {
+        curator(() => data);
+        return data;
     }
-]
-export const prependTo = <T extends Node, V extends Element, U extends Document>(lookup: NodePicker<V,U>): NodeTask<T,U> => [
-    (entry: [T,U]) => {
-        lookup()?.[0].prepend(entry[0]);
-        return entry;
+export const query = <T extends Node>(curator: Curator<[string, unknown][]>, ...queries: Filter<DOMTaskData<T>, [string, unknown][]>[]): Task<DOMTaskData<T>> =>
+    (data: DOMTaskData<T>) => {
+        curator(() => queries.reduce((entries: [string, unknown][], query) => entries.concat(query(data)), []));
+        return data;
     }
-]
-export type PropertyValueType = string | ((previousValue: string | null) => string) | undefined;
-export type PropertyAdapter = <T extends Node, U extends Document>(value: PropertyValueType) => NodeTask<T,U>;
-export type DataPropertyValueType = string | ((previousValue?: string) => string) | undefined;
-export type CssValueType = string | ((previousValue: string) => string);
-export const setProp = <T extends Node, U extends Document>(key: string, value: PropertyValueType): NodeTask<T, U> => [
+export const tag = <T extends Element>(
+    tag: string | [string, string], 
+    ...tasks: (Task<DOMTaskData<T>> | Branch<DOMTaskArg, DOMTaskData<Element>, DOMTaskData<T>> | DOMTaskCompatible)[]
+): Branch<DOMTaskArg, DOMTaskData<T>, DOMTaskData<Element>> => 
+(pConnect: Connector<DOMTaskData<Element>, DOMTaskArg, DOMTaskData<T>>, pDerive: Filter<DOMTaskData<Element>, DOMTaskArg>): Task<DOMTaskData<Element>> => 
+    pConnect( 
+        tasks.reduce(
+            (filter: Filter<DOMTaskArg, DOMTaskData<T>>, task) => typeof task === "function" ?
+                (task.length == 1 ? 
+                    (ctx: DOMTaskArg) => (task as Task<DOMTaskData<T>>)(filter(ctx)) :
+                    (ctx: DOMTaskArg) => (task as Branch<DOMTaskArg, DOMTaskData<Element>, DOMTaskData<T>>)(
+                        appendConnector, deriveDOMTaskArg
+                    )(filter(ctx))) :
+                (ctx: DOMTaskArg) => defaultConvert<T>(task)(filter(ctx)), 
+            typeof tag === 'string' ? nodeFactory<T>(tag) : nodeFactory<T>(tag[0], tag[1])),
+        pDerive
+    );
+export type DOMPropertyValue = string | ((previous?: string) => string) | undefined;
+export type DOMPropertyTask = <T extends Node>(value: DOMPropertyValue) => Task<DOMTaskData<T>>;
+export const prop = <T extends Node>(key: string, value: DOMPropertyValue): Task<DOMTaskData<T>> =>
     value === undefined ?
-        (entry: [T,U]) => { entry[0][key] = null; return entry; } :
-        typeof value === 'function' ?
-            (entry: [T,U]) => { entry[0][key] = value(entry[0][key]); return entry; } :
-            (entry: [T,U]) => { entry[0][key] = value; return entry; }
-];
-export const removeProp = <T extends Node, U extends Document>(adapter: PropertyAdapter): NodeTask<T,U> => adapter(undefined);
-export const getProp = <T extends Node, U extends Document>(name: string, key?: string): Filter<[T,U],[string, unknown][]> =>
-    (entry: [T,U]) => ([[key || name, entry[0][name]]] as [string, unknown][]);
-export const setAttr = <T extends Element, U extends Document>(key: string, value: PropertyValueType): NodeTask<T, U> => [
+        (data: DOMTaskData<T>) => { data.element[key] = null; return data; } :
+        typeof value === "function" ?
+            (data: DOMTaskData<T>) => { data.element[key] = value(data.element[key]); return data; } :
+            (data: DOMTaskData<T>) => { data.element[key] = value; return data; }
+export const getProp = <T extends Node>(key: string, alias?: string): Filter<DOMTaskData<T>,[string, unknown][]> =>
+    (data: DOMTaskData<T>) => [[alias || key, data.element[key]]];
+export const removeProp = <T extends Node>(key: string): Task<DOMTaskData<T>> => prop<T>(key, undefined);
+export const attr = <T extends Element>(key: string, value: DOMPropertyValue): Task<DOMTaskData<T>> =>
     value === undefined ?
-        (entry: [T,U]) => { entry[0].removeAttribute(key); return entry; } :
-        typeof value === 'function' ?
-            (entry: [T,U]) => { entry[0].setAttribute(key, value(entry[0].getAttribute(key))); return entry; } :
-            (entry: [T,U]) => { entry[0].setAttribute(key, value); return entry; }
-];
-export const removeAttr = <T extends Element, U extends Document>(key: string): NodeTask<T,U> => setAttr(key, undefined);
-export const getAttr = <T extends Element, U extends Document>(name: string, key?: string): Filter<[T,U],[string, unknown][]> =>
-    (entry: [T,U]) => ([[key || name, entry[0].getAttribute(name)]] as [string, unknown][]);
-export const setAria = <T extends Element, U extends Document>(key: string, value: PropertyValueType): NodeTask<T, U> => setAttr('aria-'+key, value);
-export const removeAria = <T extends Element, U extends Document>(key: string): NodeTask<T,U> => removeAttr('aria-'+key);
-export const getAria = <T extends Element, U extends Document>(name: string, key?: string): Filter<[T,U],[string, unknown][]> => getAttr('aria-'+name, key);
-export const setData = <T extends HTMLElement, U extends Document>(key: string, value: DataPropertyValueType): NodeTask<T, U> => [
+        (data: DOMTaskData<T>) => { data.element.removeAttribute(key); return data; } :
+        typeof value === "function" ?
+            (data: DOMTaskData<T>) => { data.element.setAttribute(key, value(data.element.getAttribute(key) ?? undefined)); return data; } :
+            (data: DOMTaskData<T>) => { data.element.setAttribute(key, value); return data; }
+export const getAttr = <T extends Element>(key: string, alias?: string): Filter<DOMTaskData<T>,[string, unknown][]> =>
+    (data: DOMTaskData<T>) => [[alias || key, data.element.getAttribute(key)]];
+export const removeAttr = <T extends Element>(key: string): Task<DOMTaskData<T>> => attr<T>(key, undefined);
+const ariaPreffix = "aria-";
+export const aria = <T extends Element>(key: string, value: DOMPropertyValue): Task<DOMTaskData<T>> => attr<T>(ariaPreffix+key, value);
+export const getAria = <T extends Element>(key: string, alias?: string): Filter<DOMTaskData<T>,[string, unknown][]> => getAttr<T>(ariaPreffix+key, alias);
+export const removeAria = <T extends Element>(key: string): Task<DOMTaskData<T>> => aria<T>(ariaPreffix+key, undefined);
+export type SpecializedElement = HTMLElement | SVGElement | MathMLElement;
+export const dataAttr = <T extends SpecializedElement>(key: string, value: DOMPropertyValue): Task<DOMTaskData<T>> =>
     value === undefined ?
-        (entry: [T,U]) => { delete entry[0].dataset[key]; return entry; } :
-        typeof value === 'function' ?
-            (entry: [T,U]) => { entry[0].dataset[key] = value(entry[0].dataset[key]); return entry; } :
-            (entry: [T,U]) => { entry[0].dataset[key] = value; return entry; }
-];
-export const removeData = <T extends HTMLElement, U extends Document>(key: string): NodeTask<T,U> => setData(key, undefined);
-export const getData = <T extends HTMLElement, U extends Document>(name: string, key?: string): Filter<[T,U],[string, unknown][]> =>
-    (entry: [T,U]) => ([[key || name, entry[0].dataset[name]]] as [string, unknown][]);
-export const setStyle = <T extends HTMLElement, U extends Document>(key: string, value: DataPropertyValueType): NodeTask<T, U> => [
+        (data: DOMTaskData<T>) => { delete data.element.dataset[key]; return data; } :
+        typeof value === "function" ?
+            (data: DOMTaskData<T>) => { data.element.dataset[key] = value(data.element.dataset[key] ?? undefined); return data; } :
+            (data: DOMTaskData<T>) => { data.element.dataset[key] = value; return data; }
+export const getDataAttr = <T extends SpecializedElement>(key: string, alias?: string): Filter<DOMTaskData<T>,[string, unknown][]> =>
+    (data: DOMTaskData<T>) => [[alias || key, data.element.dataset[key]]];
+export const removeDataAttr = <T extends SpecializedElement>(key: string): Task<DOMTaskData<T>> => dataAttr<T>(key, undefined);
+export const style = <T extends SpecializedElement>(key: string, value: DOMPropertyValue): Task<DOMTaskData<T>> =>
     value === undefined ?
-        (entry: [T,U]) => { entry[0].style[key] = null; return entry; } :
-        typeof value === 'function' ?
-            (entry: [T,U]) => { entry[0].style[key] = value(entry[0].style[key]); return entry; } :
-            (entry: [T,U]) => { entry[0].style[key] = value; return entry; }
-];
-export const setCss = <T extends HTMLElement, U extends Document>(value: CssValueType): NodeTask<T, U> => [
-    typeof value === 'function' ?
-            (entry: [T,U]) => { entry[0].style.cssText = value(entry[0].style.cssText); return entry; } :
-            (entry: [T,U]) => { entry[0].style.cssText = value; return entry; }
-];
-export const removeStyle = <T extends HTMLElement, U extends Document>(key: string): NodeTask<T,U> => setStyle(key, undefined);
-export const getStyle = <T extends HTMLElement, U extends Document>(name: string, key?: string): Filter<[T,U],[string, unknown][]> =>
-    (entry: [T,U]) => ([[key || name, entry[0].style[name]]] as [string, unknown][]);
-export const subscribe = <T extends EventTarget, U extends Document>(
-    eventType: string, 
+        (data: DOMTaskData<T>) => { data.element.style[key] = null; return data; } :
+        typeof value === "function" ?
+            (data: DOMTaskData<T>) => { data.element.style[key] = value(data.element.style[key] ?? undefined); return data; } :
+            (data: DOMTaskData<T>) => { data.element.style[key] = value; return data; }
+export const css = <T extends SpecializedElement>(value: string | ((previous: string) => string)): Task<DOMTaskData<T>> =>
+    typeof value === "function" ?
+        (data: DOMTaskData<T>) => { data.element.style.cssText = value(data.element.style.cssText); return data; } :
+        (data: DOMTaskData<T>) => { data.element.style.cssText = value; return data; }
+export const getStyle = <T extends SpecializedElement>(key: string, alias?: string): Filter<DOMTaskData<T>,[string, unknown][]> =>
+    (data: DOMTaskData<T>) => [[alias || key, data.element.style[key]]];
+export const removeStyle = <T extends SpecializedElement>(key: string): Task<DOMTaskData<T>> => style<T>(key, undefined);
+export const remove = <T extends Node>(property: DOMPropertyTask): Task<DOMTaskData<T>> => property(undefined);
+export const subscribe = <T extends EventTarget>(
+    eventType: string,
     listener: EventListenerOrEventListenerObject, 
     options?: boolean | AddEventListenerOptions
-): NodeTask<T,U> => [
-    (entry: [T,U]) => { entry[0].addEventListener(eventType, listener, options); return entry; }
-]
-export const unsubscribe = <T extends EventTarget, U extends Document>(
-    eventType: string, 
+): Task<DOMTaskData<T>> => (data: DOMTaskData<T>) => { 
+    data.element.addEventListener(eventType, listener, options); 
+    return data; 
+}
+export const unsubscribe = <T extends EventTarget>(
+    eventType: string,
     listener: EventListenerOrEventListenerObject, 
     options?: boolean | AddEventListenerOptions
-): NodeTask<T,U> => [
-    (entry: [T,U]) => { entry[0].removeEventListener(eventType, listener, options); return entry; }
-]
-export const text = createDOMAdapter<
-    Element, Document, 
-    Text, Document, 
-    undefined, Document, 
-    string
->('', textNodeFactory, noNodeConnector, formatAdapterArgs);
-export const a = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLAnchorElement, Document, 
-    Text | HTMLElement, Document, 
-    string
->('a', htmlNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const abbr = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLElement, Document, 
-    Text | HTMLElement, Document, 
-    string
->('abbr', htmlNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const address = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLElement, Document, 
-    Text | HTMLElement, Document, 
-    string
->('address', htmlNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const area = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLAreaElement, Document, 
-    undefined, Document, 
-    string
->('area', htmlNodeFactory, noNodeConnector, formatAdapterArgs);
-export const article = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLElement, Document, 
-    Text | HTMLElement, Document, 
-    string
->('article', htmlNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const aside = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLElement, Document, 
-    Text | HTMLElement, Document, 
-    string
->('aside', htmlNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const audio = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLAudioElement, Document, 
-    Text | HTMLElement, Document, 
-    string
->('audio', htmlNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const b = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLElement, Document, 
-    Text | HTMLElement, Document, 
-    string
->('b', htmlNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const base = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLBaseElement, Document, 
-    undefined, Document, 
-    string
->('base', htmlNodeFactory, noNodeConnector, formatAdapterArgs);
-export const bdi = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLElement, Document, 
-    Text | HTMLElement, Document, 
-    string
->('bdi', htmlNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const bdo = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLElement, Document, 
-    Text | HTMLElement, Document, 
-    string
->('bdo', htmlNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const blockquote = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLQuoteElement, Document, 
-    Text | HTMLElement, Document, 
-    string
->('blockquote', htmlNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const body = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLElement, Document, 
-    Text | HTMLElement, Document, 
-    string
->('body', htmlNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const br = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLBRElement, Document, 
-    undefined, Document, 
-    string
->('br', htmlNodeFactory, noNodeConnector, formatAdapterArgs);
-export const button = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLButtonElement, Document, 
-    Text | HTMLElement, Document, 
-    string
->('button', htmlNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const canvas = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLCanvasElement, Document, 
-    Text | HTMLElement, Document, 
-    string
->('canvas', htmlNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const caption = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLTableCaptionElement, Document, 
-    Text | HTMLElement, Document, 
-    string
->('caption', htmlNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const cite = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLQuoteElement, Document, 
-    Text | HTMLElement, Document, 
-    string
->('cite', htmlNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const code = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLElement, Document, 
-    Text | HTMLElement, Document, 
-    string
->('code', htmlNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const col = createDOMAdapter<
-    HTMLTableColElement, Document, 
-    HTMLTableColElement, Document, 
-    undefined, Document, 
-    string
->('col', htmlNodeFactory, noNodeConnector, formatAdapterArgs);
-export const colgroup = createDOMAdapter<
-    HTMLTableElement, Document, 
-    HTMLTableColElement, Document, 
-    HTMLTableColElement, Document, 
-    string
->('colgroup', htmlNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const data = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLDataElement, Document, 
-    Text | HTMLElement, Document, 
-    string
->('data', htmlNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const datalist = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLDataListElement, Document, 
-    Text | HTMLElement, Document, 
-    string
->('datalist', htmlNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const dd = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLElement, Document, 
-    Text | HTMLElement, Document, 
-    string
->('dd', htmlNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const del = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLModElement, Document, 
-    Text | HTMLElement, Document, 
-    string
->('del', htmlNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const details = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLElement, Document, 
-    Text | HTMLElement, Document, 
-    string
->('details', htmlNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const dfn = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLElement, Document, 
-    Text | HTMLElement, Document, 
-    string
->('dfn', htmlNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const dialog = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLDialogElement, Document, 
-    Text | HTMLElement, Document, 
-    string
->('dialog', htmlNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const div = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLDivElement, Document, 
-    Text | HTMLElement, Document, 
-    string
->('div', htmlNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const dl = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLElement, Document, 
-    Text | HTMLElement, Document, 
-    string
->('dl', htmlNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const dt = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLElement, Document, 
-    Text | HTMLElement, Document, 
-    string
->('dt', htmlNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const em = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLElement, Document, 
-    Text | HTMLElement, Document, 
-    string
->('em', htmlNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const embed = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLEmbedElement, Document, 
-    Text | HTMLElement, Document, 
-    string
->('embed', htmlNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const fieldset = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLFieldSetElement, Document, 
-    Text | HTMLElement, Document, 
-    string
->('fieldset', htmlNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const figcaption = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLElement, Document, 
-    Text | HTMLElement, Document, 
-    string
->('figcaption', htmlNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const figure = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLElement, Document, 
-    Text | HTMLElement, Document, 
-    string
->('figure', htmlNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const footer = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLElement, Document, 
-    Text | HTMLElement, Document, 
-    string
->('footer', htmlNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const form = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLFormElement, Document, 
-    Text | HTMLElement, Document, 
-    string
->('form', htmlNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const h1 = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLHeadingElement, Document, 
-    Text | HTMLElement, Document, 
-    string
->('h1', htmlNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const h2 = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLHeadingElement, Document, 
-    Text | HTMLElement, Document, 
-    string
->('h2', htmlNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const h3 = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLHeadingElement, Document, 
-    Text | HTMLElement, Document, 
-    string
->('h3', htmlNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const h4 = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLHeadingElement, Document, 
-    Text | HTMLElement, Document, 
-    string
->('h4', htmlNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const h5 = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLHeadingElement, Document, 
-    Text | HTMLElement, Document, 
-    string
->('h5', htmlNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const h6 = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLHeadingElement, Document, 
-    Text | HTMLElement, Document, 
-    string
->('h6', htmlNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const head = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLHeadElement, Document, 
-    Text | HTMLElement, Document, 
-    string
->('head', htmlNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const header = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLElement, Document, 
-    Text | HTMLElement, Document, 
-    string
->('header', htmlNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const hgroup = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLElement, Document, 
-    Text | HTMLElement, Document, 
-    string
->('hgroup', htmlNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const hr = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLHRElement, Document, 
-    undefined, Document, 
-    string
->('hr', htmlNodeFactory, noNodeConnector, formatAdapterArgs);
-export const html = createDOMAdapter<
-    undefined, Document, 
-    HTMLElement, Document, 
-    Text | HTMLElement, Document, 
-    string
->('html', htmlNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const i = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLElement, Document, 
-    Text | HTMLElement, Document, 
-    string
->('i', htmlNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const iframe = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLIFrameElement, Document, 
-    Text | HTMLElement, Document, 
-    string
->('iframe', htmlNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const img = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLImageElement, Document, 
-    undefined, Document, 
-    string
->('img', htmlNodeFactory, noNodeConnector, formatAdapterArgs);
-export const input = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLInputElement, Document, 
-    undefined, Document, 
-    string
->('input', htmlNodeFactory, noNodeConnector, formatAdapterArgs);
-export const ins = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLModElement, Document, 
-    Text | HTMLElement, Document, 
-    string
->('ins', htmlNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const kbd = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLElement, Document, 
-    Text | HTMLElement, Document, 
-    string
->('kbd', htmlNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const label = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLLabelElement, Document, 
-    Text | HTMLElement, Document, 
-    string
->('label', htmlNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const legend = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLLegendElement, Document, 
-    Text | HTMLElement, Document, 
-    string
->('legend', htmlNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const li = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLLIElement, Document, 
-    Text | HTMLElement, Document, 
-    string
->('li', htmlNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const link = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLLinkElement, Document, 
-    Text | HTMLElement, Document, 
-    string
->('link', htmlNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const main = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLElement, Document, 
-    Text | HTMLElement, Document, 
-    string
->('main', htmlNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const mark = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLElement, Document, 
-    Text | HTMLElement, Document, 
-    string
->('mark', htmlNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const menu = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLMenuElement, Document, 
-    Text | HTMLElement, Document, 
-    string
->('menu', htmlNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const meta = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLElement, Document, 
-    Text | HTMLElement, Document, 
-    string
->('meta', htmlNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const meter = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLMeterElement, Document, 
-    Text | HTMLElement, Document, 
-    string
->('meter', htmlNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const nav = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLElement, Document, 
-    Text | HTMLElement, Document, 
-    string
->('nav', htmlNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const noscript = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLElement, Document, 
-    Text | HTMLElement, Document, 
-    string
->('noscript', htmlNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const object = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLObjectElement, Document, 
-    Text | HTMLElement, Document, 
-    string
->('object', htmlNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const ol = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLOListElement, Document, 
-    Text | HTMLElement, Document, 
-    string
->('ol', htmlNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const optgroup = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLOptGroupElement, Document, 
-    Text | HTMLElement, Document, 
-    string
->('optgroup', htmlNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const option = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLOptionElement, Document, 
-    Text | HTMLElement, Document, 
-    string
->('option', htmlNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const output = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLOutputElement, Document, 
-    Text | HTMLElement, Document, 
-    string
->('output', htmlNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const p = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLParagraphElement, Document, 
-    Text | HTMLElement, Document, 
-    string
->('p', htmlNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const param = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLParagraphElement, Document, 
-    Text | HTMLElement, Document, 
-    string
->('param', htmlNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const picture = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLPictureElement, Document, 
-    Text | HTMLElement, Document, 
-    string
->('picture', htmlNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const pre = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLPreElement, Document, 
-    Text | HTMLElement, Document, 
-    string
->('pre', htmlNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const progress = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLProgressElement, Document, 
-    Text | HTMLElement, Document, 
-    string
->('progress', htmlNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const q = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLQuoteElement, Document, 
-    Text | HTMLElement, Document, 
-    string
->('q', htmlNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const rp = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLElement, Document, 
-    Text | HTMLElement, Document, 
-    string
->('rp', htmlNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const rt = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLElement, Document, 
-    Text | HTMLElement, Document, 
-    string
->('rt', htmlNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const ruby = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLElement, Document, 
-    Text | HTMLElement, Document, 
-    string
->('ruby', htmlNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const s = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLElement, Document, 
-    Text | HTMLElement, Document, 
-    string
->('s', htmlNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const samp = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLElement, Document, 
-    Text | HTMLElement, Document, 
-    string
->('samp', htmlNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const script = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLElement, Document, 
-    Text | HTMLElement, Document, 
-    string
->('script', htmlNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const search = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLElement, Document, 
-    Text | HTMLElement, Document, 
-    string
->('search', htmlNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const section = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLElement, Document, 
-    Text | HTMLElement, Document, 
-    string
->('section', htmlNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const select = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLSelectElement, Document, 
-    Text | HTMLElement, Document, 
-    string
->('select', htmlNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const htmlSlot = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLSlotElement, Document, 
-    Text | HTMLElement, Document, 
-    string
->('slot', htmlNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const small = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLElement, Document, 
-    Text | HTMLElement, Document, 
-    string
->('small', htmlNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const source = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLSourceElement, Document, 
-    Text | HTMLElement, Document, 
-    string
->('source', htmlNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const span = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLElement, Document, 
-    Text | HTMLElement, Document, 
-    string
->('span', htmlNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const strong = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLElement, Document, 
-    Text | HTMLElement, Document, 
-    string
->('strong', htmlNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const style = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLElement, Document, 
-    Text | HTMLElement, Document, 
-    string
->('style', htmlNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const sub = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLElement, Document, 
-    Text | HTMLElement, Document, 
-    string
->('sub', htmlNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const summary = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLElement, Document, 
-    Text | HTMLElement, Document, 
-    string
->('summary', htmlNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const sup = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLElement, Document, 
-    Text | HTMLElement, Document, 
-    string
->('sup', htmlNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const table = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLTableElement, Document, 
-    Text | HTMLElement, Document, 
-    string
->('table', htmlNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const tbody = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLTableSectionElement, Document, 
-    Text | HTMLElement, Document, 
-    string
->('tbody', htmlNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const td = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLTableCellElement, Document, 
-    Text | HTMLElement, Document, 
-    string
->('td', htmlNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const template = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLTemplateElement, Document, 
-    Text | HTMLElement, Document, 
-    string
->('template', htmlNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const textarea = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLTextAreaElement, Document, 
-    Text | HTMLElement, Document, 
-    string
->('textarea', htmlNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const tfoot = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLTableSectionElement, Document, 
-    Text | HTMLElement, Document, 
-    string
->('tfoot', htmlNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const th = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLTableCellElement, Document, 
-    Text | HTMLElement, Document, 
-    string
->('th', htmlNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const thead = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLTableSectionElement, Document, 
-    Text | HTMLElement, Document, 
-    string
->('thead', htmlNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const tile = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLTimeElement, Document, 
-    Text | HTMLElement, Document, 
-    string
->('tile', htmlNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const htmlTitle = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLTitleElement, Document, 
-    Text | HTMLElement, Document, 
-    string
->('htmlTitle', htmlNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const tr = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLTableRowElement, Document, 
-    Text | HTMLElement, Document, 
-    string
->('tr', htmlNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const track = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLTrackElement, Document, 
-    Text | HTMLElement, Document, 
-    string
->('track', htmlNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const u = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLElement, Document, 
-    Text | HTMLElement, Document, 
-    string
->('u', htmlNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const ul = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLUListElement, Document, 
-    Text | HTMLElement, Document, 
-    string
->('ul', htmlNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const htmlVar = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLElement, Document, 
-    Text | HTMLElement, Document, 
-    string
->('var', htmlNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const video = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLVideoElement, Document, 
-    Text | HTMLElement, Document, 
-    string
->('video', htmlNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const wbr = createDOMAdapter<
-    HTMLElement, Document, 
-    HTMLElement, Document, 
-    Text | HTMLElement, Document, 
-    string
->('wbr', htmlNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const animateColor = createDOMAdapter<
-    SVGElement, Document, 
-    SVGAnimateColorElement, Document,
-    Text | SVGElement, Document, 
-    string
->('animateColor', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const animate = createDOMAdapter<
-    SVGElement, Document, 
-    SVGAnimateElement, Document, 
-    Text | SVGElement, Document, 
-    string
->('animate', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const animateMotion = createDOMAdapter<
-    SVGElement, Document, 
-    SVGAnimateMotionElement, Document, 
-    Text | SVGElement, Document, 
-    string
->('animateMotion', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const animateTransform = createDOMAdapter<
-    SVGElement, Document, 
-    SVGAnimateTransformElement, Document, 
-    Text | SVGElement, Document, 
-    string
->('animateTransform', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const circle = createDOMAdapter<
-    SVGElement, Document, 
-    SVGCircleElement, Document, 
-    Text | SVGElement, Document, 
-    string
->('circle', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const clipPath = createDOMAdapter<
-    SVGElement, Document, 
-    SVGClipPathElement, Document, 
-    Text | SVGElement, Document, 
-    string
->('clipPath', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const defs = createDOMAdapter<
-    SVGElement, Document, 
-    SVGDefsElement, Document, 
-    Text | SVGElement, Document, 
-    string
->('defs', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const desc = createDOMAdapter<
-    SVGElement, Document, 
-    SVGDescElement, Document, 
-    Text | SVGElement, Document, 
-    string
->('desc', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const ellipse = createDOMAdapter<
-    SVGElement, Document, 
-    SVGEllipseElement, Document, 
-    Text | SVGElement, Document, 
-    string
->('ellipse', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const feBlend = createDOMAdapter<
-    SVGElement, Document, 
-    SVGFEBlendElement, Document, 
-    Text | SVGElement, Document, 
-    string
->('feBlend', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const feColorMatrix = createDOMAdapter<
-    SVGElement, Document, 
-    SVGFEColorMatrixElement, Document, 
-    Text | SVGElement, Document, 
-    string
->('feColorMatrix', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const feComponentTransfer = createDOMAdapter<
-    SVGElement, Document, 
-    SVGFEComponentTransferElement, Document, 
-    Text | SVGElement, Document, 
-    string
->('feComponentTransfer', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const feComposite = createDOMAdapter<
-    SVGElement, Document, 
-    SVGFECompositeElement, Document, 
-    Text | SVGElement, Document, 
-    string
->('feComposite', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const feConvolveMatrix = createDOMAdapter<
-    SVGElement, Document, 
-    SVGFEConvolveMatrixElement, Document, 
-    Text | SVGElement, Document, 
-    string
->('feConvolveMatrix', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const feDiffuseLighting = createDOMAdapter<
-    SVGElement, Document, 
-    SVGFEDiffuseLightingElement, Document, 
-    Text | SVGElement, Document, 
-    string
->('feDiffuseLighting', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const feDisplacementMap = createDOMAdapter<
-    SVGElement, Document, 
-    SVGFEDisplacementMapElement, Document, 
-    Text | SVGElement, Document, 
-    string
->('feDisplacementMap', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const feDistantLight = createDOMAdapter<
-    SVGElement, Document, 
-    SVGFEDistantLightElement, Document, 
-    Text | SVGElement, Document, 
-    string
->('feDistantLight', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const feDropShadow = createDOMAdapter<
-    SVGElement, Document, 
-    SVGFEDropShadowElement, Document, 
-    Text | SVGElement, Document, 
-    string
->('feDropShadow', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const feFlood = createDOMAdapter<
-    SVGElement, Document, 
-    SVGFEFloodElement, Document, 
-    Text | SVGElement, Document, 
-    string
->('feFlood', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const feFuncA = createDOMAdapter<
-    SVGElement, Document, 
-    SVGFEFuncAElement, Document, 
-    Text | SVGElement, Document, 
-    string
->('feFuncA', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const feFuncB = createDOMAdapter<
-    SVGElement, Document, 
-    SVGFEFuncBElement, Document, 
-    Text | SVGElement, Document, 
-    string
->('feFuncB', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const feFuncG = createDOMAdapter<
-    SVGElement, Document, 
-    SVGFEFuncGElement, Document, 
-    Text | SVGElement, Document, 
-    string
->('feFuncG', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const feFuncR = createDOMAdapter<
-    SVGElement, Document, 
-    SVGFEFuncRElement, Document, 
-    Text | SVGElement, Document, 
-    string
->('feFuncR', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const feGaussianBlur = createDOMAdapter<
-    SVGElement, Document, 
-    SVGFEGaussianBlurElement, Document, 
-    Text | SVGElement, Document, 
-    string
->('feGaussianBlur', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const feImage = createDOMAdapter<
-    SVGElement, Document, 
-    SVGFEImageElement, Document, 
-    Text | SVGElement, Document, 
-    string
->('feImage', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const feMerge = createDOMAdapter<
-    SVGElement, Document, 
-    SVGFEMergeElement, Document, 
-    Text | SVGElement, Document, 
-    string
->('feMerge', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const feMergeNode = createDOMAdapter<
-    SVGElement, Document, 
-    SVGFEMergeNodeElement, Document, 
-    Text | SVGElement, Document, 
-    string
->('feMergeNode', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const feMorphology = createDOMAdapter<
-    SVGElement, Document, 
-    SVGFEMorphologyElement, Document, 
-    Text | SVGElement, Document, 
-    string
->('feMorphology', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const feOffset = createDOMAdapter<
-    SVGElement, Document, 
-    SVGFEOffsetElement, Document, 
-    Text | SVGElement, Document, 
-    string
->('feOffset', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const fePointLight = createDOMAdapter<
-    SVGElement, Document, 
-    SVGFEPointLightElement, Document, 
-    Text | SVGElement, Document, 
-    string
->('fePointLight', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const feSpecularLighting = createDOMAdapter<
-    SVGElement, Document, 
-    SVGFESpecularLightingElement, Document, 
-    Text | SVGElement, Document, 
-    string
->('feSpecularLighting', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const feSpotLight = createDOMAdapter<
-    SVGElement, Document, 
-    SVGFESpotLightElement, Document, 
-    Text | SVGElement, Document, 
-    string
->('feSpotLight', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const feTile = createDOMAdapter<
-    SVGElement, Document, 
-    SVGFETileElement, Document, 
-    Text | SVGElement, Document, 
-    string
->('feTile', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const feTurbulence = createDOMAdapter<
-    SVGElement, Document, 
-    SVGFETurbulenceElement, Document, 
-    Text | SVGElement, Document, 
-    string
->('feTurbulence', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const filter = createDOMAdapter<
-    SVGElement, Document, 
-    SVGFilterElement, Document, 
-    Text | SVGElement, Document, 
-    string
->('filter', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const g = createDOMAdapter<
-    SVGElement, Document, 
-    SVGGElement, Document, 
-    Text | SVGElement, Document, 
-    string
->('g', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const image = createDOMAdapter<
-    SVGElement, Document, 
-    SVGImageElement, Document, 
-    Text | SVGElement, Document, 
-    string
->('image', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const line = createDOMAdapter<
-    SVGElement, Document, 
-    SVGLineElement, Document, 
-    Text | SVGElement, Document, 
-    string
->('line', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const linearGradient = createDOMAdapter<
-    SVGElement, Document, 
-    SVGLinearGradientElement, Document, 
-    Text | SVGElement, Document, 
-    string
->('linearGradient', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const marker = createDOMAdapter<
-    SVGElement, Document, 
-    SVGMarkerElement, Document, 
-    Text | SVGElement, Document, 
-    string
->('marker', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const mask = createDOMAdapter<
-    SVGElement, Document, 
-    SVGMaskElement, Document, 
-    Text | SVGElement, Document, 
-    string
->('mask', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const metadata = createDOMAdapter<
-    SVGElement, Document, 
-    SVGMetadataElement, Document, 
-    Text | SVGElement, Document, 
-    string
->('metadata', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const mpath = createDOMAdapter<
-    SVGElement, Document, 
-    SVGMPathElement, Document, 
-    Text | SVGElement, Document, 
-    string
->('mpath', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const path = createDOMAdapter<
-    SVGElement, Document, 
-    SVGPathElement, Document, 
-    Text | SVGElement, Document, 
-    string
->('path', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const polygon = createDOMAdapter<
-    SVGElement, Document, 
-    SVGPolygonElement, Document, 
-    Text | SVGElement, Document, 
-    string
->('polygon', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const polyline = createDOMAdapter<
-    SVGElement, Document, 
-    SVGPolylineElement, Document, 
-    Text | SVGElement, Document, 
-    string
->('polyline', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const radialGradient = createDOMAdapter<
-    SVGElement, Document, 
-    SVGRadialGradientElement, Document, 
-    Text | SVGElement, Document, 
-    string
->('radialGradient', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const rect = createDOMAdapter<
-    SVGElement, Document, 
-    SVGRectElement, Document, 
-    Text | SVGElement, Document, 
-    string
->('rect', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const stop = createDOMAdapter<
-    SVGElement, Document, 
-    SVGStopElement, Document, 
-    Text | SVGElement, Document, 
-    string
->('stop', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const svg = createDOMAdapter<
-    SVGElement, Document, 
-    SVGSVGElement, Document, 
-    Text | SVGElement, Document, 
-    string
->('svg', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const set = createDOMAdapter<
-    SVGElement, Document, 
-    SVGSetElement, Document, 
-    Text | SVGElement, Document, 
-    string
->('set', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const svgA = createDOMAdapter<
-    SVGElement, Document, 
-    SVGAElement, Document, 
-    Text | SVGElement, Document, 
-    string
->('a', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const svgPattern = createDOMAdapter<
-    SVGElement, Document, 
-    SVGPatternElement, Document, 
-    Text | SVGElement, Document, 
-    string
->('svgPattern', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const svgScript = createDOMAdapter<
-    SVGElement, Document, 
-    SVGScriptElement, Document, 
-    Text | SVGElement, Document, 
-    string
->('svgScript', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const svgStyle = createDOMAdapter<
-    SVGElement, Document, 
-    SVGStyleElement, Document, 
-    Text | SVGElement, Document, 
-    string
->('svgStyle', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const svgSwitch = createDOMAdapter<
-    SVGElement, Document, 
-    SVGSwitchElement, Document, 
-    Text | SVGElement, Document, 
-    string
->('svgSwitch', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const svgSymbol = createDOMAdapter<
-    SVGElement, Document, 
-    SVGSymbolElement, Document, 
-    Text | SVGElement, Document, 
-    string
->('svgSymbol', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const svgText = createDOMAdapter<
-    SVGElement, Document, 
-    SVGTextElement, Document, 
-    Text | SVGElement, Document, 
-    string
->('svgText', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const svgTitle = createDOMAdapter<
-    SVGElement, Document, 
-    SVGTitleElement, Document, 
-    Text | SVGElement, Document, 
-    string
->('svgTitle', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const textPath = createDOMAdapter<
-    SVGElement, Document, 
-    SVGTextPathElement, Document, 
-    Text | SVGElement, Document, 
-    string
->('textPath', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const tspan = createDOMAdapter<
-    SVGElement, Document, 
-    SVGTSpanElement, Document, 
-    Text | SVGElement, Document, 
-    string
->('tspan', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const use = createDOMAdapter<
-    SVGElement, Document, 
-    SVGUseElement, Document, 
-    Text | SVGElement, Document, 
-    string
->('use', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const view = createDOMAdapter<
-    SVGElement, Document, 
-    SVGViewElement, Document, 
-    Text | SVGElement, Document, 
-    string
->('view', svgNodeFactory, appendNodeConnector, formatAdapterArgs);
-export const id = <T extends Element, U extends Document>(value: PropertyValueType): NodeTask<T,U> => setAttr('id', value);
-export const accesskey = <T extends Element, U extends Document>(value: PropertyValueType): NodeTask<T,U> => setAttr('accesskey', value);
-export const autocapitalize = <T extends Element, U extends Document>(value: PropertyValueType): NodeTask<T,U> => setAttr('autocapitalize', value);
-export const autofocus = <T extends Element, U extends Document>(value: PropertyValueType): NodeTask<T,U> => setAttr('autofocus', value);
-export const enterkeyhint = <T extends Element, U extends Document>(value: PropertyValueType): NodeTask<T,U> => setAttr('enterkeyhint', value);
-export const exportparts = <T extends Element, U extends Document>(value: PropertyValueType): NodeTask<T,U> => setAttr('exportparts', value);
-export const hidden = <T extends Element, U extends Document>(value: PropertyValueType): NodeTask<T,U> => setAttr('hidden', value);
-export const inert = <T extends Element, U extends Document>(value: PropertyValueType): NodeTask<T,U> => setAttr('inert', value);
-export const inputmode = <T extends Element, U extends Document>(value: PropertyValueType): NodeTask<T,U> => setAttr('inputmode', value);
-export const is = <T extends Element, U extends Document>(value: PropertyValueType): NodeTask<T,U> => setAttr('is', value);
-export const nonce = <T extends Element, U extends Document>(value: PropertyValueType): NodeTask<T,U> => setAttr('nonce', value);
-export const part = <T extends Element, U extends Document>(value: PropertyValueType): NodeTask<T,U> => setAttr('part', value);
-export const popover = <T extends Element, U extends Document>(value: PropertyValueType): NodeTask<T,U> => setAttr('popover', value);
-export const slot = <T extends Element, U extends Document>(value: PropertyValueType): NodeTask<T,U> => setAttr('slot', value);
-export const spellcheck = <T extends Element, U extends Document>(value: PropertyValueType): NodeTask<T,U> => setAttr('spellcheck', value);
-export const translate = <T extends Element, U extends Document>(value: PropertyValueType): NodeTask<T,U> => setAttr('translate', value);
-export const className = <T extends Element, U extends Document>(value: PropertyValueType): NodeTask<T,U> => setAttr('class', value);
-export const title = <T extends HTMLElement, U extends Document>(value: PropertyValueType): NodeTask<T,U> => setAttr('title', value);
-export const tabIndex = <T extends HTMLElement, U extends Document>(value: PropertyValueType): NodeTask<T,U> => setAttr('tabIndex', value);
-export const lang = <T extends HTMLElement, U extends Document>(value: PropertyValueType): NodeTask<T,U> => setAttr('lang', value);
-export const dir = <T extends HTMLElement, U extends Document>(value: PropertyValueType): NodeTask<T,U> => setAttr('dir', value);
-export const draggable = <T extends HTMLElement, U extends Document>(value: PropertyValueType): NodeTask<T,U> => setAttr('draggable', value);
-export const itemid = <T extends HTMLElement, U extends Document>(value: PropertyValueType): NodeTask<T,U> => setAttr('itemid', value);
-export const itemprop = <T extends HTMLElement, U extends Document>(value: PropertyValueType): NodeTask<T,U> => setAttr('itemprop', value);
-export const itemref = <T extends HTMLElement, U extends Document>(value: PropertyValueType): NodeTask<T,U> => setAttr('itemref', value);
-export const itemscope = <T extends HTMLElement, U extends Document>(value: PropertyValueType): NodeTask<T,U> => setAttr('itemscope', value);
-export const itemtype = <T extends HTMLElement, U extends Document>(value: PropertyValueType): NodeTask<T,U> => setAttr('itemtype', value);
-export const crossorigin = <T extends HTMLElement, U extends Document>(value: PropertyValueType): NodeTask<T,U> => setAttr('crossorigin', value);
-export const disabled = <T extends HTMLElement, U extends Document>(value: PropertyValueType): NodeTask<T,U> => setAttr('disabled', value);
-export const elementtiming = <T extends HTMLElement, U extends Document>(value: PropertyValueType): NodeTask<T,U> => setAttr('elementtiming', value);
-export const max = <T extends HTMLElement, U extends Document>(value: PropertyValueType): NodeTask<T,U> => setAttr('max', value);
-export const min = <T extends HTMLElement, U extends Document>(value: PropertyValueType): NodeTask<T,U> => setAttr('min', value);
-export const step = <T extends HTMLInputElement, U extends Document>(value: PropertyValueType): NodeTask<T,U> => setAttr('step', value);
-export const type = <T extends HTMLInputElement, U extends Document>(value: PropertyValueType): NodeTask<T,U> => setAttr('type', value);
-export const accept = <T extends HTMLInputElement, U extends Document>(value: PropertyValueType): NodeTask<T,U> => setAttr('accept', value);
-export const capture = <T extends HTMLInputElement, U extends Document>(value: PropertyValueType): NodeTask<T,U> => setAttr('capture', value);
-export const pattern = <T extends HTMLInputElement, U extends Document>(value: PropertyValueType): NodeTask<T,U> => setAttr('pattern', value);
-export const placeholder = <T extends HTMLInputElement, U extends Document>(value: PropertyValueType): NodeTask<T,U> => setAttr('placeholder', value);
-export const $for = <T extends HTMLLabelElement | HTMLOutputElement, U extends Document>(value: PropertyValueType): NodeTask<T,U> => setAttr('for', value);
-export const size = <T extends HTMLInputElement | HTMLSelectElement, U extends Document>(value: PropertyValueType): NodeTask<T,U> => setAttr('size', value);
-export const dirname = <T extends HTMLInputElement | HTMLTextAreaElement, U extends Document>(value: PropertyValueType): NodeTask<T,U> => setAttr('dirname', value);
-export const multiple = <T extends HTMLInputElement | HTMLTextAreaElement, U extends Document>(value: PropertyValueType): NodeTask<T,U> => setAttr('multiple', value);
-export const readonly = <T extends HTMLInputElement | HTMLTextAreaElement, U extends Document>(value: PropertyValueType): NodeTask<T,U> => setAttr('readonly', value);
-export const maxlength = <T extends HTMLInputElement | HTMLTextAreaElement, U extends Document>(value: PropertyValueType): NodeTask<T,U> => setAttr('maxlength', value);
-export const minlength = <T extends HTMLInputElement | HTMLTextAreaElement, U extends Document>(value: PropertyValueType): NodeTask<T,U> => setAttr('minlength', value);
-export const required = <T extends HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement, U extends Document>(value: PropertyValueType): NodeTask<T,U> => setAttr('required', value);
-export const rel = <T extends HTMLAnchorElement | HTMLAreaElement | HTMLLinkElement | HTMLFormElement, U extends Document>(value: PropertyValueType): NodeTask<T,U> => setAttr('rel', value);
-export const autocomplete = <T extends HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement | HTMLFormElement, U extends Document>(value: PropertyValueType): NodeTask<T,U> => setAttr('autocomplete', value);
-export const nodeValue = <T extends Node, U extends Document>(value: PropertyValueType): NodeTask<T,U> => setProp('nodeValue', value);
-export const textContent = <T extends Node, U extends Document>(value: PropertyValueType): NodeTask<T,U> => setProp('textContent', value);
-export const innerHTML = <T extends Element, U extends Document>(value: PropertyValueType): NodeTask<T,U> => setProp('innerHTML', value);
-export const outerHTML = <T extends Element, U extends Document>(value: PropertyValueType): NodeTask<T,U> => setProp('outerHTML', value);
-export const getId = <T extends Element, U extends Document>(key?: string): Filter<[T,U],[string, unknown][]> => getAttr('id', key);
-export const getAccesskey = <T extends Element, U extends Document>(key?: string): Filter<[T,U],[string, unknown][]> => getAttr('accesskey', key);
-export const getAutocapitalize = <T extends Element, U extends Document>(key?: string): Filter<[T,U],[string, unknown][]> => getAttr('autocapitalize', key);
-export const getAutofocus = <T extends Element, U extends Document>(key?: string): Filter<[T,U],[string, unknown][]> => getAttr('autofocus', key);
-export const getEnterkeyhint = <T extends Element, U extends Document>(key?: string): Filter<[T,U],[string, unknown][]> => getAttr('enterkeyhint', key);
-export const getExportparts = <T extends Element, U extends Document>(key?: string): Filter<[T,U],[string, unknown][]> => getAttr('exportparts', key);
-export const getHidden = <T extends Element, U extends Document>(key?: string): Filter<[T,U],[string, unknown][]> => getAttr('hidden', key);
-export const getInert = <T extends Element, U extends Document>(key?: string): Filter<[T,U],[string, unknown][]> => getAttr('inert', key);
-export const getInputmode = <T extends Element, U extends Document>(key?: string): Filter<[T,U],[string, unknown][]> => getAttr('inputmode', key);
-export const getIs = <T extends Element, U extends Document>(key?: string): Filter<[T,U],[string, unknown][]> => getAttr('is', key);
-export const getNonce = <T extends Element, U extends Document>(key?: string): Filter<[T,U],[string, unknown][]> => getAttr('nonce', key);
-export const getPart = <T extends Element, U extends Document>(key?: string): Filter<[T,U],[string, unknown][]> => getAttr('part', key);
-export const getPopover = <T extends Element, U extends Document>(key?: string): Filter<[T,U],[string, unknown][]> => getAttr('popover', key);
-export const getSlot = <T extends Element, U extends Document>(key?: string): Filter<[T,U],[string, unknown][]> => getAttr('slot', key);
-export const getSpellcheck = <T extends Element, U extends Document>(key?: string): Filter<[T,U],[string, unknown][]> => getAttr('spellcheck', key);
-export const getTranslate = <T extends Element, U extends Document>(key?: string): Filter<[T,U],[string, unknown][]> => getAttr('translate', key);
-export const getClassName = <T extends Element, U extends Document>(key?: string): Filter<[T,U],[string, unknown][]> => getAttr('class', key);
-export const getNodeValue = <T extends Node, U extends Document>(key?: string): Filter<[T,U],[string, unknown][]> => getProp('nodeValue', key);
-export const getTextContent = <T extends Node, U extends Document>(key?: string): Filter<[T,U],[string, unknown][]> => getProp('textContent', key);
-export const getInnerHTML = <T extends Element, U extends Document>(key?: string): Filter<[T,U],[string, unknown][]> => getProp('innerHTML', key);
-export const getOuterHTML = <T extends Element, U extends Document>(key?: string): Filter<[T,U],[string, unknown][]> => getProp('outerHTML', key);
-export const nodeName = <T extends Node, U extends Document>(key?: string): Filter<[T,U],[string, unknown][]> => getProp('nodeName', key);
-export const nodeType = <T extends Node, U extends Document>(key?: string): Filter<[T,U],[string, unknown][]> => getProp('nodeType', key);
-export const clientHeight = <T extends Element, U extends Document>(key?: string): Filter<[T,U],[string, unknown][]> => getProp('clientHeight', key);
-export const clientLeft = <T extends Element, U extends Document>(key?: string): Filter<[T,U],[string, unknown][]> => getProp('clientLeft', key);
-export const clientTop = <T extends Element, U extends Document>(key?: string): Filter<[T,U],[string, unknown][]> => getProp('clientTop', key);
-export const clientWidth = <T extends Element, U extends Document>(key?: string): Filter<[T,U],[string, unknown][]> => getProp('clientWidth', key);
-export const tagName = <T extends Element, U extends Document>(key?: string): Filter<[T,U],[string, unknown][]> => getProp('tagName', key);
-export const getTitle = <T extends HTMLElement, U extends Document>(key?: string): Filter<[T,U],[string, unknown][]> => getAttr('title', key);
-export const getTabIndex = <T extends HTMLElement, U extends Document>(key?: string): Filter<[T,U],[string, unknown][]> => getAttr('tabIndex', key);
-export const getLang = <T extends HTMLElement, U extends Document>(key?: string): Filter<[T,U],[string, unknown][]> => getAttr('lang', key);
-export const getDir = <T extends HTMLElement, U extends Document>(key?: string): Filter<[T,U],[string, unknown][]> => getAttr('dir', key);
-export const getDraggable = <T extends HTMLElement, U extends Document>(key?: string): Filter<[T,U],[string, unknown][]> => getAttr('draggable', key);
-export const getItemid = <T extends HTMLElement, U extends Document>(key?: string): Filter<[T,U],[string, unknown][]> => getAttr('itemid', key);
-export const getItemprop = <T extends HTMLElement, U extends Document>(key?: string): Filter<[T,U],[string, unknown][]> => getAttr('itemprop', key);
-export const getItemref = <T extends HTMLElement, U extends Document>(key?: string): Filter<[T,U],[string, unknown][]> => getAttr('itemref', key);
-export const getItemscope = <T extends HTMLElement, U extends Document>(key?: string): Filter<[T,U],[string, unknown][]> => getAttr('itemscope', key);
-export const getItemtype = <T extends HTMLElement, U extends Document>(key?: string): Filter<[T,U],[string, unknown][]> => getAttr('itemtype', key);
-export const getCrossorigin = <T extends HTMLElement, U extends Document>(key?: string): Filter<[T,U],[string, unknown][]> => getAttr('crossorigin', key);
-export const getDisabled = <T extends HTMLElement, U extends Document>(key?: string): Filter<[T,U],[string, unknown][]> => getAttr('disabled', key);
-export const getElementtiming = <T extends HTMLElement, U extends Document>(key?: string): Filter<[T,U],[string, unknown][]> => getAttr('elementtiming', key);
-export const getMax = <T extends HTMLElement, U extends Document>(key?: string): Filter<[T,U],[string, unknown][]> => getAttr('max', key);
-export const getMin = <T extends HTMLElement, U extends Document>(key?: string): Filter<[T,U],[string, unknown][]> => getAttr('min', key);
-export const getStep = <T extends HTMLInputElement, U extends Document>(key?: string): Filter<[T,U],[string, unknown][]> => getAttr('step', key);
-export const getType = <T extends HTMLInputElement, U extends Document>(key?: string): Filter<[T,U],[string, unknown][]> => getAttr('type', key);
-export const getAccept = <T extends HTMLInputElement, U extends Document>(key?: string): Filter<[T,U],[string, unknown][]> => getAttr('accept', key);
-export const getCapture = <T extends HTMLInputElement, U extends Document>(key?: string): Filter<[T,U],[string, unknown][]> => getAttr('capture', key);
-export const getPattern = <T extends HTMLInputElement, U extends Document>(key?: string): Filter<[T,U],[string, unknown][]> => getAttr('pattern', key);
-export const getPlaceholder = <T extends HTMLInputElement, U extends Document>(key?: string): Filter<[T,U],[string, unknown][]> => getAttr('placeholder', key);
-export const getFor = <T extends HTMLLabelElement | HTMLOutputElement, U extends Document>(key?: string): Filter<[T,U],[string, unknown][]> => getAttr('for', key);
-export const getSize = <T extends HTMLInputElement | HTMLSelectElement, U extends Document>(key?: string): Filter<[T,U],[string, unknown][]> => getAttr('size', key);
-export const getDirname = <T extends HTMLInputElement | HTMLTextAreaElement, U extends Document>(key?: string): Filter<[T,U],[string, unknown][]> => getAttr('dirname', key);
-export const getMultiple = <T extends HTMLInputElement | HTMLTextAreaElement, U extends Document>(key?: string): Filter<[T,U],[string, unknown][]> => getAttr('multiple', key);
-export const getReadonly = <T extends HTMLInputElement | HTMLTextAreaElement, U extends Document>(key?: string): Filter<[T,U],[string, unknown][]> => getAttr('readonly', key);
-export const getMaxlength = <T extends HTMLInputElement | HTMLTextAreaElement, U extends Document>(key?: string): Filter<[T,U],[string, unknown][]> => getAttr('maxlength', key);
-export const getMinlength = <T extends HTMLInputElement | HTMLTextAreaElement, U extends Document>(key?: string): Filter<[T,U],[string, unknown][]> => getAttr('minlength', key);
-export const getRequired = <T extends HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement, U extends Document>(key?: string): Filter<[T,U],[string, unknown][]> => getAttr('required', key);
-export const getRel = <T extends HTMLAnchorElement | HTMLAreaElement | HTMLLinkElement | HTMLFormElement, U extends Document>(key?: string): Filter<[T,U],[string, unknown][]> => getAttr('rel', key);
-export const getAutocomplete = <T extends HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement | HTMLFormElement, U extends Document>(key?: string): Filter<[T,U],[string, unknown][]> => getAttr('autocomplete', key);
-export const addClass = <T extends Element, U extends Document>(name: string): NodeTask<T,U> => [
-    (entry: [T,U]) => {
-        entry[0].classList.add(name);
-        return entry;
-    }
-];
-export const removeClass = <T extends Element, U extends Document>(name: string): NodeTask<T,U> => [
-    (entry: [T,U]) => {
-        entry[0].classList.remove(name);
-        return entry;
-    }
-];
-export const toggleClass = <T extends Element, U extends Document>(name: string): NodeTask<T,U> => [
-    (entry: [T,U]) => {
-        entry[0].classList.toggle(name);
-        return entry;
-    }
-];
-export const dispatch = <T extends EventTarget, U extends Document>(event: Event): NodeTask<T,U> => [
-    (entry: [T,U]) => {
-        entry[0].dispatchEvent(event);
-        return entry;
-    }
-];
-export const onClick = <T extends EventTarget, U extends Document>(
+): Task<DOMTaskData<T>> => (data: DOMTaskData<T>) => { 
+    data.element.removeEventListener(eventType, listener, options); 
+    return data; 
+}
+export type HTMLProxyTarget = Record<string, Adapter<DOMTaskArg, DOMTaskData<HTMLElement>, string | Branch<DOMTaskArg, DOMTaskData<Text | HTMLElement>, DOMTaskData<Element>>>>;
+export type SVGProxyTarget = Record<string, Adapter<DOMTaskArg, DOMTaskData<SVGElement>, string | Branch<DOMTaskArg, DOMTaskData<Text | SVGElement>, DOMTaskData<SVGElement>>>>;
+export type MathMLProxyTarget = Record<string, Adapter<DOMTaskArg, DOMTaskData<MathMLElement>, string | Branch<DOMTaskArg, DOMTaskData<Text | MathMLElement>, DOMTaskData<MathMLElement>>>>;
+export type DOMPropertyProxyTarget = Record<string, DOMPropertyTask>;
+export type DOMAttributeProxyTarget = Record<string, (value: DOMPropertyValue) => Task<DOMTaskData<Element>>>;
+export type DOMStylePropertyProxyTarget = Record<string, (value: DOMPropertyValue) => Task<DOMTaskData<SpecializedElement>>>;
+export type DOMEventProxyTarget = Record<string, (listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions) => Task<DOMTaskData<EventTarget>>>;
+export const adapters = {
+    html: new Proxy<HTMLProxyTarget>({}, {
+        get(target, key, receiver) {
+            if(typeof key === "string") return createTreeNodeAdapter<
+                DOMTaskArg, DOMTaskData<HTMLElement>, DOMTaskData<Text | HTMLElement>, string
+            >(nodeFactory<HTMLElement>(key, htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+            return Reflect.get(target, key, receiver);
+        }
+    }),
+    svg: new Proxy<SVGProxyTarget>({}, {
+        get(target, key, receiver) {
+            if(typeof key === "string") return createTreeNodeAdapter<
+                DOMTaskArg, DOMTaskData<SVGElement>, DOMTaskData<Text | SVGElement>, string
+            >(nodeFactory<SVGElement>(key, svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+            return Reflect.get(target, key, receiver);
+        }
+    }),
+    math: new Proxy<MathMLProxyTarget>({}, {
+        get(target, key, receiver) {
+            if(typeof key === "string") return createTreeNodeAdapter<
+                DOMTaskArg, DOMTaskData<MathMLElement>, DOMTaskData<Text | MathMLElement>, string
+            >(nodeFactory<MathMLElement>(key, mathmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+            return Reflect.get(target, key, receiver);
+        }
+    }),
+    props: new Proxy<DOMPropertyProxyTarget>({}, {
+        get(target, key, receiver) {
+            if(typeof key === "string") return (value: DOMPropertyValue): Task<DOMTaskData<Node>> => prop(key, value);
+            return Reflect.get(target, key, receiver);
+        }
+    }),
+    attrs: new Proxy<DOMAttributeProxyTarget>({}, {
+        get(target, key, receiver) {
+            if(typeof key === "string") return (value: DOMPropertyValue): Task<DOMTaskData<Element>> => 
+                attr(/^aria[A-Z].*$/g.test(key) ? key.replace('aria', ariaPreffix) : key, value);
+            return Reflect.get(target, key, receiver);
+        }
+    }),
+    style: new Proxy<DOMStylePropertyProxyTarget>({}, {
+        get(target, key, receiver) {
+            if(typeof key === "string") return (value: DOMPropertyValue): Task<DOMTaskData<SpecializedElement>> => style(key, value);
+            return Reflect.get(target, key, receiver);
+        }
+    }),
+    events: new Proxy<DOMEventProxyTarget>({}, {
+        get(target, key, receiver) {
+            if(typeof key === "string") return (key.startsWith('on') && key.length > 2) ? 
+                (listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions): Task<DOMTaskData<EventTarget>> => subscribe(key.slice(2).toLowerCase(), listener, options) :
+                (key.startsWith('off') && key.length > 3) ?
+                    (listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions): Task<DOMTaskData<EventTarget>> => unsubscribe(key.slice(3).toLowerCase(), listener, options) :
+                    (listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions): Task<DOMTaskData<EventTarget>> => subscribe(key, listener, options);
+
+            return Reflect.get(target, key, receiver);
+        }
+    })
+};
+export type DOMPropertyQueryProxyTarget = Record<string, (key: string, alias?: string) => Filter<DOMTaskData<Node>,[string, unknown][]>>;
+export type DOMStylePropertyQueryProxyTarget = Record<string, (key: string, alias?: string) => Filter<DOMTaskData<SpecializedElement>,[string, unknown][]>>;
+export const queries = {
+    props: new Proxy<DOMPropertyQueryProxyTarget>({},{
+        get(target, key, receiver) {
+            if(typeof key === "string") return (key: string, alias?: string): Filter<DOMTaskData<Node>,[string, unknown][]> => 
+                getProp(key, alias);
+            return Reflect.get(target, key, receiver);
+        }
+    }),
+    style: new Proxy<DOMStylePropertyQueryProxyTarget>({},{
+        get(target, key, receiver) {
+            if(typeof key === "string") return (key: string, alias?: string): Filter<DOMTaskData<SpecializedElement>,[string, unknown][]> => 
+                getStyle(key, alias);
+            return Reflect.get(target, key, receiver);
+        }
+    })
+}
+
+export const textNode = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<Text>, 
+    undefined, string
+>(nodeFactory<Text>("", textScope), noConnector, deriveDOMTaskArg, defaultConvert);
+
+export type ContextualElement<T,P,A,B> = T extends P ? A : B;
+export type HTMLAOrSVGAElement<T> = ContextualElement<T, DOMTaskData<HTMLElement>, HTMLAnchorElement, SVGAElement>; //T extends DOMTaskData<HTMLElement> ? HTMLAnchorElement : SVGAElement;
+export type HTMLAOrSVGAChildElement<T> = ContextualElement<T, DOMTaskData<HTMLElement>, HTMLElement, SVGElement>; //T extends DOMTaskData<HTMLElement> ? HTMLElement : SVGElement;
+
+//ContextualElement<T, DOMTaskData<HTMLElement>, HTMLAnchorElement, SVGAElement>
+//ContextualElement<T, DOMTaskData<HTMLElement>, HTMLElement, SVGElement>
+
+// export const a = createTreeNodeAdapter<
+//     DOMTaskArg, DOMTaskData<HTMLAnchorElement | SVGAElement>, 
+//     DOMTaskData<HTMLElement | SVGElement | Text>, string
+// >(nodeFactory<HTMLAnchorElement | SVGAElement>("a", contextualScope), appendConnector, deriveDOMTaskArg, defaultConvert); 
+
+
+export const a = <T>(...args: (
+        Task<DOMTaskData<HTMLAOrSVGAElement<T>>> 
+        | string 
+        | Branch<DOMTaskArg, DOMTaskData<HTMLAOrSVGAChildElement<T> | Text>, DOMTaskData<HTMLAOrSVGAElement<T>>>
+    )[]
+): Branch<DOMTaskArg, DOMTaskData<HTMLAOrSVGAElement<T>>, T> => 
+(tConnect: Connector<T, DOMTaskArg, DOMTaskData<HTMLAOrSVGAElement<T>>>, tDerive: Filter<T, DOMTaskArg>): Task<T> => 
+    tConnect(
+        args.reduce(
+            (filter: Filter<DOMTaskArg, DOMTaskData<HTMLAOrSVGAElement<T>>>, arg) => typeof arg === "function" ?
+                (arg.length == 1 ? 
+                    (ctx: DOMTaskArg) => 
+                        (arg as Task<DOMTaskData<HTMLAOrSVGAElement<T>>>)(filter(ctx)) :
+                    (ctx: DOMTaskArg) => 
+                        (arg as Branch<DOMTaskArg, DOMTaskData<HTMLAOrSVGAChildElement<T> | Text>, DOMTaskData<HTMLAOrSVGAElement<T>>>)
+                            (appendConnector, deriveDOMTaskArg)(filter(ctx))) :
+                (ctx: DOMTaskArg) => defaultConvert<HTMLAOrSVGAElement<T>>(arg)(filter(ctx)), 
+            nodeFactory<HTMLAOrSVGAElement<T>>("a", contextualScope)), 
+        tDerive
+    );
+
+export const titleTag = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLTitleElement | SVGTitleElement>, 
+    DOMTaskData<HTMLElement | SVGElement | Text>, string
+>(nodeFactory<HTMLTitleElement | SVGTitleElement>("title", contextualScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const scriptTag = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLElement | SVGScriptElement>, 
+    DOMTaskData<HTMLElement | SVGElement | Text>, string
+>(nodeFactory<HTMLElement | SVGScriptElement>("script", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const styleTag = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLElement | SVGStyleElement>, 
+    DOMTaskData<Text>, string
+>(nodeFactory<HTMLElement | SVGStyleElement>("style", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const htmlA = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLAnchorElement>, 
+    DOMTaskData<Text | HTMLElement>, string
+>(nodeFactory<HTMLAnchorElement>("htmlA", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const abbr = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLElement>, 
+    DOMTaskData<Text | HTMLElement>, string
+>(nodeFactory<HTMLElement>("abbr", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const address = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLElement>, 
+    DOMTaskData<Text | HTMLElement>, string
+>(nodeFactory<HTMLElement>("address", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const area = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLAreaElement>, 
+    undefined, string
+>(nodeFactory<HTMLAreaElement>("area", htmlScope), noConnector, deriveDOMTaskArg, defaultConvert);
+export const article = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLElement>, 
+    DOMTaskData<Text | HTMLElement>, string
+>(nodeFactory<HTMLElement>("article", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const aside = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLElement>, 
+    DOMTaskData<Text | HTMLElement>, string
+>(nodeFactory<HTMLElement>("aside", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const audio = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLAudioElement>, 
+    DOMTaskData<Text | HTMLElement>, string
+>(nodeFactory<HTMLAudioElement>("audio", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const b = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLElement>, 
+    DOMTaskData<Text | HTMLElement>, string
+>(nodeFactory<HTMLElement>("b", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const base = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLBaseElement>, 
+    undefined, string
+>(nodeFactory<HTMLBaseElement>("base", htmlScope), noConnector, deriveDOMTaskArg, defaultConvert);
+export const bdi = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLElement>, 
+    DOMTaskData<Text | HTMLElement>, string
+>(nodeFactory<HTMLElement>("bdi", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const bdo = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLElement>, 
+    DOMTaskData<Text | HTMLElement>, string
+>(nodeFactory<HTMLElement>("bdo", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const blockquote = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLQuoteElement>, 
+    DOMTaskData<Text | HTMLElement>, string
+>(nodeFactory<HTMLQuoteElement>("blockquote", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const body = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLElement>, 
+    DOMTaskData<Text | HTMLElement>, string
+>(nodeFactory<HTMLElement>("body", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const br = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLBRElement>, 
+    undefined, string
+>(nodeFactory<HTMLBRElement>("br", htmlScope), noConnector, deriveDOMTaskArg, defaultConvert);
+export const button = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLButtonElement>, 
+    DOMTaskData<Text | HTMLElement>, string
+>(nodeFactory<HTMLButtonElement>("button", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const canvas = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLCanvasElement>, 
+    DOMTaskData<Text | HTMLElement>, string
+>(nodeFactory<HTMLCanvasElement>("canvas", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const caption = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLTableCaptionElement>, 
+    DOMTaskData<Text | HTMLElement>, string
+>(nodeFactory<HTMLTableCaptionElement>("caption", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const cite = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLQuoteElement>, 
+    DOMTaskData<Text | HTMLElement>, string
+>(nodeFactory<HTMLQuoteElement>("cite", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const code = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLElement>, 
+    DOMTaskData<Text | HTMLElement>, string
+>(nodeFactory<HTMLElement>("code", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const col = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLTableColElement>, 
+    undefined, string
+>(nodeFactory<HTMLTableColElement>("col", htmlScope), noConnector, deriveDOMTaskArg, defaultConvert);
+export const colgroup = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLTableColElement>, 
+    DOMTaskData<HTMLTableColElement>, string
+>(nodeFactory<HTMLTableColElement>("colgroup", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const data = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLDataElement>, 
+    DOMTaskData<Text | HTMLElement>, string
+>(nodeFactory<HTMLDataElement>("data", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const datalist = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLDataListElement>, 
+    DOMTaskData<Text | HTMLElement>, string
+>(nodeFactory<HTMLDataListElement>("datalist", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const dd = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLElement>, 
+    DOMTaskData<Text | HTMLElement>, string
+>(nodeFactory<HTMLElement>("dd", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const del = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLModElement>, 
+    DOMTaskData<Text | HTMLElement>, string
+>(nodeFactory<HTMLModElement>("del", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const details = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLElement>, 
+    DOMTaskData<Text | HTMLElement>, string
+>(nodeFactory<HTMLElement>("details", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const dfn = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLElement>, 
+    DOMTaskData<Text | HTMLElement>, string
+>(nodeFactory<HTMLElement>("dfn", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const dialog = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLDialogElement>, 
+    DOMTaskData<Text | HTMLElement>, string
+>(nodeFactory<HTMLDialogElement>("dialog", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const div = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLDivElement>, 
+    DOMTaskData<Text | HTMLElement>, string
+>(nodeFactory<HTMLDivElement>("div", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const dl = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLElement>, 
+    DOMTaskData<Text | HTMLElement>, string
+>(nodeFactory<HTMLElement>("dl", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const dt = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLElement>, 
+    DOMTaskData<Text | HTMLElement>, string
+>(nodeFactory<HTMLElement>("dt", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const em = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLElement>, 
+    DOMTaskData<Text | HTMLElement>, string
+>(nodeFactory<HTMLElement>("em", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const embed = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLEmbedElement>, 
+    DOMTaskData<Text | HTMLElement>, string
+>(nodeFactory<HTMLEmbedElement>("embed", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const fieldset = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLFieldSetElement>, 
+    DOMTaskData<Text | HTMLElement>, string
+>(nodeFactory<HTMLFieldSetElement>("fieldset", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const figcaption = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLElement>, 
+    DOMTaskData<Text | HTMLElement>, string
+>(nodeFactory<HTMLElement>("figcaption", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const figure = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLElement>, 
+    DOMTaskData<Text | HTMLElement>, string
+>(nodeFactory<HTMLElement>("figure", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const footer = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLElement>, 
+    DOMTaskData<Text | HTMLElement>, string
+>(nodeFactory<HTMLElement>("footer", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const form = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLFormElement>, 
+    DOMTaskData<Text | HTMLElement>, string
+>(nodeFactory<HTMLFormElement>("form", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const h1 = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLHeadingElement>, 
+    DOMTaskData<Text | HTMLElement>, string
+>(nodeFactory<HTMLHeadingElement>("h1", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const h2 = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLHeadingElement>, 
+    DOMTaskData<Text | HTMLElement>, string
+>(nodeFactory<HTMLHeadingElement>("h2", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const h3 = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLHeadingElement>, 
+    DOMTaskData<Text | HTMLElement>, string
+>(nodeFactory<HTMLHeadingElement>("h3", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const h4 = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLHeadingElement>, 
+    DOMTaskData<Text | HTMLElement>, string
+>(nodeFactory<HTMLHeadingElement>("h4", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const h5 = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLHeadingElement>, 
+    DOMTaskData<Text | HTMLElement>, string
+>(nodeFactory<HTMLHeadingElement>("h5", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const h6 = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLHeadingElement>, 
+    DOMTaskData<Text | HTMLElement>, string
+>(nodeFactory<HTMLHeadingElement>("h6", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const head = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLHeadElement>, 
+    DOMTaskData<Text | HTMLElement>, string
+>(nodeFactory<HTMLHeadElement>("head", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const header = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLElement>, 
+    DOMTaskData<Text | HTMLElement>, string
+>(nodeFactory<HTMLElement>("header", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const hgroup = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLElement>, 
+    DOMTaskData<Text | HTMLElement>, string
+>(nodeFactory<HTMLElement>("hgroup", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const hr = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLHRElement>, 
+    undefined, string
+>(nodeFactory<HTMLHRElement>("hr", htmlScope), noConnector, deriveDOMTaskArg, defaultConvert);
+export const html = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLElement>, 
+    DOMTaskData<Text | HTMLElement>, string
+>(nodeFactory<HTMLElement>("html", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const i = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLElement>, 
+    DOMTaskData<Text | HTMLElement>, string
+>(nodeFactory<HTMLElement>("i", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const iframe = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLIFrameElement>, 
+    DOMTaskData<Text | HTMLElement>, string
+>(nodeFactory<HTMLIFrameElement>("iframe", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const img = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLImageElement>, 
+    undefined, string
+>(nodeFactory<HTMLImageElement>("img", htmlScope), noConnector, deriveDOMTaskArg, defaultConvert);
+export const input = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLInputElement>, 
+    undefined, string
+>(nodeFactory<HTMLInputElement>("input", htmlScope), noConnector, deriveDOMTaskArg, defaultConvert);
+export const ins = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLModElement>, 
+    DOMTaskData<Text | HTMLElement>, string
+>(nodeFactory<HTMLModElement>("ins", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const kbd = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLElement>, 
+    DOMTaskData<Text | HTMLElement>, string
+>(nodeFactory<HTMLElement>("kbd", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const label = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLLabelElement>, 
+    DOMTaskData<Text | HTMLElement>, string
+>(nodeFactory<HTMLLabelElement>("label", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const legend = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLLegendElement>, 
+    DOMTaskData<Text | HTMLElement>, string
+>(nodeFactory<HTMLLegendElement>("legend", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const li = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLLIElement>, 
+    DOMTaskData<Text | HTMLElement>, string
+>(nodeFactory<HTMLLIElement>("li", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const link = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLLinkElement>, 
+    DOMTaskData<Text | HTMLElement>, string
+>(nodeFactory<HTMLLinkElement>("link", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const main = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLElement>, 
+    DOMTaskData<Text | HTMLElement>, string
+>(nodeFactory<HTMLElement>("main", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const mark = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLElement>, 
+    DOMTaskData<Text | HTMLElement>, string
+>(nodeFactory<HTMLElement>("mark", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const menu = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLMenuElement>, 
+    DOMTaskData<Text | HTMLElement>, string
+>(nodeFactory<HTMLMenuElement>("menu", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const meta = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLElement>, 
+    DOMTaskData<Text | HTMLElement>, string
+>(nodeFactory<HTMLElement>("meta", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const meter = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLMeterElement>, 
+    DOMTaskData<Text | HTMLElement>, string
+>(nodeFactory<HTMLMeterElement>("meter", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const nav = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLElement>, 
+    DOMTaskData<Text | HTMLElement>, string
+>(nodeFactory<HTMLElement>("nav", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const noscript = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLElement>, 
+    DOMTaskData<Text | HTMLElement>, string
+>(nodeFactory<HTMLElement>("noscript", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const object = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLObjectElement>, 
+    DOMTaskData<Text | HTMLElement>, string
+>(nodeFactory<HTMLObjectElement>("object", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const ol = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLOListElement>, 
+    DOMTaskData<Text | HTMLElement>, string
+>(nodeFactory<HTMLOListElement>("ol", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const optgroup = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLOptGroupElement>, 
+    DOMTaskData<Text | HTMLElement>, string
+>(nodeFactory<HTMLOptGroupElement>("optgroup", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const option = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLOptionElement>, 
+    DOMTaskData<Text | HTMLElement>, string
+>(nodeFactory<HTMLOptionElement>("option", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const output = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLOutputElement>, 
+    DOMTaskData<Text | HTMLElement>, string
+>(nodeFactory<HTMLOutputElement>("output", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const p = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLParagraphElement>, 
+    DOMTaskData<Text | HTMLElement>, string
+>(nodeFactory<HTMLParagraphElement>("p", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const param = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLParagraphElement>, 
+    DOMTaskData<Text | HTMLElement>, string
+>(nodeFactory<HTMLParagraphElement>("param", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const picture = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLPictureElement>, 
+    DOMTaskData<Text | HTMLElement>, string
+>(nodeFactory<HTMLPictureElement>("picture", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const pre = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLPreElement>, 
+    DOMTaskData<Text | HTMLElement>, string
+>(nodeFactory<HTMLPreElement>("pre", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const progress = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLProgressElement>, 
+    DOMTaskData<Text | HTMLElement>, string
+>(nodeFactory<HTMLProgressElement>("progress", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const q = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLQuoteElement>, 
+    DOMTaskData<Text | HTMLElement>, string
+>(nodeFactory<HTMLQuoteElement>("q", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const rp = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLElement>, 
+    DOMTaskData<Text | HTMLElement>, string
+>(nodeFactory<HTMLElement>("rp", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const rt = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLElement>, 
+    DOMTaskData<Text | HTMLElement>, string
+>(nodeFactory<HTMLElement>("rt", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const ruby = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLElement>, 
+    DOMTaskData<Text | HTMLElement>, string
+>(nodeFactory<HTMLElement>("ruby", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const s = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLElement>, 
+    DOMTaskData<Text | HTMLElement>, string
+>(nodeFactory<HTMLElement>("s", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const samp = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLElement>, 
+    DOMTaskData<Text | HTMLElement>, string
+>(nodeFactory<HTMLElement>("samp", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const htmlScriptTag = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLElement>, 
+    DOMTaskData<Text | HTMLElement>, string
+>(nodeFactory<HTMLElement>("script", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const search = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLElement>, 
+    DOMTaskData<Text | HTMLElement>, string
+>(nodeFactory<HTMLElement>("search", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const section = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLElement>, 
+    DOMTaskData<Text | HTMLElement>, string
+>(nodeFactory<HTMLElement>("section", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const select = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLSelectElement>, 
+    DOMTaskData<Text | HTMLElement>, string
+>(nodeFactory<HTMLSelectElement>("select", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const slotTag = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLSlotElement>, 
+    DOMTaskData<Text | HTMLElement>, string
+>(nodeFactory<HTMLSlotElement>("slot", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const small = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLElement>, 
+    DOMTaskData<Text | HTMLElement>, string
+>(nodeFactory<HTMLElement>("small", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const source = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLSourceElement>, 
+    DOMTaskData<Text | HTMLElement>, string
+>(nodeFactory<HTMLSourceElement>("source", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const span = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLElement>, 
+    DOMTaskData<Text | HTMLElement>, string
+>(nodeFactory<HTMLElement>("span", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const strong = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLElement>, 
+    DOMTaskData<Text | HTMLElement>, string
+>(nodeFactory<HTMLElement>("strong", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const htmlStyleTag = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLElement>, 
+    DOMTaskData<Text | HTMLElement>, string
+>(nodeFactory<HTMLElement>("style", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const sub = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLElement>, 
+    DOMTaskData<Text | HTMLElement>, string
+>(nodeFactory<HTMLElement>("sub", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const summary = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLElement>, 
+    DOMTaskData<Text | HTMLElement>, string
+>(nodeFactory<HTMLElement>("summary", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const sup = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLElement>, 
+    DOMTaskData<Text | HTMLElement>, string
+>(nodeFactory<HTMLElement>("sup", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const table = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLTableElement>, 
+    DOMTaskData<Text | HTMLElement>, string
+>(nodeFactory<HTMLTableElement>("table", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const tbody = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLTableSectionElement>, 
+    DOMTaskData<Text | HTMLElement>, string
+>(nodeFactory<HTMLTableSectionElement>("tbody", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const td = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLTableCellElement>, 
+    DOMTaskData<Text | HTMLElement>, string
+>(nodeFactory<HTMLTableCellElement>("td", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const template = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLTemplateElement>, 
+    DOMTaskData<Text | HTMLElement>, string
+>(nodeFactory<HTMLTemplateElement>("template", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const textarea = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLTextAreaElement>, 
+    DOMTaskData<Text | HTMLElement>, string
+>(nodeFactory<HTMLTextAreaElement>("textarea", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const tfoot = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLTableSectionElement>, 
+    DOMTaskData<Text | HTMLElement>, string
+>(nodeFactory<HTMLTableSectionElement>("tfoot", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const th = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLTableCellElement>, 
+    DOMTaskData<Text | HTMLElement>, string
+>(nodeFactory<HTMLTableCellElement>("th", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const thead = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLTableSectionElement>, 
+    DOMTaskData<Text | HTMLElement>, string
+>(nodeFactory<HTMLTableSectionElement>("thead", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const tile = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLTimeElement>, 
+    DOMTaskData<Text | HTMLElement>, string
+>(nodeFactory<HTMLTimeElement>("tile", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const htmlTitleTag = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLTitleElement>, 
+    DOMTaskData<Text | HTMLElement>, string
+>(nodeFactory<HTMLTitleElement>("title", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const tr = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLTableRowElement>, 
+    DOMTaskData<Text | HTMLElement>, string
+>(nodeFactory<HTMLTableRowElement>("tr", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const track = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLTrackElement>, 
+    DOMTaskData<Text | HTMLElement>, string
+>(nodeFactory<HTMLTrackElement>("track", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const u = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLElement>, 
+    DOMTaskData<Text | HTMLElement>, string
+>(nodeFactory<HTMLElement>("u", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const ul = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLUListElement>, 
+    DOMTaskData<Text | HTMLElement>, string
+>(nodeFactory<HTMLUListElement>("ul", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const varTag = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLElement>, 
+    DOMTaskData<Text | HTMLElement>, string
+>(nodeFactory<HTMLElement>("var", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const video = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLVideoElement>, 
+    DOMTaskData<Text | HTMLElement>, string
+>(nodeFactory<HTMLVideoElement>("video", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const wbr = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<HTMLElement>, 
+    DOMTaskData<Text | HTMLElement>, string
+>(nodeFactory<HTMLElement>("wbr", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const animate = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<SVGAnimateElement>, 
+    DOMTaskData<Text | SVGElement>, string
+>(nodeFactory<SVGAnimateElement>("animate", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const animateMotion = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<SVGAnimateMotionElement>, 
+    DOMTaskData<Text | SVGElement>, string
+>(nodeFactory<SVGAnimateMotionElement>("animateMotion", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const animateTransform = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<SVGAnimateTransformElement>, 
+    DOMTaskData<Text | SVGElement>, string
+>(nodeFactory<SVGAnimateTransformElement>("animateTransform", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const circle = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<SVGCircleElement>, 
+    DOMTaskData<Text | SVGElement>, string
+>(nodeFactory<SVGCircleElement>("circle", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const clipPath = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<SVGClipPathElement>, 
+    DOMTaskData<Text | SVGElement>, string
+>(nodeFactory<SVGClipPathElement>("clipPath", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const defs = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<SVGDefsElement>, 
+    DOMTaskData<Text | SVGElement>, string
+>(nodeFactory<SVGDefsElement>("defs", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const desc = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<SVGDescElement>, 
+    DOMTaskData<Text | SVGElement>, string
+>(nodeFactory<SVGDescElement>("desc", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const ellipse = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<SVGEllipseElement>, 
+    DOMTaskData<Text | SVGElement>, string
+>(nodeFactory<SVGEllipseElement>("ellipse", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const feBlend = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<SVGFEBlendElement>, 
+    DOMTaskData<Text | SVGElement>, string
+>(nodeFactory<SVGFEBlendElement>("feBlend", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const feColorMatrix = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<SVGFEColorMatrixElement>, 
+    DOMTaskData<Text | SVGElement>, string
+>(nodeFactory<SVGFEColorMatrixElement>("feColorMatrix", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const feComponentTransfer = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<SVGFEComponentTransferElement>, 
+    DOMTaskData<Text | SVGElement>, string
+>(nodeFactory<SVGFEComponentTransferElement>("feComponentTransfer", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const feComposite = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<SVGFECompositeElement>, 
+    DOMTaskData<Text | SVGElement>, string
+>(nodeFactory<SVGFECompositeElement>("feComposite", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const feConvolveMatrix = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<SVGFEConvolveMatrixElement>, 
+    DOMTaskData<Text | SVGElement>, string
+>(nodeFactory<SVGFEConvolveMatrixElement>("feConvolveMatrix", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const feDiffuseLighting = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<SVGFEDiffuseLightingElement>, 
+    DOMTaskData<Text | SVGElement>, string
+>(nodeFactory<SVGFEDiffuseLightingElement>("feDiffuseLighting", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const feDisplacementMap = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<SVGFEDisplacementMapElement>, 
+    DOMTaskData<Text | SVGElement>, string
+>(nodeFactory<SVGFEDisplacementMapElement>("feDisplacementMap", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const feDistantLight = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<SVGFEDistantLightElement>, 
+    DOMTaskData<Text | SVGElement>, string
+>(nodeFactory<SVGFEDistantLightElement>("feDistantLight", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const feDropShadow = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<SVGFEDropShadowElement>, 
+    DOMTaskData<Text | SVGElement>, string
+>(nodeFactory<SVGFEDropShadowElement>("feDropShadow", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const feFlood = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<SVGFEFloodElement>, 
+    DOMTaskData<Text | SVGElement>, string
+>(nodeFactory<SVGFEFloodElement>("feFlood", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const feFuncA = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<SVGFEFuncAElement>, 
+    DOMTaskData<Text | SVGElement>, string
+>(nodeFactory<SVGFEFuncAElement>("feFuncA", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const feFuncB = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<SVGFEFuncBElement>, 
+    DOMTaskData<Text | SVGElement>, string
+>(nodeFactory<SVGFEFuncBElement>("feFuncB", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const feFuncG = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<SVGFEFuncGElement>, 
+    DOMTaskData<Text | SVGElement>, string
+>(nodeFactory<SVGFEFuncGElement>("feFuncG", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const feFuncR = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<SVGFEFuncRElement>, 
+    DOMTaskData<Text | SVGElement>, string
+>(nodeFactory<SVGFEFuncRElement>("feFuncR", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const feGaussianBlur = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<SVGFEGaussianBlurElement>, 
+    DOMTaskData<Text | SVGElement>, string
+>(nodeFactory<SVGFEGaussianBlurElement>("feGaussianBlur", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const feImage = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<SVGFEImageElement>, 
+    DOMTaskData<Text | SVGElement>, string
+>(nodeFactory<SVGFEImageElement>("feImage", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const feMerge = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<SVGFEMergeElement>, 
+    DOMTaskData<Text | SVGElement>, string
+>(nodeFactory<SVGFEMergeElement>("feMerge", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const feMergeNode = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<SVGFEMergeNodeElement>, 
+    DOMTaskData<Text | SVGElement>, string
+>(nodeFactory<SVGFEMergeNodeElement>("feMergeNode", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const feMorphology = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<SVGFEMorphologyElement>, 
+    DOMTaskData<Text | SVGElement>, string
+>(nodeFactory<SVGFEMorphologyElement>("feMorphology", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const feOffset = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<SVGFEOffsetElement>, 
+    DOMTaskData<Text | SVGElement>, string
+>(nodeFactory<SVGFEOffsetElement>("feOffset", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const fePointLight = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<SVGFEPointLightElement>, 
+    DOMTaskData<Text | SVGElement>, string
+>(nodeFactory<SVGFEPointLightElement>("fePointLight", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const feSpecularLighting = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<SVGFESpecularLightingElement>, 
+    DOMTaskData<Text | SVGElement>, string
+>(nodeFactory<SVGFESpecularLightingElement>("feSpecularLighting", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const feSpotLight = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<SVGFESpotLightElement>, 
+    DOMTaskData<Text | SVGElement>, string
+>(nodeFactory<SVGFESpotLightElement>("feSpotLight", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const feTile = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<SVGFETileElement>, 
+    DOMTaskData<Text | SVGElement>, string
+>(nodeFactory<SVGFETileElement>("feTile", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const feTurbulence = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<SVGFETurbulenceElement>, 
+    DOMTaskData<Text | SVGElement>, string
+>(nodeFactory<SVGFETurbulenceElement>("feTurbulence", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const filter = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<SVGFilterElement>, 
+    DOMTaskData<Text | SVGElement>, string
+>(nodeFactory<SVGFilterElement>("filter", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const g = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<SVGGElement>, 
+    DOMTaskData<Text | SVGElement>, string
+>(nodeFactory<SVGGElement>("g", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const image = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<SVGImageElement>, 
+    DOMTaskData<Text | SVGElement>, string
+>(nodeFactory<SVGImageElement>("image", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const line = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<SVGLineElement>, 
+    DOMTaskData<Text | SVGElement>, string
+>(nodeFactory<SVGLineElement>("line", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const linearGradient = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<SVGLinearGradientElement>, 
+    DOMTaskData<Text | SVGElement>, string
+>(nodeFactory<SVGLinearGradientElement>("linearGradient", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const marker = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<SVGMarkerElement>, 
+    DOMTaskData<Text | SVGElement>, string
+>(nodeFactory<SVGMarkerElement>("marker", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const mask = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<SVGMaskElement>, 
+    DOMTaskData<Text | SVGElement>, string
+>(nodeFactory<SVGMaskElement>("mask", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const metadata = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<SVGMetadataElement>, 
+    DOMTaskData<Text | SVGElement>, string
+>(nodeFactory<SVGMetadataElement>("metadata", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const mpath = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<SVGMPathElement>, 
+    DOMTaskData<Text | SVGElement>, string
+>(nodeFactory<SVGMPathElement>("mpath", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const path = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<SVGPathElement>, 
+    DOMTaskData<Text | SVGElement>, string
+>(nodeFactory<SVGPathElement>("path", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const polygon = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<SVGPolygonElement>, 
+    DOMTaskData<Text | SVGElement>, string
+>(nodeFactory<SVGPolygonElement>("polygon", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const polyline = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<SVGPolylineElement>, 
+    DOMTaskData<Text | SVGElement>, string
+>(nodeFactory<SVGPolylineElement>("polyline", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const radialGradient = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<SVGRadialGradientElement>, 
+    DOMTaskData<Text | SVGElement>, string
+>(nodeFactory<SVGRadialGradientElement>("radialGradient", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const rect = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<SVGRectElement>, 
+    DOMTaskData<Text | SVGElement>, string
+>(nodeFactory<SVGRectElement>("rect", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const stop = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<SVGStopElement>, 
+    DOMTaskData<Text | SVGElement>, string
+>(nodeFactory<SVGStopElement>("stop", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const svg = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<SVGSVGElement>, 
+    DOMTaskData<Text | SVGElement>, string
+>(nodeFactory<SVGSVGElement>("svg", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const set = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<SVGSetElement>, 
+    DOMTaskData<Text | SVGElement>, string
+>(nodeFactory<SVGSetElement>("set", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const svgA = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<SVGAElement>, 
+    DOMTaskData<Text | SVGElement>, string
+>(nodeFactory<SVGAElement>("a", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const patternTag = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<SVGPatternElement>, 
+    DOMTaskData<Text | SVGElement>, string
+>(nodeFactory<SVGPatternElement>("pattern", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const switchTag = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<SVGSwitchElement>, 
+    DOMTaskData<Text | SVGElement>, string
+>(nodeFactory<SVGSwitchElement>("switch", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const symbolTag = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<SVGSymbolElement>, 
+    DOMTaskData<Text | SVGElement>, string
+>(nodeFactory<SVGSymbolElement>("symbol", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const svgTitleTag = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<SVGTitleElement>, 
+    DOMTaskData<Text | SVGElement>, string
+>(nodeFactory<SVGTitleElement>("title", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const svgScriptTag = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<SVGScriptElement>, 
+    DOMTaskData<Text | SVGElement>, string
+>(nodeFactory<SVGScriptElement>("script", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const svgStyleTag = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<SVGStyleElement>, 
+    DOMTaskData<Text | SVGElement>, string
+>(nodeFactory<SVGStyleElement>("style", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const text = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<SVGTextElement>, 
+    DOMTaskData<Text | SVGElement>, string
+>(nodeFactory<SVGTextElement>("text", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const textPath = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<SVGTextPathElement>, 
+    DOMTaskData<Text | SVGElement>, string
+>(nodeFactory<SVGTextPathElement>("textPath", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const tspan = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<SVGTSpanElement>, 
+    DOMTaskData<Text | SVGElement>, string
+>(nodeFactory<SVGTSpanElement>("tspan", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const use = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<SVGUseElement>, 
+    DOMTaskData<Text | SVGElement>, string
+>(nodeFactory<SVGUseElement>("use", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const view = createTreeNodeAdapter<
+    DOMTaskArg, DOMTaskData<SVGViewElement>, 
+    DOMTaskData<Text | SVGElement>, string
+>(nodeFactory<SVGViewElement>("view", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const id = <T extends Element>(value: DOMPropertyValue): Task<DOMTaskData<T>> => attr('id', value);
+export const accesskey = <T extends Element>(value: DOMPropertyValue): Task<DOMTaskData<T>> => attr('accesskey', value);
+export const autocapitalize = <T extends Element>(value: DOMPropertyValue): Task<DOMTaskData<T>> => attr('autocapitalize', value);
+export const autofocus = <T extends Element>(value: DOMPropertyValue): Task<DOMTaskData<T>> => attr('autofocus', value);
+export const enterkeyhint = <T extends Element>(value: DOMPropertyValue): Task<DOMTaskData<T>> => attr('enterkeyhint', value);
+export const exportparts = <T extends Element>(value: DOMPropertyValue): Task<DOMTaskData<T>> => attr('exportparts', value);
+export const hidden = <T extends Element>(value: DOMPropertyValue): Task<DOMTaskData<T>> => attr('hidden', value);
+export const inert = <T extends Element>(value: DOMPropertyValue): Task<DOMTaskData<T>> => attr('inert', value);
+export const inputmode = <T extends Element>(value: DOMPropertyValue): Task<DOMTaskData<T>> => attr('inputmode', value);
+export const is = <T extends Element>(value: DOMPropertyValue): Task<DOMTaskData<T>> => attr('is', value);
+export const nonce = <T extends Element>(value: DOMPropertyValue): Task<DOMTaskData<T>> => attr('nonce', value);
+export const part = <T extends Element>(value: DOMPropertyValue): Task<DOMTaskData<T>> => attr('part', value);
+export const popover = <T extends Element>(value: DOMPropertyValue): Task<DOMTaskData<T>> => attr('popover', value);
+export const slot = <T extends Element>(value: DOMPropertyValue): Task<DOMTaskData<T>> => attr('slot', value);
+export const spellcheck = <T extends Element>(value: DOMPropertyValue): Task<DOMTaskData<T>> => attr('spellcheck', value);
+export const translate = <T extends Element>(value: DOMPropertyValue): Task<DOMTaskData<T>> => attr('translate', value);
+export const className = <T extends Element>(value: DOMPropertyValue): Task<DOMTaskData<T>> => attr('class', value);
+export const title = <T extends HTMLElement>(value: DOMPropertyValue): Task<DOMTaskData<T>> => attr('title', value);
+export const tabIndex = <T extends HTMLElement>(value: DOMPropertyValue): Task<DOMTaskData<T>> => attr('tabIndex', value);
+export const lang = <T extends HTMLElement>(value: DOMPropertyValue): Task<DOMTaskData<T>> => attr('lang', value);
+export const dir = <T extends HTMLElement>(value: DOMPropertyValue): Task<DOMTaskData<T>> => attr('dir', value);
+export const draggable = <T extends HTMLElement>(value: DOMPropertyValue): Task<DOMTaskData<T>> => attr('draggable', value);
+export const itemid = <T extends HTMLElement>(value: DOMPropertyValue): Task<DOMTaskData<T>> => attr('itemid', value);
+export const itemprop = <T extends HTMLElement>(value: DOMPropertyValue): Task<DOMTaskData<T>> => attr('itemprop', value);
+export const itemref = <T extends HTMLElement>(value: DOMPropertyValue): Task<DOMTaskData<T>> => attr('itemref', value);
+export const itemscope = <T extends HTMLElement>(value: DOMPropertyValue): Task<DOMTaskData<T>> => attr('itemscope', value);
+export const itemtype = <T extends HTMLElement>(value: DOMPropertyValue): Task<DOMTaskData<T>> => attr('itemtype', value);
+export const crossorigin = <T extends HTMLElement>(value: DOMPropertyValue): Task<DOMTaskData<T>> => attr('crossorigin', value);
+export const disabled = <T extends HTMLElement>(value: DOMPropertyValue): Task<DOMTaskData<T>> => attr('disabled', value);
+export const elementtiming = <T extends HTMLElement>(value: DOMPropertyValue): Task<DOMTaskData<T>> => attr('elementtiming', value);
+export const max = <T extends HTMLElement>(value: DOMPropertyValue): Task<DOMTaskData<T>> => attr('max', value);
+export const min = <T extends HTMLElement>(value: DOMPropertyValue): Task<DOMTaskData<T>> => attr('min', value);
+export const step = <T extends HTMLInputElement>(value: DOMPropertyValue): Task<DOMTaskData<T>> => attr('step', value);
+export const type = <T extends HTMLInputElement>(value: DOMPropertyValue): Task<DOMTaskData<T>> => attr('type', value);
+export const accept = <T extends HTMLInputElement>(value: DOMPropertyValue): Task<DOMTaskData<T>> => attr('accept', value);
+export const capture = <T extends HTMLInputElement>(value: DOMPropertyValue): Task<DOMTaskData<T>> => attr('capture', value);
+export const pattern = <T extends HTMLInputElement>(value: DOMPropertyValue): Task<DOMTaskData<T>> => attr('pattern', value);
+export const placeholder = <T extends HTMLInputElement>(value: DOMPropertyValue): Task<DOMTaskData<T>> => attr('placeholder', value);
+export const forAttr = <T extends HTMLLabelElement | HTMLOutputElement>(value: DOMPropertyValue): Task<DOMTaskData<T>> => attr('forAttr', value);
+export const size = <T extends HTMLInputElement | HTMLSelectElement>(value: DOMPropertyValue): Task<DOMTaskData<T>> => attr('size', value);
+export const dirname = <T extends HTMLInputElement | HTMLTextAreaElement>(value: DOMPropertyValue): Task<DOMTaskData<T>> => attr('dirname', value);
+export const multiple = <T extends HTMLInputElement | HTMLTextAreaElement>(value: DOMPropertyValue): Task<DOMTaskData<T>> => attr('multiple', value);
+export const readonly = <T extends HTMLInputElement | HTMLTextAreaElement>(value: DOMPropertyValue): Task<DOMTaskData<T>> => attr('readonly', value);
+export const maxlength = <T extends HTMLInputElement | HTMLTextAreaElement>(value: DOMPropertyValue): Task<DOMTaskData<T>> => attr('maxlength', value);
+export const minlength = <T extends HTMLInputElement | HTMLTextAreaElement>(value: DOMPropertyValue): Task<DOMTaskData<T>> => attr('minlength', value);
+export const required = <T extends HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>(value: DOMPropertyValue): Task<DOMTaskData<T>> => attr('required', value);
+export const rel = <T extends HTMLAnchorElement | HTMLAreaElement | HTMLLinkElement | HTMLFormElement>(value: DOMPropertyValue): Task<DOMTaskData<T>> => attr('rel', value);
+export const autocomplete = <T extends HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement | HTMLFormElement>(value: DOMPropertyValue): Task<DOMTaskData<T>> => attr('autocomplete', value);
+export const nodeValue = <T extends Node>(value: DOMPropertyValue): Task<DOMTaskData<T>> => prop('nodeValue', value);
+export const textContent = <T extends Node>(value: DOMPropertyValue): Task<DOMTaskData<T>> => prop('textContent', value);
+export const innerHTML = <T extends Element>(value: DOMPropertyValue): Task<DOMTaskData<T>> => prop('innerHTML', value);
+export const outerHTML = <T extends Element>(value: DOMPropertyValue): Task<DOMTaskData<T>> => prop('outerHTML', value);
+export const getId = <T extends Element>(alias?: string): Filter<DOMTaskData<T>,[string, unknown][]> => getAttr<T>('id', alias);
+export const getAccesskey = <T extends Element>(alias?: string): Filter<DOMTaskData<T>,[string, unknown][]> => getAttr<T>('accesskey', alias);
+export const getAutocapitalize = <T extends Element>(alias?: string): Filter<DOMTaskData<T>,[string, unknown][]> => getAttr<T>('autocapitalize', alias);
+export const getAutofocus = <T extends Element>(alias?: string): Filter<DOMTaskData<T>,[string, unknown][]> => getAttr<T>('autofocus', alias);
+export const getEnterkeyhint = <T extends Element>(alias?: string): Filter<DOMTaskData<T>,[string, unknown][]> => getAttr<T>('enterkeyhint', alias);
+export const getExportparts = <T extends Element>(alias?: string): Filter<DOMTaskData<T>,[string, unknown][]> => getAttr<T>('exportparts', alias);
+export const getHidden = <T extends Element>(alias?: string): Filter<DOMTaskData<T>,[string, unknown][]> => getAttr<T>('hidden', alias);
+export const getInert = <T extends Element>(alias?: string): Filter<DOMTaskData<T>,[string, unknown][]> => getAttr<T>('inert', alias);
+export const getInputmode = <T extends Element>(alias?: string): Filter<DOMTaskData<T>,[string, unknown][]> => getAttr<T>('inputmode', alias);
+export const getIs = <T extends Element>(alias?: string): Filter<DOMTaskData<T>,[string, unknown][]> => getAttr<T>('is', alias);
+export const getNonce = <T extends Element>(alias?: string): Filter<DOMTaskData<T>,[string, unknown][]> => getAttr<T>('nonce', alias);
+export const getPart = <T extends Element>(alias?: string): Filter<DOMTaskData<T>,[string, unknown][]> => getAttr<T>('part', alias);
+export const getPopover = <T extends Element>(alias?: string): Filter<DOMTaskData<T>,[string, unknown][]> => getAttr<T>('popover', alias);
+export const getSlot = <T extends Element>(alias?: string): Filter<DOMTaskData<T>,[string, unknown][]> => getAttr<T>('slot', alias);
+export const getSpellcheck = <T extends Element>(alias?: string): Filter<DOMTaskData<T>,[string, unknown][]> => getAttr<T>('spellcheck', alias);
+export const getTranslate = <T extends Element>(alias?: string): Filter<DOMTaskData<T>,[string, unknown][]> => getAttr<T>('translate', alias);
+export const getClassName = <T extends Element>(alias?: string): Filter<DOMTaskData<T>,[string, unknown][]> => getAttr<T>('class', alias);
+export const getNodeValue = <T extends Node>(alias?: string): Filter<DOMTaskData<T>,[string, unknown][]> => getProp<T>('nodeValue', alias);
+export const getTextContent = <T extends Node>(alias?: string): Filter<DOMTaskData<T>,[string, unknown][]> => getProp<T>('textContent', alias);
+export const getInnerHTML = <T extends Element>(alias?: string): Filter<DOMTaskData<T>,[string, unknown][]> => getProp<T>('innerHTML', alias);
+export const getOuterHTML = <T extends Element>(alias?: string): Filter<DOMTaskData<T>,[string, unknown][]> => getProp<T>('outerHTML', alias);
+export const nodeName = <T extends Node>(alias?: string): Filter<DOMTaskData<T>,[string, unknown][]> => getProp<T>('nodeName', alias);
+export const nodeType = <T extends Node>(alias?: string): Filter<DOMTaskData<T>,[string, unknown][]> => getProp<T>('nodeType', alias);
+export const clientHeight = <T extends Element>(alias?: string): Filter<DOMTaskData<T>,[string, unknown][]> => getProp<T>('clientHeight', alias);
+export const clientLeft = <T extends Element>(alias?: string): Filter<DOMTaskData<T>,[string, unknown][]> => getProp<T>('clientLeft', alias);
+export const clientTop = <T extends Element>(alias?: string): Filter<DOMTaskData<T>,[string, unknown][]> => getProp<T>('clientTop', alias);
+export const clientWidth = <T extends Element>(alias?: string): Filter<DOMTaskData<T>,[string, unknown][]> => getProp<T>('clientWidth', alias);
+export const tagName = <T extends Element>(alias?: string): Filter<DOMTaskData<T>,[string, unknown][]> => getProp<T>('tagName', alias);
+export const getTitle = <T extends HTMLElement>(alias?: string): Filter<DOMTaskData<T>,[string, unknown][]> => getAttr<T>('title', alias);
+export const getTabIndex = <T extends HTMLElement>(alias?: string): Filter<DOMTaskData<T>,[string, unknown][]> => getAttr<T>('tabIndex', alias);
+export const getLang = <T extends HTMLElement>(alias?: string): Filter<DOMTaskData<T>,[string, unknown][]> => getAttr<T>('lang', alias);
+export const getDir = <T extends HTMLElement>(alias?: string): Filter<DOMTaskData<T>,[string, unknown][]> => getAttr<T>('dir', alias);
+export const getDraggable = <T extends HTMLElement>(alias?: string): Filter<DOMTaskData<T>,[string, unknown][]> => getAttr<T>('draggable', alias);
+export const getItemid = <T extends HTMLElement>(alias?: string): Filter<DOMTaskData<T>,[string, unknown][]> => getAttr<T>('itemid', alias);
+export const getItemprop = <T extends HTMLElement>(alias?: string): Filter<DOMTaskData<T>,[string, unknown][]> => getAttr<T>('itemprop', alias);
+export const getItemref = <T extends HTMLElement>(alias?: string): Filter<DOMTaskData<T>,[string, unknown][]> => getAttr<T>('itemref', alias);
+export const getItemscope = <T extends HTMLElement>(alias?: string): Filter<DOMTaskData<T>,[string, unknown][]> => getAttr<T>('itemscope', alias);
+export const getItemtype = <T extends HTMLElement>(alias?: string): Filter<DOMTaskData<T>,[string, unknown][]> => getAttr<T>('itemtype', alias);
+export const getCrossorigin = <T extends HTMLElement>(alias?: string): Filter<DOMTaskData<T>,[string, unknown][]> => getAttr<T>('crossorigin', alias);
+export const getDisabled = <T extends HTMLElement>(alias?: string): Filter<DOMTaskData<T>,[string, unknown][]> => getAttr<T>('disabled', alias);
+export const getElementtiming = <T extends HTMLElement>(alias?: string): Filter<DOMTaskData<T>,[string, unknown][]> => getAttr<T>('elementtiming', alias);
+export const getMax = <T extends HTMLElement>(alias?: string): Filter<DOMTaskData<T>,[string, unknown][]> => getAttr<T>('max', alias);
+export const getMin = <T extends HTMLElement>(alias?: string): Filter<DOMTaskData<T>,[string, unknown][]> => getAttr<T>('min', alias);
+export const getStep = <T extends HTMLInputElement>(alias?: string): Filter<DOMTaskData<T>,[string, unknown][]> => getAttr<T>('step', alias);
+export const getType = <T extends HTMLInputElement>(alias?: string): Filter<DOMTaskData<T>,[string, unknown][]> => getAttr<T>('type', alias);
+export const getAccept = <T extends HTMLInputElement>(alias?: string): Filter<DOMTaskData<T>,[string, unknown][]> => getAttr<T>('accept', alias);
+export const getCapture = <T extends HTMLInputElement>(alias?: string): Filter<DOMTaskData<T>,[string, unknown][]> => getAttr<T>('capture', alias);
+export const getPattern = <T extends HTMLInputElement>(alias?: string): Filter<DOMTaskData<T>,[string, unknown][]> => getAttr<T>('pattern', alias);
+export const getPlaceholder = <T extends HTMLInputElement>(alias?: string): Filter<DOMTaskData<T>,[string, unknown][]> => getAttr<T>('placeholder', alias);
+export const getForAttr = <T extends HTMLLabelElement | HTMLOutputElement>(alias?: string): Filter<DOMTaskData<T>,[string, unknown][]> => getAttr<T>('forAttr', alias);
+export const getSize = <T extends HTMLInputElement | HTMLSelectElement>(alias?: string): Filter<DOMTaskData<T>,[string, unknown][]> => getAttr<T>('size', alias);
+export const getDirname = <T extends HTMLInputElement | HTMLTextAreaElement>(alias?: string): Filter<DOMTaskData<T>,[string, unknown][]> => getAttr<T>('dirname', alias);
+export const getMultiple = <T extends HTMLInputElement | HTMLTextAreaElement>(alias?: string): Filter<DOMTaskData<T>,[string, unknown][]> => getAttr<T>('multiple', alias);
+export const getReadonly = <T extends HTMLInputElement | HTMLTextAreaElement>(alias?: string): Filter<DOMTaskData<T>,[string, unknown][]> => getAttr<T>('readonly', alias);
+export const getMaxlength = <T extends HTMLInputElement | HTMLTextAreaElement>(alias?: string): Filter<DOMTaskData<T>,[string, unknown][]> => getAttr<T>('maxlength', alias);
+export const getMinlength = <T extends HTMLInputElement | HTMLTextAreaElement>(alias?: string): Filter<DOMTaskData<T>,[string, unknown][]> => getAttr<T>('minlength', alias);
+export const getRequired = <T extends HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>(alias?: string): Filter<DOMTaskData<T>,[string, unknown][]> => getAttr<T>('required', alias);
+export const getRel = <T extends HTMLAnchorElement | HTMLAreaElement | HTMLLinkElement | HTMLFormElement>(alias?: string): Filter<DOMTaskData<T>,[string, unknown][]> => getAttr<T>('rel', alias);
+export const getAutocomplete = <T extends HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement | HTMLFormElement>(alias?: string): Filter<DOMTaskData<T>,[string, unknown][]> => getAttr<T>('autocomplete', alias);
+export const addClass = <T extends Element>(name: string): Task<DOMTaskData<T>> => (data: DOMTaskData<T>): DOMTaskData<T> => {
+    data.element.classList.add(name);
+    return data;
+};
+export const removeClass = <T extends Element>(name: string): Task<DOMTaskData<T>> => (data: DOMTaskData<T>): DOMTaskData<T> => {
+    data.element.classList.remove(name);
+    return data;
+};
+export const toggleClass = <T extends Element>(name: string): Task<DOMTaskData<T>> => (data: DOMTaskData<T>): DOMTaskData<T> => {
+    data.element.classList.toggle(name);
+    return data;
+};
+export const dispatch = <T extends EventTarget>(event: Event): Task<DOMTaskData<T>> => (data: DOMTaskData<T>): DOMTaskData<T> => {
+    data.element.dispatchEvent(event);
+    return data;
+};
+export const onClick = <T extends EventTarget>(
     listener: EventListenerOrEventListenerObject, 
     options?: boolean | AddEventListenerOptions
-): NodeTask<T,U> => subscribe('click', listener, options);
-export const onDbClick = <T extends EventTarget, U extends Document>(
+): Task<DOMTaskData<T>> => subscribe('click', listener, options);
+export const onDbClick = <T extends EventTarget>(
     listener: EventListenerOrEventListenerObject, 
     options?: boolean | AddEventListenerOptions
-): NodeTask<T,U> => subscribe('dbclick', listener, options);
-export const onBlur = <T extends EventTarget, U extends Document>(
+): Task<DOMTaskData<T>> => subscribe('dbclick', listener, options);
+export const onBlur = <T extends EventTarget>(
     listener: EventListenerOrEventListenerObject, 
     options?: boolean | AddEventListenerOptions
-): NodeTask<T,U> => subscribe('blur', listener, options);
-export const onFocus = <T extends EventTarget, U extends Document>(
+): Task<DOMTaskData<T>> => subscribe('blur', listener, options);
+export const onFocus = <T extends EventTarget>(
     listener: EventListenerOrEventListenerObject, 
     options?: boolean | AddEventListenerOptions
-): NodeTask<T,U> => subscribe('focus', listener, options);
-export const onChange = <T extends EventTarget, U extends Document>(
+): Task<DOMTaskData<T>> => subscribe('focus', listener, options);
+export const onChange = <T extends EventTarget>(
     listener: EventListenerOrEventListenerObject, 
     options?: boolean | AddEventListenerOptions
-): NodeTask<T,U> => subscribe('change', listener, options);
-export const onMouseDown = <T extends EventTarget, U extends Document>(
+): Task<DOMTaskData<T>> => subscribe('change', listener, options);
+export const onMouseDown = <T extends EventTarget>(
     listener: EventListenerOrEventListenerObject, 
     options?: boolean | AddEventListenerOptions
-): NodeTask<T,U> => subscribe('mousedown', listener, options);
-export const onMouseEnter = <T extends EventTarget, U extends Document>(
+): Task<DOMTaskData<T>> => subscribe('mousedown', listener, options);
+export const onMouseEnter = <T extends EventTarget>(
     listener: EventListenerOrEventListenerObject, 
     options?: boolean | AddEventListenerOptions
-): NodeTask<T,U> => subscribe('mouseenter', listener, options);
-export const onMouseLeave = <T extends EventTarget, U extends Document>(
+): Task<DOMTaskData<T>> => subscribe('mouseenter', listener, options);
+export const onMouseLeave = <T extends EventTarget>(
     listener: EventListenerOrEventListenerObject, 
     options?: boolean | AddEventListenerOptions
-): NodeTask<T,U> => subscribe('mouseleave', listener, options);
-export const onMouseMove = <T extends EventTarget, U extends Document>(
+): Task<DOMTaskData<T>> => subscribe('mouseleave', listener, options);
+export const onMouseMove = <T extends EventTarget>(
     listener: EventListenerOrEventListenerObject, 
     options?: boolean | AddEventListenerOptions
-): NodeTask<T,U> => subscribe('mousemove', listener, options);
-export const onMouseOut = <T extends EventTarget, U extends Document>(
+): Task<DOMTaskData<T>> => subscribe('mousemove', listener, options);
+export const onMouseOut = <T extends EventTarget>(
     listener: EventListenerOrEventListenerObject, 
     options?: boolean | AddEventListenerOptions
-): NodeTask<T,U> => subscribe('mouseout', listener, options);
-export const onMouseOver = <T extends EventTarget, U extends Document>(
+): Task<DOMTaskData<T>> => subscribe('mouseout', listener, options);
+export const onMouseOver = <T extends EventTarget>(
     listener: EventListenerOrEventListenerObject, 
     options?: boolean | AddEventListenerOptions
-): NodeTask<T,U> => subscribe('mouseover', listener, options);
-export const onMouseUp = <T extends EventTarget, U extends Document>(
+): Task<DOMTaskData<T>> => subscribe('mouseover', listener, options);
+export const onMouseUp = <T extends EventTarget>(
     listener: EventListenerOrEventListenerObject, 
     options?: boolean | AddEventListenerOptions
-): NodeTask<T,U> => subscribe('mouseup', listener, options);
-export const onWheel = <T extends EventTarget, U extends Document>(
+): Task<DOMTaskData<T>> => subscribe('mouseup', listener, options);
+export const onWheel = <T extends EventTarget>(
     listener: EventListenerOrEventListenerObject, 
     options?: boolean | AddEventListenerOptions
-): NodeTask<T,U> => subscribe('wheel', listener, options);
-export const onScroll = <T extends EventTarget, U extends Document>(
+): Task<DOMTaskData<T>> => subscribe('wheel', listener, options);
+export const onScroll = <T extends EventTarget>(
     listener: EventListenerOrEventListenerObject, 
     options?: boolean | AddEventListenerOptions
-): NodeTask<T,U> => subscribe('scroll', listener, options);
-export const onKeyDown = <T extends EventTarget, U extends Document>(
+): Task<DOMTaskData<T>> => subscribe('scroll', listener, options);
+export const onKeyDown = <T extends EventTarget>(
     listener: EventListenerOrEventListenerObject, 
     options?: boolean | AddEventListenerOptions
-): NodeTask<T,U> => subscribe('keydown', listener, options);
-export const onKeyPress = <T extends EventTarget, U extends Document>(
+): Task<DOMTaskData<T>> => subscribe('keydown', listener, options);
+export const onKeyPress = <T extends EventTarget>(
     listener: EventListenerOrEventListenerObject, 
     options?: boolean | AddEventListenerOptions
-): NodeTask<T,U> => subscribe('keypress', listener, options);
-export const onKeyUp = <T extends EventTarget, U extends Document>(
+): Task<DOMTaskData<T>> => subscribe('keypress', listener, options);
+export const onKeyUp = <T extends EventTarget>(
     listener: EventListenerOrEventListenerObject, 
     options?: boolean | AddEventListenerOptions
-): NodeTask<T,U> => subscribe('keyup', listener, options);
-export const onCopy = <T extends EventTarget, U extends Document>(
+): Task<DOMTaskData<T>> => subscribe('keyup', listener, options);
+export const onCopy = <T extends EventTarget>(
     listener: EventListenerOrEventListenerObject, 
     options?: boolean | AddEventListenerOptions
-): NodeTask<T,U> => subscribe('copy', listener, options);
-export const onCut = <T extends EventTarget, U extends Document>(
+): Task<DOMTaskData<T>> => subscribe('copy', listener, options);
+export const onCut = <T extends EventTarget>(
     listener: EventListenerOrEventListenerObject, 
     options?: boolean | AddEventListenerOptions
-): NodeTask<T,U> => subscribe('cut', listener, options);
-export const onPaste = <T extends EventTarget, U extends Document>(
+): Task<DOMTaskData<T>> => subscribe('cut', listener, options);
+export const onPaste = <T extends EventTarget>(
     listener: EventListenerOrEventListenerObject, 
     options?: boolean | AddEventListenerOptions
-): NodeTask<T,U> => subscribe('paste', listener, options);
-export const onSelect = <T extends EventTarget, U extends Document>(
+): Task<DOMTaskData<T>> => subscribe('paste', listener, options);
+export const onSelect = <T extends EventTarget>(
     listener: EventListenerOrEventListenerObject, 
     options?: boolean | AddEventListenerOptions
-): NodeTask<T,U> => subscribe('select', listener, options);
-export const onFocusIn = <T extends EventTarget, U extends Document>(
+): Task<DOMTaskData<T>> => subscribe('select', listener, options);
+export const onFocusIn = <T extends EventTarget>(
     listener: EventListenerOrEventListenerObject, 
     options?: boolean | AddEventListenerOptions
-): NodeTask<T,U> => subscribe('focusin', listener, options);
-export const onFocusOut = <T extends EventTarget, U extends Document>(
+): Task<DOMTaskData<T>> => subscribe('focusin', listener, options);
+export const onFocusOut = <T extends EventTarget>(
     listener: EventListenerOrEventListenerObject, 
     options?: boolean | AddEventListenerOptions
-): NodeTask<T,U> => subscribe('focusout', listener, options);
+): Task<DOMTaskData<T>> => subscribe('focusout', listener, options);

@@ -1,35 +1,32 @@
-import { a, className, getElement, nav, prepend, render, setAttr, div, text } from "./myLib"
+import { a, className, getElement, nav, prepend, render, attr, div, textNode, DOMTaskData } from "./myLib"
 
 
-const mainView = nav(className("site-nav"), div(
-    className("trigger"), 
-    a(
-        className("page-link"), 
-        setAttr("href","/blog/"), 
-        text("Blog")
-    ),
-    a(
-        className("page-link"), 
-        setAttr("href","https://docs.genieacs.com/"), 
-        setAttr("target", "_blank"),
-        text("Docs")
-    ),
-    a(
-        className("page-link"), 
-        setAttr("href","https://forum.genieacs.com/"), 
-        setAttr("target", "_blank"),
-        text("Community")
-    ),
-    a(
-        className("page-link"), 
-        setAttr("href","/support/"), 
-        text("Support")
+const mainView = nav(className("site-nav"), 
+    div(className("trigger"), 
+        a(className("page-link"), attr("href","/blog/"), "Blog"),
+        a(
+            className("page-link"), 
+            attr("href","https://docs.genieacs.com/"), 
+            attr("target", "_blank"),
+            textNode("Docs")
+        ),
+        a(
+            className("page-link"), 
+            attr("href","https://forum.genieacs.com/"), 
+            attr("target", "_blank"),
+            textNode("Community")
+        ),
+        a(
+            className("page-link"), 
+            attr("href","/support/"), 
+            textNode("Support")
+        )
     )
-)); 
+); 
 
 
 
-const renderApp = render<HTMLElement,Document>(
+const renderApp = render(
     getElement("body", document), 
     prepend(mainView)
 );

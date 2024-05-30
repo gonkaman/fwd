@@ -22,8 +22,8 @@ export type Curator<T> = (lookup: Lookup<T>) => void;
 //@@ Store > Curator, Lookup @@//
 export type Delegate<T> = [Curator<T>, Lookup<T>];
 
-//@@ createTreeNodeAdapter > Filter, Connector, Branch, Adapter @@//
-export const createTreeNodeAdapter = <TArg, TTarget, TChild, K>(
+//@@ createAdapter > Filter, Connector, Branch, Adapter @@//
+export const createAdapter = <TArg, TTarget, TChild, K>(
     factory: Filter<TArg, TTarget>,
     connect: Connector<TTarget, TArg, TChild>,
     deriveArg: Filter<TTarget, TArg>,
@@ -388,7 +388,7 @@ export type DOMEventProxyTarget = Record<string, (listener: EventListenerOrEvent
 export const adapters = {
     html: new Proxy<HTMLProxyTarget>({}, {
         get(target, key, receiver) {
-            if(typeof key === "string") return createTreeNodeAdapter<
+            if(typeof key === "string") return createAdapter<
                 DOMTaskArg, DOMTaskData<HTMLElement>, DOMTaskData<Text | HTMLElement>, string
             >(nodeFactory<HTMLElement>(key, htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
             return Reflect.get(target, key, receiver);
@@ -396,7 +396,7 @@ export const adapters = {
     }),
     svg: new Proxy<SVGProxyTarget>({}, {
         get(target, key, receiver) {
-            if(typeof key === "string") return createTreeNodeAdapter<
+            if(typeof key === "string") return createAdapter<
                 DOMTaskArg, DOMTaskData<SVGElement>, DOMTaskData<Text | SVGElement>, string
             >(nodeFactory<SVGElement>(key, svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
             return Reflect.get(target, key, receiver);
@@ -404,7 +404,7 @@ export const adapters = {
     }),
     math: new Proxy<MathMLProxyTarget>({}, {
         get(target, key, receiver) {
-            if(typeof key === "string") return createTreeNodeAdapter<
+            if(typeof key === "string") return createAdapter<
                 DOMTaskArg, DOMTaskData<MathMLElement>, DOMTaskData<Text | MathMLElement>, string
             >(nodeFactory<MathMLElement>(key, mathmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
             return Reflect.get(target, key, receiver);
@@ -437,6 +437,30 @@ export const adapters = {
                     (listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions): Task<DOMTaskData<EventTarget>> => unsubscribe(key.slice(3).toLowerCase(), listener, options) :
                     (listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions): Task<DOMTaskData<EventTarget>> => subscribe(key, listener, options);
 
+            return Reflect.get(target, key, receiver);
+        }
+    })
+};
+
+//@@ DOMPropertyQueryProxyTarget > Filter, DOMTaskData @@//
+export type DOMPropertyQueryProxyTarget = Record<string, (key: string, alias?: string) => Filter<DOMTaskData<Node>,[string, unknown][]>>;
+
+//@@ DOMStylePropertyQueryProxyTarget > Filter, DOMTaskData, SpecializedElement @@//
+export type DOMStylePropertyQueryProxyTarget = Record<string, (key: string, alias?: string) => Filter<DOMTaskData<SpecializedElement>,[string, unknown][]>>;
+
+//@@ queries > DOMPropertyQueryProxyTarget, DOMStylePropertyQueryProxyTarget, Filter, DOMTaskData, SpecializedElement @@//
+export const queries = {
+    props: new Proxy<DOMPropertyQueryProxyTarget>({},{
+        get(target, key, receiver) {
+            if(typeof key === "string") return (key: string, alias?: string): Filter<DOMTaskData<Node>,[string, unknown][]> => 
+                getProp(key, alias);
+            return Reflect.get(target, key, receiver);
+        }
+    }),
+    style: new Proxy<DOMStylePropertyQueryProxyTarget>({},{
+        get(target, key, receiver) {
+            if(typeof key === "string") return (key: string, alias?: string): Filter<DOMTaskData<SpecializedElement>,[string, unknown][]> => 
+                getStyle(key, alias);
             return Reflect.get(target, key, receiver);
         }
     })

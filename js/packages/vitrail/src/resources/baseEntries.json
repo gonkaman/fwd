@@ -1,10 +1,10 @@
 {
     "adapter": {
         "textNode": { "key": "", "target": "Text", "type": "text", "parent": "Element" },
-        "a": { "target": ["HTMLAnchorElement","SVGAElement"], "type": "contextual" },
-        "titleTag": { "key": "title", "target": ["HTMLTitleElement", "SVGTitleElement"], "type": "contextual" },
-        "scriptTag": { "key": "script", "target": ["HTMLElement", "SVGScriptElement"] },
-        "styleTag": { "key": "style", "target": ["HTMLElement", "SVGStyleElement"]}
+        "a": { "target": ["HTMLAnchorElement","SVGAElement"], "type": "contextual", "childs": ["HTMLElement","SVGElement","Text"] },
+        "titleTag": { "key": "title", "target": ["HTMLTitleElement", "SVGTitleElement"], "type": "contextual", "childs": ["HTMLElement","SVGElement","Text"] },
+        "scriptTag": { "key": "script", "target": ["HTMLElement", "SVGScriptElement"], "childs": ["HTMLElement","SVGElement","Text"] },
+        "styleTag": { "key": "style", "target": ["HTMLElement", "SVGStyleElement"], "childs": ["Text"] }
     },
     "attribute": {
         "id": {},
