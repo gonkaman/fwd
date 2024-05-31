@@ -336,3 +336,27 @@ export const unsubscribe = <T extends EventTarget, U extends Document>(
 ): NodeTask<T,U> => [
     (entry: [T,U]) => { entry[0].removeEventListener(eventType, listener, options); return entry; }
 ]
+
+
+
+
+
+
+
+//@@ createAdapter > Filter, Connector, Branch, Adapter @@//
+// export const createAdapter = <TArg, TTarget, TChild, K>(
+//     factory: Filter<TArg, TTarget>,
+//     connect: Connector<TTarget, TArg, TChild>,
+//     deriveArg: Filter<TTarget, TArg>,
+//     convert: Filter<K, Task<TTarget>>
+// ): Adapter<TArg, TTarget, K | Branch<TArg, TChild, TTarget>> => 
+// <T>(...args: (Task<TTarget> | K | Branch<TArg, TChild, TTarget>)[]): Branch<TArg, TTarget, T> => 
+//         (tConnect: Connector<T, TArg, TTarget>, tDerive: Filter<T, TArg>): Task<T> => 
+//             tConnect(
+//                 args.reduce((filter, arg) => typeof arg === "function" ?
+//                     (arg.length == 1 ? 
+//                         (ctx: TArg) => (arg as Task<TTarget>)(filter(ctx)) :
+//                         (ctx: TArg) => (arg as Branch<TArg, TChild, TTarget>)(connect, deriveArg)(filter(ctx))) :
+//                     (ctx: TArg) => convert(arg)(filter(ctx)), factory), 
+//                 tDerive
+//             );

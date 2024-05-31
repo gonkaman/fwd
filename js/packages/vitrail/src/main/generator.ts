@@ -1,13 +1,28 @@
-export type AdapterType = "html" | "svg" | "mathml" | "text" | "contextual";
-export type QueryGetterType = "getAttr" | "getProp";
-
+export enum AdapterType {
+    html = "html",
+    svg = "svg",
+    math = "mathml",
+    text = "text"
+}
+export enum QueryGetterType {
+    attr = "getAttr", 
+    prop = "getProp"
+}
 export type AdapterEntry = {
     name: string,
     key: string,
-    type: AdapterType,
+    type: string,
     target: string,
-    parent: string,
-    childs: string
+    childs?: string
+}
+export type ContextualAdapterEntry = {
+    name: string,
+    key: string,
+    target: {
+        task: string,
+        compatible: string,
+        type: string
+    }
 }
 export type AttributeEntry = {
     name: string,
@@ -23,7 +38,7 @@ export type QueryEntry = {
     name: string,
     key: string,
     target: string,
-    getter: QueryGetterType
+    getter: string
 }
 export type ActionArgEntry = {
     name: string,
@@ -48,6 +63,7 @@ export type CoreEntry = {
 }
 export type EntryMap = {
     adapter: Record<string, AdapterEntry>,
+    contextual: Record<string, ContextualAdapterEntry>,
     attribute: Record<string, PropertyEntry>,
     property: Record<string, PropertyEntry>,
     query: Record<string, QueryEntry>,
@@ -62,14 +78,23 @@ const sourceGenerators = {
 
     //adapters template
     adapter: (entry: AdapterEntry): [string, string[]] => {
-        const connectorName = (entry.childs === "undefined" ? 'no' : 'append')+'Connector';
-        const childs = entry.childs === "undefined" ? entry.childs : `DOMTaskData<${entry.childs}>`;
         return [
-            `export const ${entry.name} = createTreeNodeAdapter<
-    DOMTaskArg, DOMTaskData<${entry.target}>, 
-    ${childs}, string
->(nodeFactory<${entry.target}>("${entry.key}", ${entry.type}Scope), ${connectorName}, deriveDOMTaskArg, defaultConvert);`, 
-            ['createTreeNodeAdapter', "nodeFactory", connectorName, 'deriveDOMTaskArg', 'defaultConvert']
+            `export const ${entry.name} = domAdapter("${entry.key}", ${entry.childs === "undefined"}, ${entry.type}Scope) as unknown as Adapter<DOMTaskArg, DOMTaskData<${entry.target}>, ${entry.childs === "undefined" ? "" : `Branch<DOMTaskArg, DOMTaskData<${entry.childs}>, DOMTaskData<${entry.target}>> | `}DOMTaskCompatible>;`,
+            ['DOMTaskArg', 'DOMTaskData', 'DOMTaskCompatible', 'domAdapter']
+        ];
+    },
+
+    //contextual adapter
+    contextual: (entry: ContextualAdapterEntry): [string, string[]] => {
+        return [
+`export const ${entry.name} = <T>(...args: (
+        ${entry.target.task}
+        | ${entry.target.compatible} 
+    )[]
+) => domBranch<T>(args as (Task<DOMTaskData<Node>> | DOMTaskCompatible | Branch<DOMTaskArg, DOMTaskData<Node>, DOMTaskData<Node>>)[], "${entry.key}", ${entry.target.compatible.indexOf('Branch') < 0}, contextualScope) as unknown as Branch<
+    DOMTaskArg, ${entry.target.type}, T
+>;`, 
+                    ['Task', 'Branch', 'DOMTaskArg', 'DOMTaskData', 'DOMTaskCompatible', 'domBranch'] 
         ];
     },
 
@@ -102,7 +127,7 @@ const sourceGenerators = {
         const params = entry.arguments.map(arg => arg.name+(arg.optional ? '?' : '')+': '+arg.type).join(', ');
         const inputs = entry.arguments.map(arg => arg.name).join(', ');
         return [
-            `export const ${entry.name} = <T extends ${entry.target}>(${params}): Task<DOMTaskData<T>> => (data: DOMTaskData<T>): DOMTaskData<T> => {
+`export const ${entry.name} = <T extends ${entry.target}>(${params}): Task<DOMTaskData<T>> => (data: DOMTaskData<T>): DOMTaskData<T> => {
     data.element.${entry.callPath}(${inputs});
     return data;
 };`,
@@ -113,10 +138,10 @@ const sourceGenerators = {
     //event template
     event: (entry: EventEntry): [string, string[]] => {
         return [
-            `export const ${entry.name} = <T extends ${entry.target}>(
-    listener: EventListenerOrEventListenerObject, 
-    options?: boolean | AddEventListenerOptions
-): Task<DOMTaskData<T>> => subscribe('${entry.key}', listener, options);`,
+`export const ${entry.name} = <T extends ${entry.target}>(listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions): Task<DOMTaskData<T>> => 
+    subscribe('${entry.key}', listener, options);
+export const off${entry.name.slice(2)} = <T extends ${entry.target}>(listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions): Task<DOMTaskData<T>> => 
+    unsubscribe('${entry.key}', listener, options);`,
             ['Task','DOMTaskData','subscribe']
         ];
     }
@@ -128,6 +153,7 @@ const sourceGenerators = {
 const renderExposedEntries = (entryMap: EntryMap, token: string, rendered: Set<string>): [string, string[]] | null => {
     rendered.add(token);
     if(entryMap.adapter[token]) return sourceGenerators.adapter(entryMap.adapter[token]);
+    if(entryMap.contextual[token]) return sourceGenerators.contextual(entryMap.contextual[token]);
     if(entryMap.attribute[token]) return sourceGenerators.attribute(entryMap.attribute[token]);
     if(entryMap.property[token]) return sourceGenerators.property(entryMap.property[token]);
     if(entryMap.query[token]) return sourceGenerators.query(entryMap.query[token]);
@@ -151,6 +177,9 @@ const renderDependencies = (entryMap: EntryMap, deps: Set<string>, rendered: Set
             }
             else if(entryMap.adapter[token]) {
                 sourceData = sourceGenerators.adapter(entryMap.adapter[token]);
+            }
+            else if(entryMap.contextual[token]) {
+                sourceData = sourceGenerators.contextual(entryMap.contextual[token]);
             }
             else if(entryMap.attribute[token]) {
                 sourceData = sourceGenerators.attribute(entryMap.attribute[token]);
@@ -191,6 +220,7 @@ const renderSelectedEntries = (entryMap: EntryMap, tokens: string[]): string => 
 const renderAllEntries = (entryMap: EntryMap): string => 
     Object.values(entryMap.provided).map(entry => entry.body)
     .concat(Object.values(entryMap.adapter).map(entry => sourceGenerators.adapter(entry)[0]))
+    .concat(Object.values(entryMap.contextual).map(entry => sourceGenerators.contextual(entry)[0]))
     .concat(Object.values(entryMap.attribute).map(entry => sourceGenerators.attribute(entry)[0]))
     .concat(Object.values(entryMap.property).map(entry => sourceGenerators.property(entry)[0]))
     .concat(Object.values(entryMap.query).map(entry => sourceGenerators.query(entry)[0]))

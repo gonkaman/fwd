@@ -1,7 +1,3 @@
-export const createTreeNodeAdapter = (factory, connect, deriveArg, convert) => (...args) => (tConnect, tDerive) => tConnect(
-  args.reduce((filter2, arg) => typeof arg === "function" ? arg.length == 1 ? (ctx) => arg(filter2(ctx)) : (ctx) => arg(connect, deriveArg)(filter2(ctx)) : (ctx) => convert(arg)(filter2(ctx)), factory),
-  tDerive
-);
 export const noConnector = (_) => (target) => target;
 const htmlScope = "http://www.w3.org/1999/xhtml";
 const svgScope = "http://www.w3.org/2000/svg";
@@ -9,9 +5,8 @@ const mathmlScope = "http://www.w3.org/1998/Math/MathML";
 const textScope = "text";
 const contextualScope = "ctx";
 const defaultNodeFactory = (tagName2) => (arg) => {
-  if (arg == null) arg = { document, scope: htmlScope };
-  arg.element = arg.document.createElement(tagName2);
-  return arg;
+  if (arg == null) return { element: document.createElement(tagName2), document, scope: htmlScope };
+  return { element: arg.document.createElement(tagName2), document: arg.document, scope: htmlScope };
 };
 export const nodeFactory = (tagName2, scope) => {
   if (scope == null) return defaultNodeFactory(tagName2);
@@ -20,25 +15,22 @@ export const nodeFactory = (tagName2, scope) => {
       return defaultNodeFactory(tagName2);
     case svgScope:
       return (arg) => {
-        if (arg == null) arg = { document, scope: svgScope };
-        arg.element = arg.document.createElementNS(svgScope, tagName2);
-        return arg;
+        if (arg == null) return { element: document.createElementNS(svgScope, tagName2), document, scope: svgScope };
+        return { element: arg.document.createElementNS(svgScope, tagName2), document: arg.document, scope: svgScope };
       };
     case mathmlScope:
       return (arg) => {
-        if (arg == null) arg = { document, scope: mathmlScope };
-        arg.element = arg.document.createElementNS(mathmlScope, tagName2);
-        return arg;
+        if (arg == null) return { element: document.createElementNS(mathmlScope, tagName2), document, scope: mathmlScope };
+        return { element: arg.document.createElementNS(mathmlScope, tagName2), document: arg.document, scope: mathmlScope };
       };
     case textScope:
       return (arg) => {
-        if (arg == null) arg = { document, scope: textScope };
-        arg.element = arg.document.createTextNode(tagName2);
-        return arg;
+        if (arg == null) return { element: document.createTextNode(tagName2), document, scope: textScope };
+        return { element: arg.document.createTextNode(tagName2), document: arg.document, scope: textScope };
       };
     case contextualScope:
       return (arg) => {
-        if (arg == null) arg = { document, scope: htmlScope };
+        if (arg == null) return defaultNodeFactory(tagName2)(arg);
         return nodeFactory(tagName2, arg.scope)(arg);
       };
     default:
@@ -134,15 +126,16 @@ export const query = (curator, ...queries2) => (data2) => {
   curator(() => queries2.reduce((entries, query2) => entries.concat(query2(data2)), []));
   return data2;
 };
-export const tag = (tag2, ...tasks) => (pConnect, pDerive) => pConnect(
-  tasks.reduce(
-    (filter2, task) => typeof task === "function" ? task.length == 1 ? (ctx) => task(filter2(ctx)) : (ctx) => task(
-      appendConnector,
-      deriveDOMTaskArg
-    )(filter2(ctx)) : (ctx) => defaultConvert(task)(filter2(ctx)),
-    typeof tag2 === "string" ? nodeFactory(tag2) : nodeFactory(tag2[0], tag2[1])
-  ),
-  pDerive
+export const domBranch = (args, tagName2, isEmpty, scope) => (tConnect, tDerive) => tConnect(
+  args.reduce((filter2, arg) => typeof arg === "function" ? arg.length == 1 ? (ctx) => arg(filter2(ctx)) : (ctx) => arg(isEmpty ? noConnector : appendConnector, deriveDOMTaskArg)(filter2(ctx)) : (ctx) => defaultConvert(arg)(filter2(ctx)), nodeFactory(tagName2, scope)),
+  tDerive
+);
+export const domAdapter = (tagName2, isEmpty, scope) => (...args) => domBranch(args, tagName2, isEmpty, scope);
+export const tag = (tagName2, ...tasks) => domBranch(
+  tasks,
+  typeof tagName2 === "string" ? tagName2 : tagName2[0],
+  false,
+  typeof tagName2 === "string" ? htmlScope : tagName2[1]
 );
 export const prop = (key, value) => value === void 0 ? (data2) => {
   data2.element[key] = null;
@@ -215,37 +208,25 @@ export const unsubscribe = (eventType, listener, options) => (data2) => {
 export const adapters = {
   html: new Proxy({}, {
     get(target, key, receiver) {
-      if (typeof key === "string") return createTreeNodeAdapter(nodeFactory(key, htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+      if (typeof key === "string") return domAdapter(key, ["area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "para", "source", "track", "wbr"].indexOf(key) >= 0, htmlScope);
       return Reflect.get(target, key, receiver);
     }
   }),
   svg: new Proxy({}, {
     get(target, key, receiver) {
-      if (typeof key === "string") return createTreeNodeAdapter(nodeFactory(key, svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+      if (typeof key === "string") return domAdapter(key, false, svgScope);
       return Reflect.get(target, key, receiver);
     }
   }),
   math: new Proxy({}, {
     get(target, key, receiver) {
-      if (typeof key === "string") return createTreeNodeAdapter(nodeFactory(key, mathmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+      if (typeof key === "string") return domAdapter(key, false, mathmlScope);
       return Reflect.get(target, key, receiver);
     }
   }),
   props: new Proxy({}, {
     get(target, key, receiver) {
       if (typeof key === "string") return (value) => prop(key, value);
-      return Reflect.get(target, key, receiver);
-    }
-  }),
-  attrs: new Proxy({}, {
-    get(target, key, receiver) {
-      if (typeof key === "string") return (value) => attr(/^aria[A-Z].*$/g.test(key) ? key.replace("aria", ariaPreffix) : key, value);
-      return Reflect.get(target, key, receiver);
-    }
-  }),
-  style: new Proxy({}, {
-    get(target, key, receiver) {
-      if (typeof key === "string") return (value) => style(key, value);
       return Reflect.get(target, key, receiver);
     }
   }),
@@ -270,185 +251,185 @@ export const queries = {
     }
   })
 };
-export const textNode = createTreeNodeAdapter(nodeFactory("", textScope), noConnector, deriveDOMTaskArg, defaultConvert);
-export const a = createTreeNodeAdapter(nodeFactory("a", contextualScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const titleTag = createTreeNodeAdapter(nodeFactory("title", contextualScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const scriptTag = createTreeNodeAdapter(nodeFactory("script", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const styleTag = createTreeNodeAdapter(nodeFactory("style", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const htmlA = createTreeNodeAdapter(nodeFactory("htmlA", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const abbr = createTreeNodeAdapter(nodeFactory("abbr", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const address = createTreeNodeAdapter(nodeFactory("address", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const area = createTreeNodeAdapter(nodeFactory("area", htmlScope), noConnector, deriveDOMTaskArg, defaultConvert);
-export const article = createTreeNodeAdapter(nodeFactory("article", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const aside = createTreeNodeAdapter(nodeFactory("aside", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const audio = createTreeNodeAdapter(nodeFactory("audio", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const b = createTreeNodeAdapter(nodeFactory("b", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const base = createTreeNodeAdapter(nodeFactory("base", htmlScope), noConnector, deriveDOMTaskArg, defaultConvert);
-export const bdi = createTreeNodeAdapter(nodeFactory("bdi", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const bdo = createTreeNodeAdapter(nodeFactory("bdo", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const blockquote = createTreeNodeAdapter(nodeFactory("blockquote", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const body = createTreeNodeAdapter(nodeFactory("body", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const br = createTreeNodeAdapter(nodeFactory("br", htmlScope), noConnector, deriveDOMTaskArg, defaultConvert);
-export const button = createTreeNodeAdapter(nodeFactory("button", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const canvas = createTreeNodeAdapter(nodeFactory("canvas", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const caption = createTreeNodeAdapter(nodeFactory("caption", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const cite = createTreeNodeAdapter(nodeFactory("cite", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const code = createTreeNodeAdapter(nodeFactory("code", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const col = createTreeNodeAdapter(nodeFactory("col", htmlScope), noConnector, deriveDOMTaskArg, defaultConvert);
-export const colgroup = createTreeNodeAdapter(nodeFactory("colgroup", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const data = createTreeNodeAdapter(nodeFactory("data", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const datalist = createTreeNodeAdapter(nodeFactory("datalist", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const dd = createTreeNodeAdapter(nodeFactory("dd", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const del = createTreeNodeAdapter(nodeFactory("del", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const details = createTreeNodeAdapter(nodeFactory("details", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const dfn = createTreeNodeAdapter(nodeFactory("dfn", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const dialog = createTreeNodeAdapter(nodeFactory("dialog", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const div = createTreeNodeAdapter(nodeFactory("div", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const dl = createTreeNodeAdapter(nodeFactory("dl", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const dt = createTreeNodeAdapter(nodeFactory("dt", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const em = createTreeNodeAdapter(nodeFactory("em", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const embed = createTreeNodeAdapter(nodeFactory("embed", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const fieldset = createTreeNodeAdapter(nodeFactory("fieldset", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const figcaption = createTreeNodeAdapter(nodeFactory("figcaption", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const figure = createTreeNodeAdapter(nodeFactory("figure", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const footer = createTreeNodeAdapter(nodeFactory("footer", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const form = createTreeNodeAdapter(nodeFactory("form", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const h1 = createTreeNodeAdapter(nodeFactory("h1", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const h2 = createTreeNodeAdapter(nodeFactory("h2", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const h3 = createTreeNodeAdapter(nodeFactory("h3", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const h4 = createTreeNodeAdapter(nodeFactory("h4", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const h5 = createTreeNodeAdapter(nodeFactory("h5", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const h6 = createTreeNodeAdapter(nodeFactory("h6", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const head = createTreeNodeAdapter(nodeFactory("head", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const header = createTreeNodeAdapter(nodeFactory("header", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const hgroup = createTreeNodeAdapter(nodeFactory("hgroup", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const hr = createTreeNodeAdapter(nodeFactory("hr", htmlScope), noConnector, deriveDOMTaskArg, defaultConvert);
-export const html = createTreeNodeAdapter(nodeFactory("html", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const i = createTreeNodeAdapter(nodeFactory("i", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const iframe = createTreeNodeAdapter(nodeFactory("iframe", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const img = createTreeNodeAdapter(nodeFactory("img", htmlScope), noConnector, deriveDOMTaskArg, defaultConvert);
-export const input = createTreeNodeAdapter(nodeFactory("input", htmlScope), noConnector, deriveDOMTaskArg, defaultConvert);
-export const ins = createTreeNodeAdapter(nodeFactory("ins", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const kbd = createTreeNodeAdapter(nodeFactory("kbd", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const label = createTreeNodeAdapter(nodeFactory("label", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const legend = createTreeNodeAdapter(nodeFactory("legend", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const li = createTreeNodeAdapter(nodeFactory("li", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const link = createTreeNodeAdapter(nodeFactory("link", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const main = createTreeNodeAdapter(nodeFactory("main", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const mark = createTreeNodeAdapter(nodeFactory("mark", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const menu = createTreeNodeAdapter(nodeFactory("menu", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const meta = createTreeNodeAdapter(nodeFactory("meta", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const meter = createTreeNodeAdapter(nodeFactory("meter", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const nav = createTreeNodeAdapter(nodeFactory("nav", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const noscript = createTreeNodeAdapter(nodeFactory("noscript", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const object = createTreeNodeAdapter(nodeFactory("object", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const ol = createTreeNodeAdapter(nodeFactory("ol", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const optgroup = createTreeNodeAdapter(nodeFactory("optgroup", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const option = createTreeNodeAdapter(nodeFactory("option", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const output = createTreeNodeAdapter(nodeFactory("output", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const p = createTreeNodeAdapter(nodeFactory("p", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const param = createTreeNodeAdapter(nodeFactory("param", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const picture = createTreeNodeAdapter(nodeFactory("picture", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const pre = createTreeNodeAdapter(nodeFactory("pre", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const progress = createTreeNodeAdapter(nodeFactory("progress", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const q = createTreeNodeAdapter(nodeFactory("q", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const rp = createTreeNodeAdapter(nodeFactory("rp", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const rt = createTreeNodeAdapter(nodeFactory("rt", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const ruby = createTreeNodeAdapter(nodeFactory("ruby", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const s = createTreeNodeAdapter(nodeFactory("s", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const samp = createTreeNodeAdapter(nodeFactory("samp", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const htmlScriptTag = createTreeNodeAdapter(nodeFactory("script", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const search = createTreeNodeAdapter(nodeFactory("search", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const section = createTreeNodeAdapter(nodeFactory("section", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const select = createTreeNodeAdapter(nodeFactory("select", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const slotTag = createTreeNodeAdapter(nodeFactory("slot", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const small = createTreeNodeAdapter(nodeFactory("small", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const source = createTreeNodeAdapter(nodeFactory("source", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const span = createTreeNodeAdapter(nodeFactory("span", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const strong = createTreeNodeAdapter(nodeFactory("strong", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const htmlStyleTag = createTreeNodeAdapter(nodeFactory("style", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const sub = createTreeNodeAdapter(nodeFactory("sub", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const summary = createTreeNodeAdapter(nodeFactory("summary", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const sup = createTreeNodeAdapter(nodeFactory("sup", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const table = createTreeNodeAdapter(nodeFactory("table", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const tbody = createTreeNodeAdapter(nodeFactory("tbody", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const td = createTreeNodeAdapter(nodeFactory("td", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const template = createTreeNodeAdapter(nodeFactory("template", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const textarea = createTreeNodeAdapter(nodeFactory("textarea", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const tfoot = createTreeNodeAdapter(nodeFactory("tfoot", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const th = createTreeNodeAdapter(nodeFactory("th", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const thead = createTreeNodeAdapter(nodeFactory("thead", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const tile = createTreeNodeAdapter(nodeFactory("tile", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const htmlTitleTag = createTreeNodeAdapter(nodeFactory("title", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const tr = createTreeNodeAdapter(nodeFactory("tr", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const track = createTreeNodeAdapter(nodeFactory("track", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const u = createTreeNodeAdapter(nodeFactory("u", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const ul = createTreeNodeAdapter(nodeFactory("ul", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const varTag = createTreeNodeAdapter(nodeFactory("var", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const video = createTreeNodeAdapter(nodeFactory("video", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const wbr = createTreeNodeAdapter(nodeFactory("wbr", htmlScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const animate = createTreeNodeAdapter(nodeFactory("animate", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const animateMotion = createTreeNodeAdapter(nodeFactory("animateMotion", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const animateTransform = createTreeNodeAdapter(nodeFactory("animateTransform", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const circle = createTreeNodeAdapter(nodeFactory("circle", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const clipPath = createTreeNodeAdapter(nodeFactory("clipPath", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const defs = createTreeNodeAdapter(nodeFactory("defs", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const desc = createTreeNodeAdapter(nodeFactory("desc", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const ellipse = createTreeNodeAdapter(nodeFactory("ellipse", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const feBlend = createTreeNodeAdapter(nodeFactory("feBlend", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const feColorMatrix = createTreeNodeAdapter(nodeFactory("feColorMatrix", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const feComponentTransfer = createTreeNodeAdapter(nodeFactory("feComponentTransfer", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const feComposite = createTreeNodeAdapter(nodeFactory("feComposite", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const feConvolveMatrix = createTreeNodeAdapter(nodeFactory("feConvolveMatrix", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const feDiffuseLighting = createTreeNodeAdapter(nodeFactory("feDiffuseLighting", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const feDisplacementMap = createTreeNodeAdapter(nodeFactory("feDisplacementMap", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const feDistantLight = createTreeNodeAdapter(nodeFactory("feDistantLight", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const feDropShadow = createTreeNodeAdapter(nodeFactory("feDropShadow", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const feFlood = createTreeNodeAdapter(nodeFactory("feFlood", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const feFuncA = createTreeNodeAdapter(nodeFactory("feFuncA", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const feFuncB = createTreeNodeAdapter(nodeFactory("feFuncB", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const feFuncG = createTreeNodeAdapter(nodeFactory("feFuncG", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const feFuncR = createTreeNodeAdapter(nodeFactory("feFuncR", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const feGaussianBlur = createTreeNodeAdapter(nodeFactory("feGaussianBlur", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const feImage = createTreeNodeAdapter(nodeFactory("feImage", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const feMerge = createTreeNodeAdapter(nodeFactory("feMerge", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const feMergeNode = createTreeNodeAdapter(nodeFactory("feMergeNode", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const feMorphology = createTreeNodeAdapter(nodeFactory("feMorphology", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const feOffset = createTreeNodeAdapter(nodeFactory("feOffset", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const fePointLight = createTreeNodeAdapter(nodeFactory("fePointLight", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const feSpecularLighting = createTreeNodeAdapter(nodeFactory("feSpecularLighting", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const feSpotLight = createTreeNodeAdapter(nodeFactory("feSpotLight", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const feTile = createTreeNodeAdapter(nodeFactory("feTile", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const feTurbulence = createTreeNodeAdapter(nodeFactory("feTurbulence", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const filter = createTreeNodeAdapter(nodeFactory("filter", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const g = createTreeNodeAdapter(nodeFactory("g", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const image = createTreeNodeAdapter(nodeFactory("image", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const line = createTreeNodeAdapter(nodeFactory("line", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const linearGradient = createTreeNodeAdapter(nodeFactory("linearGradient", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const marker = createTreeNodeAdapter(nodeFactory("marker", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const mask = createTreeNodeAdapter(nodeFactory("mask", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const metadata = createTreeNodeAdapter(nodeFactory("metadata", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const mpath = createTreeNodeAdapter(nodeFactory("mpath", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const path = createTreeNodeAdapter(nodeFactory("path", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const polygon = createTreeNodeAdapter(nodeFactory("polygon", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const polyline = createTreeNodeAdapter(nodeFactory("polyline", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const radialGradient = createTreeNodeAdapter(nodeFactory("radialGradient", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const rect = createTreeNodeAdapter(nodeFactory("rect", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const stop = createTreeNodeAdapter(nodeFactory("stop", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const svg = createTreeNodeAdapter(nodeFactory("svg", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const set = createTreeNodeAdapter(nodeFactory("set", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const svgA = createTreeNodeAdapter(nodeFactory("a", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const patternTag = createTreeNodeAdapter(nodeFactory("pattern", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const switchTag = createTreeNodeAdapter(nodeFactory("switch", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const symbolTag = createTreeNodeAdapter(nodeFactory("symbol", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const svgTitleTag = createTreeNodeAdapter(nodeFactory("title", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const svgScriptTag = createTreeNodeAdapter(nodeFactory("script", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const svgStyleTag = createTreeNodeAdapter(nodeFactory("style", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const text = createTreeNodeAdapter(nodeFactory("text", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const textPath = createTreeNodeAdapter(nodeFactory("textPath", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const tspan = createTreeNodeAdapter(nodeFactory("tspan", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const use = createTreeNodeAdapter(nodeFactory("use", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
-export const view = createTreeNodeAdapter(nodeFactory("view", svgScope), appendConnector, deriveDOMTaskArg, defaultConvert);
+export const textNode = domAdapter("", true, textScope);
+export const scriptTag = domAdapter("script", false, htmlScope);
+export const styleTag = domAdapter("style", false, htmlScope);
+export const htmlA = domAdapter("htmlA", false, htmlScope);
+export const abbr = domAdapter("abbr", false, htmlScope);
+export const address = domAdapter("address", false, htmlScope);
+export const area = domAdapter("area", true, htmlScope);
+export const article = domAdapter("article", false, htmlScope);
+export const aside = domAdapter("aside", false, htmlScope);
+export const audio = domAdapter("audio", false, htmlScope);
+export const b = domAdapter("b", false, htmlScope);
+export const base = domAdapter("base", true, htmlScope);
+export const bdi = domAdapter("bdi", false, htmlScope);
+export const bdo = domAdapter("bdo", false, htmlScope);
+export const blockquote = domAdapter("blockquote", false, htmlScope);
+export const body = domAdapter("body", false, htmlScope);
+export const br = domAdapter("br", true, htmlScope);
+export const button = domAdapter("button", false, htmlScope);
+export const canvas = domAdapter("canvas", false, htmlScope);
+export const caption = domAdapter("caption", false, htmlScope);
+export const cite = domAdapter("cite", false, htmlScope);
+export const code = domAdapter("code", false, htmlScope);
+export const col = domAdapter("col", true, htmlScope);
+export const colgroup = domAdapter("colgroup", false, htmlScope);
+export const data = domAdapter("data", false, htmlScope);
+export const datalist = domAdapter("datalist", false, htmlScope);
+export const dd = domAdapter("dd", false, htmlScope);
+export const del = domAdapter("del", false, htmlScope);
+export const details = domAdapter("details", false, htmlScope);
+export const dfn = domAdapter("dfn", false, htmlScope);
+export const dialog = domAdapter("dialog", false, htmlScope);
+export const div = domAdapter("div", false, htmlScope);
+export const dl = domAdapter("dl", false, htmlScope);
+export const dt = domAdapter("dt", false, htmlScope);
+export const em = domAdapter("em", false, htmlScope);
+export const embed = domAdapter("embed", false, htmlScope);
+export const fieldset = domAdapter("fieldset", false, htmlScope);
+export const figcaption = domAdapter("figcaption", false, htmlScope);
+export const figure = domAdapter("figure", false, htmlScope);
+export const footer = domAdapter("footer", false, htmlScope);
+export const form = domAdapter("form", false, htmlScope);
+export const h1 = domAdapter("h1", false, htmlScope);
+export const h2 = domAdapter("h2", false, htmlScope);
+export const h3 = domAdapter("h3", false, htmlScope);
+export const h4 = domAdapter("h4", false, htmlScope);
+export const h5 = domAdapter("h5", false, htmlScope);
+export const h6 = domAdapter("h6", false, htmlScope);
+export const head = domAdapter("head", false, htmlScope);
+export const header = domAdapter("header", false, htmlScope);
+export const hgroup = domAdapter("hgroup", false, htmlScope);
+export const hr = domAdapter("hr", true, htmlScope);
+export const html = domAdapter("html", false, htmlScope);
+export const i = domAdapter("i", false, htmlScope);
+export const iframe = domAdapter("iframe", false, htmlScope);
+export const img = domAdapter("img", true, htmlScope);
+export const input = domAdapter("input", true, htmlScope);
+export const ins = domAdapter("ins", false, htmlScope);
+export const kbd = domAdapter("kbd", false, htmlScope);
+export const label = domAdapter("label", false, htmlScope);
+export const legend = domAdapter("legend", false, htmlScope);
+export const li = domAdapter("li", false, htmlScope);
+export const link = domAdapter("link", false, htmlScope);
+export const main = domAdapter("main", false, htmlScope);
+export const mark = domAdapter("mark", false, htmlScope);
+export const menu = domAdapter("menu", false, htmlScope);
+export const meta = domAdapter("meta", false, htmlScope);
+export const meter = domAdapter("meter", false, htmlScope);
+export const nav = domAdapter("nav", false, htmlScope);
+export const noscript = domAdapter("noscript", false, htmlScope);
+export const object = domAdapter("object", false, htmlScope);
+export const ol = domAdapter("ol", false, htmlScope);
+export const optgroup = domAdapter("optgroup", false, htmlScope);
+export const option = domAdapter("option", false, htmlScope);
+export const output = domAdapter("output", false, htmlScope);
+export const p = domAdapter("p", false, htmlScope);
+export const param = domAdapter("param", false, htmlScope);
+export const picture = domAdapter("picture", false, htmlScope);
+export const pre = domAdapter("pre", false, htmlScope);
+export const progress = domAdapter("progress", false, htmlScope);
+export const q = domAdapter("q", false, htmlScope);
+export const rp = domAdapter("rp", false, htmlScope);
+export const rt = domAdapter("rt", false, htmlScope);
+export const ruby = domAdapter("ruby", false, htmlScope);
+export const s = domAdapter("s", false, htmlScope);
+export const samp = domAdapter("samp", false, htmlScope);
+export const htmlScriptTag = domAdapter("script", false, htmlScope);
+export const search = domAdapter("search", false, htmlScope);
+export const section = domAdapter("section", false, htmlScope);
+export const select = domAdapter("select", false, htmlScope);
+export const slotTag = domAdapter("slot", false, htmlScope);
+export const small = domAdapter("small", false, htmlScope);
+export const source = domAdapter("source", false, htmlScope);
+export const span = domAdapter("span", false, htmlScope);
+export const strong = domAdapter("strong", false, htmlScope);
+export const htmlStyleTag = domAdapter("style", false, htmlScope);
+export const sub = domAdapter("sub", false, htmlScope);
+export const summary = domAdapter("summary", false, htmlScope);
+export const sup = domAdapter("sup", false, htmlScope);
+export const table = domAdapter("table", false, htmlScope);
+export const tbody = domAdapter("tbody", false, htmlScope);
+export const td = domAdapter("td", false, htmlScope);
+export const template = domAdapter("template", false, htmlScope);
+export const textarea = domAdapter("textarea", false, htmlScope);
+export const tfoot = domAdapter("tfoot", false, htmlScope);
+export const th = domAdapter("th", false, htmlScope);
+export const thead = domAdapter("thead", false, htmlScope);
+export const tile = domAdapter("tile", false, htmlScope);
+export const htmlTitleTag = domAdapter("title", false, htmlScope);
+export const tr = domAdapter("tr", false, htmlScope);
+export const track = domAdapter("track", false, htmlScope);
+export const u = domAdapter("u", false, htmlScope);
+export const ul = domAdapter("ul", false, htmlScope);
+export const varTag = domAdapter("var", false, htmlScope);
+export const video = domAdapter("video", false, htmlScope);
+export const wbr = domAdapter("wbr", false, htmlScope);
+export const animate = domAdapter("animate", false, svgScope);
+export const animateMotion = domAdapter("animateMotion", false, svgScope);
+export const animateTransform = domAdapter("animateTransform", false, svgScope);
+export const circle = domAdapter("circle", false, svgScope);
+export const clipPath = domAdapter("clipPath", false, svgScope);
+export const defs = domAdapter("defs", false, svgScope);
+export const desc = domAdapter("desc", false, svgScope);
+export const ellipse = domAdapter("ellipse", false, svgScope);
+export const feBlend = domAdapter("feBlend", false, svgScope);
+export const feColorMatrix = domAdapter("feColorMatrix", false, svgScope);
+export const feComponentTransfer = domAdapter("feComponentTransfer", false, svgScope);
+export const feComposite = domAdapter("feComposite", false, svgScope);
+export const feConvolveMatrix = domAdapter("feConvolveMatrix", false, svgScope);
+export const feDiffuseLighting = domAdapter("feDiffuseLighting", false, svgScope);
+export const feDisplacementMap = domAdapter("feDisplacementMap", false, svgScope);
+export const feDistantLight = domAdapter("feDistantLight", false, svgScope);
+export const feDropShadow = domAdapter("feDropShadow", false, svgScope);
+export const feFlood = domAdapter("feFlood", false, svgScope);
+export const feFuncA = domAdapter("feFuncA", false, svgScope);
+export const feFuncB = domAdapter("feFuncB", false, svgScope);
+export const feFuncG = domAdapter("feFuncG", false, svgScope);
+export const feFuncR = domAdapter("feFuncR", false, svgScope);
+export const feGaussianBlur = domAdapter("feGaussianBlur", false, svgScope);
+export const feImage = domAdapter("feImage", false, svgScope);
+export const feMerge = domAdapter("feMerge", false, svgScope);
+export const feMergeNode = domAdapter("feMergeNode", false, svgScope);
+export const feMorphology = domAdapter("feMorphology", false, svgScope);
+export const feOffset = domAdapter("feOffset", false, svgScope);
+export const fePointLight = domAdapter("fePointLight", false, svgScope);
+export const feSpecularLighting = domAdapter("feSpecularLighting", false, svgScope);
+export const feSpotLight = domAdapter("feSpotLight", false, svgScope);
+export const feTile = domAdapter("feTile", false, svgScope);
+export const feTurbulence = domAdapter("feTurbulence", false, svgScope);
+export const filter = domAdapter("filter", false, svgScope);
+export const g = domAdapter("g", false, svgScope);
+export const image = domAdapter("image", false, svgScope);
+export const line = domAdapter("line", false, svgScope);
+export const linearGradient = domAdapter("linearGradient", false, svgScope);
+export const marker = domAdapter("marker", false, svgScope);
+export const mask = domAdapter("mask", false, svgScope);
+export const metadata = domAdapter("metadata", false, svgScope);
+export const mpath = domAdapter("mpath", false, svgScope);
+export const path = domAdapter("path", false, svgScope);
+export const polygon = domAdapter("polygon", false, svgScope);
+export const polyline = domAdapter("polyline", false, svgScope);
+export const radialGradient = domAdapter("radialGradient", false, svgScope);
+export const rect = domAdapter("rect", false, svgScope);
+export const stop = domAdapter("stop", false, svgScope);
+export const svg = domAdapter("svg", false, svgScope);
+export const set = domAdapter("set", false, svgScope);
+export const svgA = domAdapter("a", false, svgScope);
+export const patternTag = domAdapter("pattern", false, svgScope);
+export const switchTag = domAdapter("switch", false, svgScope);
+export const symbolTag = domAdapter("symbol", false, svgScope);
+export const svgTitleTag = domAdapter("title", false, svgScope);
+export const svgScriptTag = domAdapter("script", false, svgScope);
+export const svgStyleTag = domAdapter("style", false, svgScope);
+export const text = domAdapter("text", false, svgScope);
+export const textPath = domAdapter("textPath", false, svgScope);
+export const tspan = domAdapter("tspan", false, svgScope);
+export const use = domAdapter("use", false, svgScope);
+export const view = domAdapter("view", false, svgScope);
+export const a = (...args) => domBranch(args, "a", false, contextualScope);
+export const titleTag = (...args) => domBranch(args, "title", false, contextualScope);
 export const id = (value) => attr("id", value);
 export const accesskey = (value) => attr("accesskey", value);
 export const autocapitalize = (value) => attr("autocapitalize", value);
@@ -577,25 +558,48 @@ export const dispatch = (event) => (data2) => {
   return data2;
 };
 export const onClick = (listener, options) => subscribe("click", listener, options);
+export const offClick = (listener, options) => unsubscribe("click", listener, options);
 export const onDbClick = (listener, options) => subscribe("dbclick", listener, options);
+export const offDbClick = (listener, options) => unsubscribe("dbclick", listener, options);
 export const onBlur = (listener, options) => subscribe("blur", listener, options);
+export const offBlur = (listener, options) => unsubscribe("blur", listener, options);
 export const onFocus = (listener, options) => subscribe("focus", listener, options);
+export const offFocus = (listener, options) => unsubscribe("focus", listener, options);
 export const onChange = (listener, options) => subscribe("change", listener, options);
+export const offChange = (listener, options) => unsubscribe("change", listener, options);
 export const onMouseDown = (listener, options) => subscribe("mousedown", listener, options);
+export const offMouseDown = (listener, options) => unsubscribe("mousedown", listener, options);
 export const onMouseEnter = (listener, options) => subscribe("mouseenter", listener, options);
+export const offMouseEnter = (listener, options) => unsubscribe("mouseenter", listener, options);
 export const onMouseLeave = (listener, options) => subscribe("mouseleave", listener, options);
+export const offMouseLeave = (listener, options) => unsubscribe("mouseleave", listener, options);
 export const onMouseMove = (listener, options) => subscribe("mousemove", listener, options);
+export const offMouseMove = (listener, options) => unsubscribe("mousemove", listener, options);
 export const onMouseOut = (listener, options) => subscribe("mouseout", listener, options);
+export const offMouseOut = (listener, options) => unsubscribe("mouseout", listener, options);
 export const onMouseOver = (listener, options) => subscribe("mouseover", listener, options);
+export const offMouseOver = (listener, options) => unsubscribe("mouseover", listener, options);
 export const onMouseUp = (listener, options) => subscribe("mouseup", listener, options);
+export const offMouseUp = (listener, options) => unsubscribe("mouseup", listener, options);
 export const onWheel = (listener, options) => subscribe("wheel", listener, options);
+export const offWheel = (listener, options) => unsubscribe("wheel", listener, options);
 export const onScroll = (listener, options) => subscribe("scroll", listener, options);
+export const offScroll = (listener, options) => unsubscribe("scroll", listener, options);
 export const onKeyDown = (listener, options) => subscribe("keydown", listener, options);
+export const offKeyDown = (listener, options) => unsubscribe("keydown", listener, options);
 export const onKeyPress = (listener, options) => subscribe("keypress", listener, options);
+export const offKeyPress = (listener, options) => unsubscribe("keypress", listener, options);
 export const onKeyUp = (listener, options) => subscribe("keyup", listener, options);
+export const offKeyUp = (listener, options) => unsubscribe("keyup", listener, options);
 export const onCopy = (listener, options) => subscribe("copy", listener, options);
+export const offCopy = (listener, options) => unsubscribe("copy", listener, options);
 export const onCut = (listener, options) => subscribe("cut", listener, options);
+export const offCut = (listener, options) => unsubscribe("cut", listener, options);
 export const onPaste = (listener, options) => subscribe("paste", listener, options);
+export const offPaste = (listener, options) => unsubscribe("paste", listener, options);
 export const onSelect = (listener, options) => subscribe("select", listener, options);
+export const offSelect = (listener, options) => unsubscribe("select", listener, options);
 export const onFocusIn = (listener, options) => subscribe("focusin", listener, options);
+export const offFocusIn = (listener, options) => unsubscribe("focusin", listener, options);
 export const onFocusOut = (listener, options) => subscribe("focusout", listener, options);
+export const offFocusOut = (listener, options) => unsubscribe("focusout", listener, options);

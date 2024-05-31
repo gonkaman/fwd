@@ -1,9 +1,8 @@
-import { AdapterEntry, AttributeEntry, PropertyEntry, QueryEntry, ActionEntry, ActionArgEntry, EventEntry, EntryMap } from "../main/generator.ts"
+import { AdapterEntry, AttributeEntry, PropertyEntry, QueryEntry, ActionEntry, ActionArgEntry, EventEntry, EntryMap, ContextualAdapterEntry, QueryGetterType, AdapterType } from "../main/generator.ts"
 
 type AdapterDefaultData = {
-    target: string,
-    type: string,
-    parent: string | string[],
+    target: string | string[],
+    type: AdapterType,
     childs: string | string[],
     preffix?: string
 }
@@ -31,20 +30,26 @@ export const getEntryNameProvider = (processedKeys: Set<string>, keywords: strin
     };
 }
 
+const unionType = (type: string | string[]): string => typeof type === 'string' ? type : type.join(' | ');
+
+const getContextualType = (target: [string, string, string | string[]][]): string => target.length === 1 ? 
+    `DOMTaskData<${target[0][1]}>` : 
+    `(T extends DOMTaskData<${target[0][0]}> ? DOMTaskData<${target[0][1]}> : ${getContextualType(target.slice(1))})`;
+
+const getContextualTask = (target: [string, string, string | string[]][]): string => target.length === 1 ? 
+    `Task<DOMTaskData<${target[0][1]}>>` : 
+    `(T extends DOMTaskData<${target[0][0]}> ? Task<DOMTaskData<${target[0][1]}>> : ${getContextualTask(target.slice(1))})`;
+
+const getContextualCompatible = (target: [string, string, string | string[]][]): string => target.length === 1 ? 
+    `(Branch<DOMTaskArg, DOMTaskData<${unionType(target[0][2])}>, DOMTaskData<${target[0][1]}>> | DOMTaskCompatible)` : 
+    `(T extends DOMTaskData<${target[0][0]}> ? (Branch<DOMTaskArg, DOMTaskData<${unionType(target[0][2])}>, DOMTaskData<${target[0][1]}>> | DOMTaskCompatible) : ${getContextualCompatible(target.slice(1))})`;
+
 const formatAdapters = (data: Record<string,any> | null | undefined, defaultData: AdapterDefaultData, getName: EntryNameProvider): Record<string, AdapterEntry> => {
     if(data == null) return {};
     return Object.fromEntries(Object.entries(data).map(entry => {
         const name = getName(...entry, defaultData.preffix);
         if(typeof entry[1] === 'string') return [
-            entry[0], 
-            {
-                name: name, 
-                key: entry[1], 
-                type: defaultData.type, 
-                target: Array.isArray(defaultData.target) ? defaultData.target.join(" | ") : defaultData.target, 
-                parent: Array.isArray(defaultData.parent) ? defaultData.parent.join(" | ") : defaultData.parent,
-                childs: Array.isArray(defaultData.childs) ? defaultData.childs.join(" | ") : defaultData.childs
-            }
+            entry[0], { name: name, key: entry[1], type: defaultData.type, target: unionType(defaultData.target), childs: unionType(defaultData.childs) }
         ];
 
         entry[1]["name"] = name;
@@ -52,10 +57,23 @@ const formatAdapters = (data: Record<string,any> | null | undefined, defaultData
         if(entry[1]["type"] == null) entry[1]["type"] = defaultData.type;
         if(entry[1]["target"] == null) entry[1]["target"] = defaultData.target;
         if(Array.isArray(entry[1]["target"])) entry[1]["target"] = entry[1]["target"].join(" | ");
-        if(entry[1]["parent"] == null) entry[1]["parent"] = defaultData.parent;
-        if(Array.isArray(entry[1]["parent"])) entry[1]["parent"] = entry[1]["parent"].join(" | ");
         if(entry[1]["childs"] == null) entry[1]["childs"] = defaultData.childs;
         if(Array.isArray(entry[1]["childs"])) entry[1]["childs"] = entry[1]["childs"].join(" | ");
+        return entry;
+    }));
+} 
+
+const formatContextuals = (data: Record<string,any> | null | undefined, getName: EntryNameProvider): Record<string, ContextualAdapterEntry> => {
+    if(data == null) return {};
+    return Object.fromEntries(Object.entries(data).map(entry => {
+        if(entry[1]["target"] == null) throw new Error(`! Missing required key found while loading contextual adapter data: [adapter: ${entry[0]}, missing key: target]`);
+        entry[1]["name"] = getName(...entry);
+        entry[1]["target"] = {
+            type: getContextualType(entry[1]["target"]),
+            task: getContextualTask(entry[1]["target"]),
+            compatible: getContextualCompatible(entry[1]["target"])
+        };
+        if(entry[1]["key"] == null) entry[1]["key"] = entry[0];
         return entry;
     }));
 } 
@@ -148,7 +166,7 @@ const formatEvents = (data: Record<string,any> | null | undefined, defaultTarget
 } 
 
 export const formatBaseEntries = (data: Record<string, any>, getName: EntryNameProvider): EntryMap => {
-    const baseAdapterDefaults : AdapterDefaultData = { target: "Element", type: "html", parent: "undefined", childs: "undefined"};
+    const baseAdapterDefaults : AdapterDefaultData = { target: "Element", type: AdapterType.html, childs: "undefined"};
     const baseAttributeDefaultTarget = "Element";
     const basePropertyDefaultTarget = "Element";
     const baseQueryDefaultTarget = "Element";
@@ -156,6 +174,7 @@ export const formatBaseEntries = (data: Record<string, any>, getName: EntryNameP
     const baseEventDefaultTarget = "EventTarget";
     return {
         adapter: formatAdapters(data["adapter"], baseAdapterDefaults, getName),
+        contextual: formatContextuals(data["contextual"], getName),
         attribute: formatAttributes(data["attribute"], baseAttributeDefaultTarget, getName),
         property: formatProperties(data["property"], basePropertyDefaultTarget, getName),
         query: formatQueries(data["query"], baseQueryDefaultTarget, getName),
@@ -167,14 +186,14 @@ export const formatBaseEntries = (data: Record<string, any>, getName: EntryNameP
 
 
 export const formatHtmlEntries = (data: Record<string, any>, getName: EntryNameProvider): EntryMap => {
-    const baseAdapterDefaults : AdapterDefaultData = { target: "HTMLElement", type: "html", parent: "HTMLElement", childs: ["Text", "HTMLElement"], preffix: "html"};
+    const baseAdapterDefaults : AdapterDefaultData = { target: "HTMLElement", type: AdapterType.html, childs: ["Text", "HTMLElement"], preffix: "html"};
     const baseAttributeDefaultTarget = "HTMLElement";
     const basePropertyDefaultTarget = "HTMLElement";
     const baseQueryDefaultTarget = "HTMLElement";
     const baseActionDefaultTarget = "HTMLElement";
     const baseEventDefaultTarget = "HTMLElement";
     return {
-        adapter: formatAdapters(data["adapter"], baseAdapterDefaults, getName),
+        adapter: formatAdapters(data["adapter"], baseAdapterDefaults, getName), contextual: {},
         attribute: formatAttributes(data["attribute"], baseAttributeDefaultTarget, getName),
         property: formatProperties(data["property"], basePropertyDefaultTarget, getName),
         query: formatQueries(data["query"], baseQueryDefaultTarget, getName),
@@ -185,14 +204,14 @@ export const formatHtmlEntries = (data: Record<string, any>, getName: EntryNameP
 }
 
 export const formatSvgEntries = (data: Record<string, any>, getName: EntryNameProvider): EntryMap => {
-    const baseAdapterDefaults : AdapterDefaultData = { target: "SVGElement", type: "svg", parent: "SVGElement", childs: ["Text", "SVGElement"], preffix: "svg"};
+    const baseAdapterDefaults : AdapterDefaultData = { target: "SVGElement", type: AdapterType.svg, childs: ["Text", "SVGElement"], preffix: "svg"};
     const baseAttributeDefaultTarget = "SVGElement";
     const basePropertyDefaultTarget = "SVGElement";
     const baseQueryDefaultTarget = "SVGElement";
     const baseActionDefaultTarget = "SVGElement";
     const baseEventDefaultTarget = "SVGElement";
     return {
-        adapter: formatAdapters(data["adapter"], baseAdapterDefaults, getName),
+        adapter: formatAdapters(data["adapter"], baseAdapterDefaults, getName), contextual: {},
         attribute: formatAttributes(data["attribute"], baseAttributeDefaultTarget, getName),
         property: formatProperties(data["property"], basePropertyDefaultTarget, getName),
         query: formatQueries(data["query"], baseQueryDefaultTarget, getName),
@@ -203,14 +222,14 @@ export const formatSvgEntries = (data: Record<string, any>, getName: EntryNamePr
 }
 
 export const formatMathmlEntries = (data: Record<string, any>, getName: EntryNameProvider): EntryMap => {
-    const baseAdapterDefaults : AdapterDefaultData = { target: "MathMLElement", type: "mathml", parent: "MathMLElement", childs: ["Text", "MathMLElement"], preffix: "math"};
+    const baseAdapterDefaults : AdapterDefaultData = { target: "MathMLElement", type: AdapterType.math, childs: ["Text", "MathMLElement"], preffix: "math"};
     const baseAttributeDefaultTarget = "MathMLElement";
     const basePropertyDefaultTarget = "MathMLElement";
     const baseQueryDefaultTarget = "MathMLElement";
     const baseActionDefaultTarget = "MathMLElement";
     const baseEventDefaultTarget = "MathMLElement";
     return {
-        adapter: formatAdapters(data["adapter"], baseAdapterDefaults, getName),
+        adapter: formatAdapters(data["adapter"], baseAdapterDefaults, getName), contextual: {},
         attribute: formatAttributes(data["attribute"], baseAttributeDefaultTarget, getName),
         property: formatProperties(data["property"], basePropertyDefaultTarget, getName),
         query: formatQueries(data["query"], baseQueryDefaultTarget, getName),
@@ -225,7 +244,7 @@ const generateAttributeGetter = (getName: EntryNameProvider, key: string, value:
         name: getName('get' + key[0].toUpperCase() + key.slice(1), value),
         key: value.key,
         target: value.target,
-        getter: "getAttr"
+        getter: QueryGetterType.attr
     }
 }
 
@@ -234,7 +253,7 @@ const generatePropertyGetter = (getName: EntryNameProvider, key: string, value: 
         name: getName('get' + key[0].toUpperCase() + key.slice(1), value),
         key: value.key,
         target: value.target,
-        getter: "getProp"
+        getter: QueryGetterType.prop
     }
 }
 
@@ -242,6 +261,7 @@ const generatePropertyGetter = (getName: EntryNameProvider, key: string, value: 
 export const buildEntryMap = (getName: EntryNameProvider, corelibSource: string, ...formattedEntries: EntryMap[]): EntryMap => {
     const result : EntryMap = {
         adapter: {},
+        contextual: {},
         attribute: {},
         property: {},
         query: {},
@@ -252,6 +272,7 @@ export const buildEntryMap = (getName: EntryNameProvider, corelibSource: string,
 
     formattedEntries.forEach(entry => {
         Object.assign(result.adapter, entry.adapter);
+        Object.assign(result.contextual, entry.contextual);
         Object.assign(result.attribute, entry.attribute);
         Object.entries(entry.attribute).forEach(item => {
             const queryData = generateAttributeGetter(getName, ...item);
