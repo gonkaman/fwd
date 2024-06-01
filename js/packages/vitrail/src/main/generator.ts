@@ -117,7 +117,7 @@ const sourceGenerators = {
     //query template
     query: (entry: QueryEntry): [string, string[]] => {
         return [
-            `export const ${entry.name} = <T extends ${entry.target}>(alias?: string): Filter<DOMTaskData<T>,[string, unknown][]> => ${entry.getter}<T>('${entry.key}', alias);`, 
+            `export const ${entry.name} = <T extends ${entry.target}>(alias?: string): Filter<DOMTaskData<T>,[string, Lookup<unknown>]> => ${entry.getter}<T>('${entry.key}', alias);`, 
             ['Filter','DOMTaskData', entry.getter]
         ];
     },

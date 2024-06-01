@@ -1,3 +1,5 @@
+import { getExportparts } from "../../samples/serenia";
+
 //@@ Filter @@//
 export type Filter<TArg,TResult> = (arg: TArg) => TResult;
 
@@ -18,9 +20,6 @@ export type Lookup<T> = Filter<void,T|null|undefined>;
 
 //@@ Curator > Lookup @@//
 export type Curator<T> = (lookup: Lookup<T>) => void; 
-
-//@@ Store > Curator, Lookup @@//
-export type Delegate<T> = [Curator<T>, Lookup<T>];
 
 //@@ noConnector > Filter, Task @@//
 export const noConnector = <TArg, T>(_: Filter<TArg, any>): Task<T> => (target: T) => target;
@@ -108,6 +107,11 @@ export const appendConnector = <T extends DOMTaskData<Node>>(filter: Filter<DOMT
 export const append = <T extends Element>(branch: Branch<DOMTaskArg, DOMTaskData<Node>, DOMTaskData<T> | unknown>): Task<DOMTaskData<T>> => 
 (branch as Branch<DOMTaskArg, DOMTaskData<Node>, DOMTaskData<T>>)(appendConnector, deriveDOMTaskArg);
 
+//@@ appendAll > Task, Branch, DOMTaskData, DOMTaskArg, appendConnector, deriveDOMTaskArg @@//
+export const appendAll = <T extends Element>(...branches: Branch<DOMTaskArg, DOMTaskData<Node>, DOMTaskData<T> | unknown>[]): Task<DOMTaskData<T>> => 
+    (data: DOMTaskData<T>) => branches.reduce((current, branch) => 
+        (branch as Branch<DOMTaskArg, DOMTaskData<Node>, DOMTaskData<T>>)(appendConnector, deriveDOMTaskArg)(current), data);
+
 //@@ appendTo > Task, Lookup, DOMTaskData, DOMTaskArg @@//
 export const appendTo = <T extends Node>(lookup: Lookup<DOMTaskData<Element>>): Task<DOMTaskData<T>> => 
     (node: DOMTaskData<T>): DOMTaskData<T> => {
@@ -125,6 +129,11 @@ export const prependConnector = <T extends DOMTaskData<Element>>(filter: Filter<
 //@@ prepend > Task, Branch, DOMTaskData, DOMTaskArg, prependConnector, deriveDOMTaskArg @@//
 export const prepend = <T extends Element>(branch: Branch<DOMTaskArg, DOMTaskData<Node>, DOMTaskData<T> | unknown>): Task<DOMTaskData<T>> =>
 (branch as Branch<DOMTaskArg, DOMTaskData<Node>, DOMTaskData<T>>)(prependConnector, deriveDOMTaskArg);
+
+//@@ prependAll > Task, Branch, DOMTaskData, DOMTaskArg, prependConnector, deriveDOMTaskArg @@//
+export const prependAll = <T extends Element>(...branches: Branch<DOMTaskArg, DOMTaskData<Node>, DOMTaskData<T> | unknown>[]): Task<DOMTaskData<T>> =>
+    (data: DOMTaskData<T>) => branches.reduce((current, branch) => 
+        (branch as Branch<DOMTaskArg, DOMTaskData<Node>, DOMTaskData<T>>)(prependConnector, deriveDOMTaskArg)(current), data);
 
 //@@ prependTo > Task, Lookup, DOMTaskData, DOMTaskArg @@//
 export const prependTo = <T extends Node>(lookup: Lookup<DOMTaskData<Element>>): Task<DOMTaskData<T>> =>
@@ -170,8 +179,13 @@ export const handleNode = <T extends Node>(task: Task<T>): Task<DOMTaskData<T>> 
     return data;
 }
 
+export const detach = <T extends Node>(): Task<DOMTaskData<T>> => (data: DOMTaskData<T>) => {
+    data.element.parentNode?.removeChild(data.element);
+    return data;
+}
+
 //@@ createRef > Lookup, Delegate, DOMTaskData @@//
-export const createRef = <T extends Node>(): Delegate<DOMTaskData<T>> => {
+export const createRef = <T extends Node>(): [Curator<DOMTaskData<T>>, Lookup<DOMTaskData<T>>] => {
     let getData: Lookup<DOMTaskData<T>> = () => null;
     return [
         (lookup: Lookup<DOMTaskData<T>>) => { getData = lookup; },
@@ -188,12 +202,16 @@ export const createMultiRef = <T extends Node>(): [Curator<DOMTaskData<T>>, Look
     ]
 }
 
-//@@ createQuery > Lookup, Delegate, DOMTaskData @@//
-export const createQuery = (): Delegate<[string, unknown][]> => {
-    const getters: Lookup<[string, unknown][]>[] = [];
+//@@ createQuery > Lookup, DOMTaskData @@//
+export const createQuery = (): [Filter<[string, Lookup<unknown>],void>, Filter<string | undefined | null, unknown>] => {
+    const queryMap: Map<string, Lookup<unknown>> = new Map<string, Lookup<unknown>>();
     return [
-        (lookup: Lookup<[string, unknown][]>) => { getters.push(lookup); },
-        () => getters.reduce((entries: [string, unknown][], getData) => entries.concat(getData() ?? []), [])
+        (lookup: [string, Lookup<unknown>]) => { queryMap.set(...lookup); },
+        (key?: string | null) => {
+            if(key == null) return new Map<string, unknown>(Array.from(queryMap.entries()).map(entry => [entry[0], entry[1]()]));
+            const valueLookup = queryMap.get(key);
+            return valueLookup == null ? valueLookup+"" : valueLookup();
+        }
     ]
 }
 
@@ -204,10 +222,10 @@ export const ref = <T extends Node>(curator: Curator<DOMTaskData<T>>): Task<DOMT
         return data;
     }
 
-//@@ query > Filter, Task, Curator, DOMTaskData @@//
-export const query = <T extends Node>(curator: Curator<[string, unknown][]>, ...queries: Filter<DOMTaskData<T>, [string, unknown][]>[]): Task<DOMTaskData<T>> =>
+//@@ query > Filter, Task, DOMTaskData @@//
+export const query = <T extends Node>(curator: Filter<[string, Lookup<unknown>],void>, ...queryFilters: Filter<DOMTaskData<T>, [string, Lookup<unknown>]>[]): Task<DOMTaskData<T>> =>
     (data: DOMTaskData<T>) => {
-        curator(() => queries.reduce((entries: [string, unknown][], query) => entries.concat(query(data)), []));
+        queryFilters.forEach(filter => curator(filter(data)));
         return data;
     }
 
@@ -262,8 +280,8 @@ export const prop = <T extends Node>(key: string, value: DOMPropertyValue): Task
             (data: DOMTaskData<T>) => { data.element[key] = value; return data; }
 
 //@@ getProp > Filter, DOMTaskData @@//
-export const getProp = <T extends Node>(key: string, alias?: string): Filter<DOMTaskData<T>,[string, unknown][]> =>
-    (data: DOMTaskData<T>) => [[alias || key, data.element[key]]];
+export const getProp = <T extends Node>(key: string, alias?: string): Filter<DOMTaskData<T>,[string, Lookup<unknown>]> =>
+    (data: DOMTaskData<T>) => [alias || key, () => data.element[key]];
 
 //@@ removeProp > Task, DOMTaskData @@//
 export const removeProp = <T extends Node>(key: string): Task<DOMTaskData<T>> => prop<T>(key, undefined);
@@ -278,8 +296,8 @@ export const attr = <T extends Element>(key: string, value: DOMPropertyValue): T
             (data: DOMTaskData<T>) => { data.element.setAttribute(key, value); return data; }
 
 //@@ getAttr > Filter, DOMTaskData @@//
-export const getAttr = <T extends Element>(key: string, alias?: string): Filter<DOMTaskData<T>,[string, unknown][]> =>
-    (data: DOMTaskData<T>) => [[alias || key, data.element.getAttribute(key)]];
+export const getAttr = <T extends Element>(key: string, alias?: string): Filter<DOMTaskData<T>,[string, Lookup<unknown>]> =>
+    (data: DOMTaskData<T>) => [alias || key, () => data.element.getAttribute(key)];
 
 //@@ removeAttr > Task, DOMTaskData @@//
 export const removeAttr = <T extends Element>(key: string): Task<DOMTaskData<T>> => attr<T>(key, undefined);
@@ -291,7 +309,7 @@ const ariaPreffix = "aria-";
 export const aria = <T extends Element>(key: string, value: DOMPropertyValue): Task<DOMTaskData<T>> => attr<T>(ariaPreffix+key, value);
 
 //@@ getAria > Filter, DOMTaskData, ariaPreffix @@//
-export const getAria = <T extends Element>(key: string, alias?: string): Filter<DOMTaskData<T>,[string, unknown][]> => getAttr<T>(ariaPreffix+key, alias);
+export const getAria = <T extends Element>(key: string, alias?: string): Filter<DOMTaskData<T>,[string, Lookup<unknown>]> => getAttr<T>(ariaPreffix+key, alias);
 
 //@@ removeAria > Task, DOMTaskData, ariaPreffix @@//
 export const removeAria = <T extends Element>(key: string): Task<DOMTaskData<T>> => aria<T>(ariaPreffix+key, undefined);
@@ -308,8 +326,8 @@ export const dataAttr = <T extends SpecializedElement>(key: string, value: DOMPr
             (data: DOMTaskData<T>) => { data.element.dataset[key] = value; return data; }
 
 //@@ getDataAttr > Filter, DOMTaskData, SpecializedElement @@//
-export const getDataAttr = <T extends SpecializedElement>(key: string, alias?: string): Filter<DOMTaskData<T>,[string, unknown][]> =>
-    (data: DOMTaskData<T>) => [[alias || key, data.element.dataset[key]]];
+export const getDataAttr = <T extends SpecializedElement>(key: string, alias?: string): Filter<DOMTaskData<T>,[string, Lookup<unknown>]> =>
+    (data: DOMTaskData<T>) => [alias || key, () => data.element.dataset[key]];
 
 //@@ removeDataAttr > Task, DOMTaskData, SpecializedElement @@//
 export const removeDataAttr = <T extends SpecializedElement>(key: string): Task<DOMTaskData<T>> => dataAttr<T>(key, undefined);
@@ -329,8 +347,8 @@ export const css = <T extends SpecializedElement>(value: string | ((previous: st
         (data: DOMTaskData<T>) => { data.element.style.cssText = value; return data; }
 
 //@@ getStyle > Filter, DOMTaskData, SpecializedElement @@//
-export const getStyle = <T extends SpecializedElement>(key: string, alias?: string): Filter<DOMTaskData<T>,[string, unknown][]> =>
-    (data: DOMTaskData<T>) => [[alias || key, data.element.style[key]]];
+export const getStyle = <T extends SpecializedElement>(key: string, alias?: string): Filter<DOMTaskData<T>,[string, Lookup<unknown>]> =>
+    (data: DOMTaskData<T>) => [alias || key, () => data.element.style[key]];
 
 //@@ removeStyle > Task, DOMTaskData, SpecializedElement @@//
 export const removeStyle = <T extends SpecializedElement>(key: string): Task<DOMTaskData<T>> => style<T>(key, undefined);
@@ -420,7 +438,7 @@ export const adapters = {
 //@@ adapters.attrs > adapters_start, DOMStylePropertyProxyTarget, DOMPropertyValue, SpecializedElement, Task, DOMTaskData, style @@//
     style: new Proxy<DOMStylePropertyProxyTarget>({}, {
         get(target, key, receiver) {
-            if(typeof key === "string") return (value: DOMPropertyValue): Task<DOMTaskData<SpecializedElement>> => style(key, value);
+            if(typeof key === "string") return (value: DOMPropertyValue): Task<DOMTaskData<SpecializedElement>> => style(key.startsWith('_') && key.length > 1 ? key.slice(1) : key, value);
             return Reflect.get(target, key, receiver);
         }
     }),
@@ -441,17 +459,17 @@ export const adapters = {
 };
 
 //@@ DOMPropertyQueryProxyTarget > Filter, DOMTaskData @@//
-export type DOMPropertyQueryProxyTarget = Record<string, (key: string, alias?: string) => Filter<DOMTaskData<Node>,[string, unknown][]>>;
+export type DOMPropertyQueryProxyTarget = Record<string, (key: string, alias?: string) => Filter<DOMTaskData<Node>,[string, Lookup<unknown>]>>;
 
 //@@ DOMStylePropertyQueryProxyTarget > Filter, DOMTaskData, SpecializedElement @@//
-export type DOMStylePropertyQueryProxyTarget = Record<string, (key: string, alias?: string) => Filter<DOMTaskData<SpecializedElement>,[string, unknown][]>>;
+export type DOMStylePropertyQueryProxyTarget = Record<string, (key: string, alias?: string) => Filter<DOMTaskData<SpecializedElement>,[string, Lookup<unknown>]>>;
 
 //@@ queries_start > DOMPropertyQueryProxyTarget, DOMStylePropertyQueryProxyTarget, Filter, DOMTaskData, SpecializedElement @@//
 export const queries = {
 //@@ queries.props > queries_start, DOMPropertyQueryProxyTarget, Filter, DOMTaskData, getProp @@//
     props: new Proxy<DOMPropertyQueryProxyTarget>({},{
         get(target, key, receiver) {
-            if(typeof key === "string") return (key: string, alias?: string): Filter<DOMTaskData<Node>,[string, unknown][]> => 
+            if(typeof key === "string") return (key: string, alias?: string): Filter<DOMTaskData<Node>,[string, Lookup<unknown>]> => 
                 getProp(key, alias);
             return Reflect.get(target, key, receiver);
         }
@@ -459,7 +477,7 @@ export const queries = {
 //@@ queries.style > queries_start, DOMStylePropertyQueryProxyTarget, Filter, DOMTaskData, getStyle @@//
     style: new Proxy<DOMStylePropertyQueryProxyTarget>({},{
         get(target, key, receiver) {
-            if(typeof key === "string") return (key: string, alias?: string): Filter<DOMTaskData<SpecializedElement>,[string, unknown][]> => 
+            if(typeof key === "string") return (key: string, alias?: string): Filter<DOMTaskData<SpecializedElement>,[string, Lookup<unknown>]> => 
                 getStyle(key, alias);
             return Reflect.get(target, key, receiver);
         }

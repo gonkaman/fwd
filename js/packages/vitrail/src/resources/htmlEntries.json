@@ -72,7 +72,7 @@
         "option": { "target":"HTMLOptionElement" },
         "output": { "target":"HTMLOutputElement" },
         "p": { "target":"HTMLParagraphElement" },
-        "param": { "target":"HTMLParagraphElement" },
+        "param": { "target":"HTMLParamElement" },
         "picture": {"target":"HTMLPictureElement" },
         "pre": { "target":"HTMLPreElement" },
         "progress": {  "target":"HTMLProgressElement" },
@@ -145,5 +145,10 @@
         "required": { "target": ["HTMLInputElement", "HTMLSelectElement", "HTMLTextAreaElement"]},
         "rel": { "target": ["HTMLAnchorElement", "HTMLAreaElement", "HTMLLinkElement", "HTMLFormElement"]},
         "autocomplete": { "target": ["HTMLInputElement", "HTMLSelectElement", "HTMLTextAreaElement", "HTMLFormElement"]}
+    },
+    "property": {
+        "value": { "target": ["HTMLInputElement", "HTMLOptionElement", "HTMLMeterElement", 
+                                "HTMLTextAreaElement", "HTMLLIElement", "HTMLProgressElement", 
+                                "HTMLButtonElement", "HTMLParamElement"]}
     }
 }
